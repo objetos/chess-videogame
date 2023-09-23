@@ -1,7 +1,7 @@
 const E_PieceColor = Object.freeze({
-    Black: Symbol("White"),
-    White: Symbol("Black"),
-    None: Symbol("Black")
+    Black: Symbol("Black"),
+    White: Symbol("White"),
+    None: Symbol("None")
 })
 
 
