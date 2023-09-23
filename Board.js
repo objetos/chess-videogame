@@ -2,8 +2,8 @@
 class Board {
     static #FIRST_FILE = 0x0101010101010101n;
     static #FIRST_RANK = 0xFFn;
-    #pieces = 0;
-    #piecesMatrix = 0;
+    #pieces = {};
+    #piecesMatrix = [];
 
     static GetFile(inputFileNumber) {
         console.assert(typeof inputFileNumber === "number", "File is of incorrect type");
@@ -117,50 +117,85 @@ class Board {
         this.#CreatePieces(inputPieceMatrix);
     }
 
+    PrintBoard() {
+        let string = "";
+        for (let rankIndex = 0; rankIndex < this.#piecesMatrix.length; rankIndex++) {
+            for (let fileIndex = 0; fileIndex < this.#piecesMatrix[rankIndex].length; fileIndex++) {
+
+                let piece = this.#piecesMatrix[rankIndex][fileIndex];
+
+                if (piece === undefined) {
+                    string += " 00";
+                } else {
+                    string += " " + piece.ToString();
+                }
+
+                if (((fileIndex + 1) % 8) === 0) {
+                    string += "\n";
+                }
+            }
+        }
+        console.log(string);
+    }
+
     #CreatePieces(inputPieceMatrix) {
         //secrets: how pieces are created and stored in board
         //preconditions; 8x8 board with piece color and type.
 
+        this.#pieces = {};
+        this.#pieces[E_PieceColor.White] = {}
+        this.#pieces[E_PieceColor.Black] = {}
+
+        this.#piecesMatrix = [];
+        for (let i = 0; i < 8; i++) {
+            this.#piecesMatrix.push(new Array(8));
+        }
+
         //for each square
-        for (let file = 0; file < inputPieceMatrix.length; file++) {
-            for (let rank = 0; rank < inputPieceMatrix[file].length; rank++) {
+        for (let rankIndex = 0; rankIndex < inputPieceMatrix.length; rankIndex++) {
+            for (let fileIndex = 0; fileIndex < inputPieceMatrix[rankIndex].length; fileIndex++) {
 
                 //if there's a piece
-                let pieceInfo = inputPieceMatrix[file][rank];
-                if (pieceInfo === undefined) continue;
+                let piece = inputPieceMatrix[rankIndex][fileIndex];
+                if (piece === undefined) continue;
 
                 //create a piece
                 let pieceObject = null;
-                switch (pieceInfo.type) {
+                switch (piece.type) {
                     case E_PieceType.King:
-                        pieceObject = new Pawn(0, 0, 0);
+                        pieceObject = new King(piece.color, 0, 0);
                         break;
                     case E_PieceType.Queen:
-                        pieceObject = new Queen(0, 0, 0);
-                        break;
-                    case E_PieceType.Knight:
+                        pieceObject = new Queen(piece.color, 0, 0);
                         break;
                     case E_PieceType.Bishop:
-                        pieceObject = new Bishop(0, 0, 0);
+                        pieceObject = new Bishop(piece.color, 0, 0);
                         break;
                     case E_PieceType.Rook:
-                        pieceObject = new Rook(0, 0, 0);
+                        pieceObject = new Rook(piece.color, 0, 0);
                         break;
                     case E_PieceType.Knight:
-                        pieceObject = new Knight(0, 0, 0);
+                        pieceObject = new Knight(piece.color, 0, 0);
                         break;
                     case E_PieceType.Pawn:
-                        pieceObject = new Pawn(0, 0, 0);
+                        pieceObject = new Pawn(piece.color, 0, 0);
+                        break;
+                    case E_PieceType.None:
+                        console.error("No type set to piece");
                         break;
                     default:
-                        console.error("Incorrect piece type:" + pieceInfo.type);
+                        console.error("Incorrect piece type:" + piece.type);
                         break;
                 }
 
                 //categorize it by color and type
-                this.#pieces[pieceInfo.color][pieceInfo.type].push(pieceObject);
+                if (this.#pieces[piece.color][piece.type] === undefined) {
+                    this.#pieces[piece.color][piece.type] = new Array();
+                }
+
+                this.#pieces[piece.color][piece.type].push(pieceObject);
                 //add it to the board
-                this.#piecesMatrix[file][rank] = pieceObject;
+                this.#piecesMatrix[rankIndex][fileIndex] = pieceObject;
             }
         }
     }
