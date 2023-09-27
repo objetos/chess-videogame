@@ -2,7 +2,7 @@
 class Board {
     static #FIRST_FILE = 0x0101010101010101n;
     static #FIRST_RANK = 0xFFn;
-    #pieces = {};
+    #piecesDictionary = {};
     #piecesMatrix = [];
 
     static GetFile(inputFileNumber) {
@@ -117,6 +117,37 @@ class Board {
         this.#CreatePieces(inputPieceMatrix);
     }
 
+    GetPiecesOfType(pieceType) {
+        //secrets: how to access info, how to calculate bitboard
+        //input: given piece type
+        //output: 64-bit bitboard representation of location of every piece of that type
+        //Test: 
+        //-compare pieces location on input board visually to bitboard given
+        //-Iterate through board and verify that every 1 must match with the given type
+
+        /*
+        create a empty board
+        if type is registered
+            for each piece of type    
+                get location in board
+                add it to board
+            return board
+        else
+            return empty board
+        */
+        // let typeBitboard = 0n;
+        // if (this.#IsPieceTypeRegistered(pieceType)) {
+        //     let piecesOfType = this.#piecesDictionary[E_PieceColor.White][pieceType]
+        //     for (const iterator of object) {
+
+        //     }
+        // } else {
+        //     //board has no pieces of type
+        // }
+    }
+
+
+
     PrintBoard() {
         let string = "";
         for (let rankIndex = 0; rankIndex < this.#piecesMatrix.length; rankIndex++) {
@@ -139,13 +170,15 @@ class Board {
     }
 
     #CreatePieces(inputPieceMatrix) {
-        //secrets: how pieces are created and stored in board
-        //preconditions; 8x8 board with piece color and type.
+        console.assert(Array.isArray(inputPieceMatrix), "Input is not a matrix");
+        console.assert(inputPieceMatrix.length == 8, "Input matrix is not 8x8");
 
-        this.#pieces = {};
-        this.#pieces[E_PieceColor.White] = {}
-        this.#pieces[E_PieceColor.Black] = {}
+        //initialize dictionary of pieces
+        this.#piecesDictionary = {};
+        this.#piecesDictionary[E_PieceColor.White] = {}
+        this.#piecesDictionary[E_PieceColor.Black] = {}
 
+        //initialize board
         this.#piecesMatrix = [];
         for (let i = 0; i < 8; i++) {
             this.#piecesMatrix.push(new Array(8));
@@ -153,50 +186,62 @@ class Board {
 
         //for each square
         for (let rankIndex = 0; rankIndex < inputPieceMatrix.length; rankIndex++) {
+
+            console.assert(Array.isArray(inputPieceMatrix[rankIndex]), "Input is not a matrix");
+            console.assert(inputPieceMatrix[rankIndex], "Input matrix is not 8x8");
+
             for (let fileIndex = 0; fileIndex < inputPieceMatrix[rankIndex].length; fileIndex++) {
 
                 //if there's a piece
                 let piece = inputPieceMatrix[rankIndex][fileIndex];
                 if (piece === undefined) continue;
 
+                console.assert(!(piece.type === undefined), "Piece has no type property");
+                console.assert(!(piece.color === undefined), "Piece has no color property");
+
                 //create a piece
-                let pieceObject = null;
-                switch (piece.type) {
-                    case E_PieceType.King:
-                        pieceObject = new King(piece.color, 0, 0);
-                        break;
-                    case E_PieceType.Queen:
-                        pieceObject = new Queen(piece.color, 0, 0);
-                        break;
-                    case E_PieceType.Bishop:
-                        pieceObject = new Bishop(piece.color, 0, 0);
-                        break;
-                    case E_PieceType.Rook:
-                        pieceObject = new Rook(piece.color, 0, 0);
-                        break;
-                    case E_PieceType.Knight:
-                        pieceObject = new Knight(piece.color, 0, 0);
-                        break;
-                    case E_PieceType.Pawn:
-                        pieceObject = new Pawn(piece.color, 0, 0);
-                        break;
-                    case E_PieceType.None:
-                        console.error("No type set to piece");
-                        break;
-                    default:
-                        console.error("Incorrect piece type:" + piece.type);
-                        break;
-                }
+                let pieceObject = this.#CreatePiece(piece);
 
                 //categorize it by color and type
-                if (this.#pieces[piece.color][piece.type] === undefined) {
-                    this.#pieces[piece.color][piece.type] = new Array();
+                if (this.#piecesDictionary[piece.color][piece.type] === undefined) {
+                    this.#piecesDictionary[piece.color][piece.type] = new Array();
                 }
+                this.#piecesDictionary[piece.color][piece.type].push(pieceObject);
 
-                this.#pieces[piece.color][piece.type].push(pieceObject);
                 //add it to the board
                 this.#piecesMatrix[rankIndex][fileIndex] = pieceObject;
             }
         }
+    }
+
+    #CreatePiece(piece) {
+        let pieceObject = null;
+        switch (piece.type) {
+            case E_PieceType.King:
+                pieceObject = new King(piece.color, 0, 0);
+                break;
+            case E_PieceType.Queen:
+                pieceObject = new Queen(piece.color, 0, 0);
+                break;
+            case E_PieceType.Bishop:
+                pieceObject = new Bishop(piece.color, 0, 0);
+                break;
+            case E_PieceType.Rook:
+                pieceObject = new Rook(piece.color, 0, 0);
+                break;
+            case E_PieceType.Knight:
+                pieceObject = new Knight(piece.color, 0, 0);
+                break;
+            case E_PieceType.Pawn:
+                pieceObject = new Pawn(piece.color, 0, 0);
+                break;
+            case E_PieceType.None:
+                console.error("No type set to piece");
+                break;
+            default:
+                console.error("Incorrect piece type:" + piece.type);
+                break;
+        }
+        return pieceObject;
     }
 }
