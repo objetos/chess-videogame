@@ -126,8 +126,8 @@ class Board {
 
         //find all pieces of given type
         let piecesOfType = new Array();
-        for (let color of Object.values(E_PieceColor)) {
-            piecesOfType = piecesOfType.concat(this.#piecesDictionary[color][pieceType])
+        for (let pieceColor of Object.values(E_PieceColor)) {
+            piecesOfType = piecesOfType.concat(this.#piecesDictionary[pieceColor][pieceType])
         }
 
         //for each piece of given type    
@@ -141,7 +141,29 @@ class Board {
         return pieceTypeBitboard;
     }
 
+    GetPiecesOfColor(pieceColor) {
 
+        console.assert(Object.values(E_PieceColor).includes(pieceColor), "Piece color not defined");
+
+        //create a empty board
+        let pieceColorBitboard = 0n;
+
+        //find all pieces of given color
+        let piecesOfColor = new Array();
+        for (let pieceType of Object.values(E_PieceType)) {
+            piecesOfColor = piecesOfColor.concat(this.#piecesDictionary[pieceColor][pieceType])
+        }
+
+        //for each piece of given color    
+        for (let piece of piecesOfColor) {
+            //get location in board
+            let position = piece.GetPosition();
+            //add it to board
+            pieceColorBitboard = pieceColorBitboard | position;
+        }
+
+        return pieceColorBitboard;
+    }
 
     Print() {
         let string = "";
