@@ -175,8 +175,12 @@ class Board {
 
         //initialize dictionary of pieces
         this.#piecesDictionary = {};
-        this.#piecesDictionary[E_PieceColor.White] = {}
-        this.#piecesDictionary[E_PieceColor.Black] = {}
+        for (let color of Object.values(E_PieceColor)) {
+            this.#piecesDictionary[color] = {}
+            for (let type of Object.values(E_PieceType)) {
+                this.#piecesDictionary[color][type] = new Array();
+            }
+        }
 
         //initialize board
         this.#piecesMatrix = [];
@@ -186,7 +190,6 @@ class Board {
 
         //for each square
         for (let rankIndex = 0; rankIndex < inputPieceMatrix.length; rankIndex++) {
-
             console.assert(Array.isArray(inputPieceMatrix[rankIndex]), "Input is not a matrix");
             console.assert(inputPieceMatrix[rankIndex], "Input matrix is not 8x8");
 
@@ -200,12 +203,11 @@ class Board {
                 console.assert(!(piece.color === undefined), "Piece has no color property");
 
                 //create a piece
-                let pieceObject = this.#CreatePiece(piece);
+                let rank = 8 - rankIndex;
+                let file = fileIndex + 1;
+                let pieceObject = this.#CreatePiece(piece, rank, file);
 
                 //categorize it by color and type
-                if (this.#piecesDictionary[piece.color][piece.type] === undefined) {
-                    this.#piecesDictionary[piece.color][piece.type] = new Array();
-                }
                 this.#piecesDictionary[piece.color][piece.type].push(pieceObject);
 
                 //add it to the board
@@ -214,26 +216,26 @@ class Board {
         }
     }
 
-    #CreatePiece(piece) {
+    #CreatePiece(piece, rank, file) {
         let pieceObject = null;
         switch (piece.type) {
             case E_PieceType.King:
-                pieceObject = new King(piece.color, 0, 0);
+                pieceObject = new King(piece.color, rank, file);
                 break;
             case E_PieceType.Queen:
-                pieceObject = new Queen(piece.color, 0, 0);
+                pieceObject = new Queen(piece.color, rank, file);
                 break;
             case E_PieceType.Bishop:
-                pieceObject = new Bishop(piece.color, 0, 0);
+                pieceObject = new Bishop(piece.color, rank, file);
                 break;
             case E_PieceType.Rook:
-                pieceObject = new Rook(piece.color, 0, 0);
+                pieceObject = new Rook(piece.color, rank, file);
                 break;
             case E_PieceType.Knight:
-                pieceObject = new Knight(piece.color, 0, 0);
+                pieceObject = new Knight(piece.color, rank, file);
                 break;
             case E_PieceType.Pawn:
-                pieceObject = new Pawn(piece.color, 0, 0);
+                pieceObject = new Pawn(piece.color, rank, file);
                 break;
             case E_PieceType.None:
                 console.error("No type set to piece");
