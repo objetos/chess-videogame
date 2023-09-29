@@ -11,7 +11,7 @@ class Board {
 
         let fileBitboard = this.#FIRST_FILE;
         //Move first file n positions
-        fileBitboard = fileBitboard << BigInt(inputFileNumber - 1);
+        fileBitboard = fileBitboard << BigInt(8 - inputFileNumber);
         return fileBitboard;
     }
 
