@@ -1,4 +1,4 @@
-//****** ASSERT INPUTS, CLASS PROLOG
+//******  CLASS PROLOG, ASSERT FLOATING INPUTS
 class Board {
     static #FIRST_FILE = 0x0101010101010101n;
     static #FIRST_RANK = 0xFFn;
@@ -118,37 +118,32 @@ class Board {
     }
 
     GetPiecesOfType(pieceType) {
-        //secrets: how to access info, how to calculate bitboard
-        //input: given piece type
-        //output: 64-bit bitboard representation of location of every piece of that type
-        //Test: 
-        //-compare pieces location on input board visually to bitboard given
-        //-Iterate through board and verify that every 1 must match with the given type
 
-        /*
-        create a empty board
-        if type is registered
-            for each piece of type    
-                get location in board
-                add it to board
-            return board
-        else
-            return empty board
-        */
-        // let typeBitboard = 0n;
-        // if (this.#IsPieceTypeRegistered(pieceType)) {
-        //     let piecesOfType = this.#piecesDictionary[E_PieceColor.White][pieceType]
-        //     for (const iterator of object) {
+        console.assert(Object.values(E_PieceType).includes(pieceType), "Piece type not defined");
 
-        //     }
-        // } else {
-        //     //board has no pieces of type
-        // }
+        //create a empty board
+        let pieceTypeBitboard = 0n;
+
+        //find all pieces of given type
+        let piecesOfType = new Array();
+        for (let color of Object.values(E_PieceColor)) {
+            piecesOfType = piecesOfType.concat(this.#piecesDictionary[color][pieceType])
+        }
+
+        //for each piece of given type    
+        for (let piece of piecesOfType) {
+            //get location in board
+            let position = piece.GetPosition();
+            //add it to board
+            pieceTypeBitboard = pieceTypeBitboard | position;
+        }
+
+        return pieceTypeBitboard;
     }
 
 
 
-    PrintBoard() {
+    Print() {
         let string = "";
         for (let rankIndex = 0; rankIndex < this.#piecesMatrix.length; rankIndex++) {
             for (let fileIndex = 0; fileIndex < this.#piecesMatrix[rankIndex].length; fileIndex++) {
