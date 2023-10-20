@@ -165,6 +165,34 @@ class Board {
         return pieceColorBitboard;
     }
 
+    GetOccupied() {
+        //test: square by square check
+
+        //get board occupied by white pieces
+        let whitePieces = this.GetPiecesOfColor(E_PieceColor.White);
+        //get board occupied by black pieces
+        let blackPieces = this.GetPiecesOfColor(E_PieceColor.Black);
+        //join white board and black board
+        let occupied = whitePieces | blackPieces;
+        return occupied;
+    }
+
+    GetEmptySpaces() {
+        //test: square by square check
+        //get board occupied by pieces
+        let occupied = this.GetOccupied();
+        //reverse board to obtain empty spaces
+        let empty = ~occupied;
+
+        return empty;
+    }
+
+
+    ApplyMove(move) {
+
+
+    }
+
     Print() {
         let string = "";
         for (let rankIndex = 0; rankIndex < this.#piecesMatrix.length; rankIndex++) {
