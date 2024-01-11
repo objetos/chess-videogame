@@ -15,6 +15,6 @@ class SlidingPiece extends Piece {
         let position = this.position;
 
         let slidingMoves = ((occupiedInMask - 2 * position) ^ Reverse((Reverse(occupiedInMask) - 2 * Reverse(position)))) & mask;
-        return slidingMoves;
+        return slidingMoves & !board.GetPiecesOfColor(this.color);
     }
 }

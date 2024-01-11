@@ -19,7 +19,7 @@ class Piece {
             throw new Error("Abstract classes can't be instantiated.");
         }
 
-        console.assert(Object.values(E_PieceColor).includes(pieceColor), "Piece color not defined");
+        console.assert(Object.values(E_PieceColor).includes(color), "Piece color not defined");
         console.assert(typeof file === "number", "File is of incorrect type");
         console.assert(file >= 1 && file <= 8, "File " + file + " is out of bounds.");
         console.assert(typeof rank === "number", "Rank is of incorrect type");
