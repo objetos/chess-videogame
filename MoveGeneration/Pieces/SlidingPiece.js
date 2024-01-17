@@ -4,17 +4,26 @@ class SlidingPiece extends Piece {
         throw new Error("Method 'GetType()' must be implemented.");
     }
 
-    GetSlidingMask() {
+    GetSlidingMasks() {
         throw new Error("Method 'GetType()' must be implemented.");
     }
-
+    /**
+     * 
+     * @param {Board} board 
+     * @returns 
+     */
     GetMoves(board) {
         let occupied = board.GetOccupied();
-        let mask = this.GetSlidingMask();
-        let occupiedInMask = occupied & mask;
+        let masks = this.GetSlidingMasks();
         let position = this.position;
+        let slidingMoves = 0n;
 
-        let slidingMoves = ((occupiedInMask - 2 * position) ^ Reverse((Reverse(occupiedInMask) - 2 * Reverse(position)))) & mask;
-        return slidingMoves & !board.GetPiecesOfColor(this.color);
+        masks.forEach(mask => {
+            let blockers = occupied & mask;
+            let positiveRayMoves = ((blockers - 2n * position) ^ occupied) & mask;
+            let negativeRayMoves = (Reverse((Reverse(blockers) - 2n * Reverse(position))) ^ occupied) & mask;
+            slidingMoves = slidingMoves | positiveRayMoves | negativeRayMoves;
+        });
+        return slidingMoves & ~board.GetPiecesOfColor(this.color);
     }
 }

@@ -4,11 +4,11 @@ class Rook extends SlidingPiece {
         return E_PieceType.Rook;
     }
 
-    GetSlidingMask() {
-        return Board.GetRank(this.rank) | Board.GetFile(this.file);
+    GetSlidingMasks() {
+        return [Board.GetFile(this.file), Board.GetRank(this.rank)];
     }
 
     GetMoves(board) {
-        super.GetMoves(board);
+        return super.GetMoves(board);
     }
 }

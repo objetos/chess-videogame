@@ -4,15 +4,15 @@ class Bishop extends SlidingPiece {
         return E_PieceType.Bishop;
     }
 
-    GetSlidingMask() {
+    GetSlidingMasks() {
         let antiDiagonalNumber = this.file + this.rank - 1;
         let diagonalNumber = (9 - this.file) + this.rank - 1;
 
-        return Board.GetDiagonal(diagonalNumber) | Board.GetAntiDiagonal(antiDiagonalNumber);
+        return [Board.GetDiagonal(diagonalNumber), Board.GetAntiDiagonal(antiDiagonalNumber)];
     }
 
 
     GetMoves(board) {
-        super.GetMoves(board);
+        return super.GetMoves(board);
     }
 }
