@@ -10,6 +10,7 @@ class Pawn extends Piece {
         let oneSquareFront;
         let twoSquaresFront;
 
+        //calculate destination squares based on color
         switch (this.color) {
             case E_PieceColor.White:
                 diagonalSquare = (this.position << 7n);
@@ -29,10 +30,12 @@ class Pawn extends Piece {
                 throw new Error("No color specified");
         }
 
-        let rightCapture = diagonalSquare & board.GetPiecesOfColor(this.oppositeColor) & ~Board.GetRank(8) & ~Board.GetFile(1);
-        let leftCapture = antiDiagonalSquare & board.GetPiecesOfColor(this.oppositeColor) & ~Board.GetRank(8) & ~Board.GetFile(8);
-        let frontMove = oneSquareFront & board.GetEmptySpaces() & ~Board.GetFile(8);
-        let frontJump = (frontMove > 1) & twoSquaresFront & board.GetEmptySpaces() & Board.GetRank(4);
+        //calculate moves
+        let rightCapture = diagonalSquare & board.GetPiecesOfColor(this.oppositeColor) & ~(Board.GetFile(8) | Board.GetFile(1));
+        let leftCapture = antiDiagonalSquare & board.GetPiecesOfColor(this.oppositeColor) & ~(Board.GetFile(8) | Board.GetFile(1));
+        let frontMove = oneSquareFront & board.GetEmptySpaces();
+        let frontJump = 0n;
+        if (0n < frontMove) frontJump = twoSquaresFront & board.GetEmptySpaces() & (Board.GetRank(4) | Board.GetRank(5));
 
         return rightCapture | leftCapture | frontMove | frontJump;
     }
