@@ -44,8 +44,10 @@ class Piece {
 
         //move to rank
         this.#position = 1n << BigInt(8 - file);
+        this.#rank = rank;
         //move to file
         this.#position = this.#position << BigInt((rank - 1) * 8);
+        this.#file = file;
     }
 
     get position() {
@@ -53,7 +55,13 @@ class Piece {
     }
 
     SetPosition(rank, file) {
-        //****** assertions
+        //****** assertions, test
+        //move to rank
+        this.#position = 1n << BigInt(8 - file);
+        this.#rank = rank;
+        //move to file
+        this.#position = this.#position << BigInt((rank - 1) * 8);
+        this.#file = file;
     }
 
     get color() {

@@ -1,10 +1,15 @@
 class King extends Piece {
     #attackMask = 0x70507n;
+    #hasMoved = false;
 
     GetType() {
         return E_PieceType.King;
     }
-
+    /**
+     * 
+     * @param {Board} board 
+     * @returns 
+     */
     GetMoves(board) {
         //calculate current square
         let currentSquare = (this.rank - 1) * 8 + (9 - this.file);
@@ -27,6 +32,15 @@ class King extends Piece {
         moves = moves & ~board.GetPiecesOfColor(this.color);
 
         return moves;
+    }
+
+    SetPosition(rank, file) {
+        super.SetPosition(rank, file);
+        this.#hasMoved = true;
+    }
+
+    get hasMoved() {
+        return this.#hasMoved;
     }
 
 }

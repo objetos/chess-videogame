@@ -1,4 +1,5 @@
 class Rook extends SlidingPiece {
+    #hasMoved = false;
 
     GetType() {
         return E_PieceType.Rook;
@@ -10,5 +11,14 @@ class Rook extends SlidingPiece {
 
     GetMoves(board) {
         return super.GetMoves(board);
+    }
+
+    SetPosition(rank, file) {
+        super.SetPosition(rank, file);
+        this.#hasMoved = true;
+    }
+
+    get hasMoved() {
+        return this.#hasMoved;
     }
 }

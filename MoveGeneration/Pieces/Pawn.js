@@ -5,7 +5,7 @@ class Pawn extends Piece {
     }
 
     GetMoves(board) {
-        let diagonalSquare
+        let diagonalSquare;
         let antiDiagonalSquare;
         let oneSquareFront;
         let twoSquaresFront;
@@ -30,12 +30,11 @@ class Pawn extends Piece {
                 throw new Error("No color specified");
         }
 
-        //calculate moves
+        //calculate moves ****** document better
         let rightCapture = diagonalSquare & board.GetPiecesOfColor(this.oppositeColor) & ~(Board.GetFile(8) | Board.GetFile(1));
         let leftCapture = antiDiagonalSquare & board.GetPiecesOfColor(this.oppositeColor) & ~(Board.GetFile(8) | Board.GetFile(1));
-        let frontMove = oneSquareFront & board.GetEmptySpaces();
-        let frontJump = 0n;
-        if (0n < frontMove) frontJump = twoSquaresFront & board.GetEmptySpaces() & (Board.GetRank(4) | Board.GetRank(5));
+        let frontMove = oneSquareFront & board.GetEmptySpaces() & ~Board.GetRank(1) & ~Board.GetRank(8);
+        let frontJump = twoSquaresFront & board.GetEmptySpaces() & (Board.GetRank(4) | Board.GetRank(5)) & GetBooleanBitboard(frontMove > 1);
 
         return rightCapture | leftCapture | frontMove | frontJump;
     }

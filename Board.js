@@ -1,10 +1,13 @@
-//******  CLASS PROLOG, ASSERT FLOATING INPUTS, DOCUMENT CONSTRUCTOR, REMOVE MAGIC NUMBERS
+//******  CLASS PROLOG, ASSERT FLOATING INPUTS, DOCUMENT CONSTRUCTOR, REMOVE MAGIC NUMBERS, TEST NEW METHODS, 
+//ADD ERROR CHECKING IN METHODS
+
 class Board {
     static #FIRST_FILE = 0x0101010101010101n;
     static #FIRST_RANK = 0xFFn;
-    #piecesDictionary = {};
-    #piecesMatrix = [];
-    #pieces = [];
+    #piecesDictionary = {}; //pieces categorized by color and type
+    #board = new Quadrille(8, 8);//board with piece objects. Index 0 is the bottom left corner. Index 63 is top right corner.
+    #boardSymbols; //****** simplify
+    #playingColor = E_PieceColor.White;//****** remove from here
 
     /**
      * Gives a bitboard with a single file.
@@ -153,6 +156,7 @@ class Board {
 
     constructor(inputFen) {
         let chessBoard = new Quadrille(inputFen);
+        this.#boardSymbols = chessBoard;
 
         //initialize dictionary of pieces
         this.#piecesDictionary = {};
@@ -177,14 +181,13 @@ class Board {
                 let file = fileIndex + 1;
                 let pieceObject = this.#CreatePiece(piece, rank, file);
 
-                //categorize it by color and type
+                //categorize piece by color and type
                 this.#piecesDictionary[pieceObject.color][pieceObject.GetType()].push(pieceObject);
 
-                //add it to pieces array
-                this.#pieces.push(pieceObject);
+                //add piece to board
+                this.#board.fill(rankIndex, fileIndex, pieceObject);
             }
         }
-        this.#piecesMatrix = chessBoard;
     }
 
     /**
@@ -192,7 +195,7 @@ class Board {
      * @param {Board} board 
      * @returns {Move[]} Array of legal moves
      */
-    GetLegalMoves() {
+    GetLegalMoves() { //****** method outside of board
         //secrets: how are moves calculated, transformation from bitboard to moves
         //input:board with pieces
         //output:array of moves with start and end position
@@ -200,11 +203,17 @@ class Board {
         //errors: null board --> crash,
 
         let legalMoves = new Array();
+        let playingPieces;
 
-        this.#pieces.forEach(piece => {
+        for (let pieceType of Object.values(E_PieceType)) {
+            playingPieces = playingPieces.concat(this.#piecesDictionary[g_PLAYING_COLOR][pieceType]);
+        }
+
+        playingPieces.forEach(piece => {
             //get board with permitted moves
             let pieceMoves = piece.GetMoves(this);
             let testBit = 1n;
+
             //for each square
             for (let index = 0; index < 64; index++) {
                 //if square is permitted
@@ -220,12 +229,54 @@ class Board {
                 //continue to next square
                 testBit = testBit << 1n;
             }
+
         });
 
         return legalMoves;
     }
 
+    GetDict() {
+        return this.#piecesDictionary;
+    }
 
+
+    /**
+     * 
+     * @param {E_PieceColor} pieceColor 
+     * @param {E_PieceType} pieceType 
+     * @returns {BigInt} Bitboard that contains pieces of given characteristics.
+     */
+    GetPieces(pieceColor = E_PieceColor.Any, pieceType = E_PieceType.Any) {
+        console.assert(Object.values(E_PieceType).includes(pieceType), "Piece type not defined");
+        console.assert(Object.values(E_PieceColor).includes(pieceColor), "Piece color not defined");
+
+        let piecesBitboard = 0n;
+        let pieces = [];
+
+        if (pieceColor === E_PieceColor.Any && pieceType === E_PieceType.Any) return this.GetOccupied();
+
+        if (pieceColor === E_PieceColor.Any) {
+            for (let color of Object.values(E_PieceColor)) {
+                pieces = pieces.concat(this.#piecesDictionary[color][pieceType]);
+            }
+        } else if (pieceType === E_PieceType.Any) {
+            for (let type of Object.values(E_PieceType)) {
+                pieces = pieces.concat(this.#piecesDictionary[pieceColor][type]);
+            }
+        } else {
+            pieces = pieces.concat(this.#piecesDictionary[pieceColor][pieceType]);
+        }
+
+        //for each piece of given type    
+        for (let piece of pieces) {
+            //get location in board
+            let position = piece.position;
+            //add it to board
+            piecesBitboard = piecesBitboard | position;
+        }
+
+        return piecesBitboard;
+    }
     /** 
      * @param {E_PieceType} pieceType 
      * @returns {BigInt} Bitboard that contains pieces of given type.
@@ -282,6 +333,7 @@ class Board {
         return pieceColorBitboard;
     }
 
+    //****** use quadrille methods
     /**
      * @returns Bitboard that contains all spaces occupied by a piece.
      */
@@ -314,17 +366,73 @@ class Board {
      * @returns FEN representation of board 
      */
 
-    GetFen() {
-        return this.#piecesMatrix.toFEN();
+    GetFEN() {
+        return this.#boardSymbols.toFEN();
     }
 
     /**
      * 
      * @param {Move} move Applies move to board
      */
-    ApplyMove(move) {
+    MakeMove(move) {
+        //secrets: how are moves are done, information changed internally
+        //preconditions: move is legal and within board range
+        //postconditions: info will be updated 
+        //input:move
+        //output:none
+        //test: Print to visualize move is done, input incorrect moves and see response
+        //errors: move to same spot, move out of bounds, no piece on rank or file, 
+        //two pieces of same color in same square,
+
+        //check rank and file are within bounds ******
+        //check start and destination squares are not the same ****** 
 
 
+        let startRankIndex = 8 - move.startRank;
+        let startFileIndex = move.startFile - 1;
+        let endRankIndex = 8 - move.endRank;
+        let endFileIndex = move.endFile - 1;
+        //get piece in start square
+        let pieceToMove = this.#board.read(startRankIndex, startFileIndex);
+        //if no piece in square
+        if (pieceToMove == null) {
+            //error ****** 
+            console.log("Failed making move. No piece in start square");
+            console.log(move);
+        }
+
+        //check piece in destination square
+        let pieceInDestination = this.#board.read(endRankIndex, endFileIndex);
+        //if there's a piece in destination square
+        if (pieceInDestination != null) {
+            //if it's of opposite color
+            if (pieceInDestination.color != pieceToMove.color) {
+                //capture piece
+                pieceInDestination.Capture();
+                //remove  piece from board
+                this.#board.clear(endRankIndex, endFileIndex);
+                this.#boardSymbols.clear(endRankIndex, endFileIndex);
+            } else { //if it's of the same color
+                //error
+            }
+        }
+
+        //move piece in boards
+        this.#board.clear(startRankIndex, startFileIndex);
+        this.#board.fill(endRankIndex, endFileIndex, pieceToMove);
+
+        let pieceSymbol = this.#boardSymbols.read(startRankIndex, startFileIndex);
+        this.#boardSymbols.clear(startRankIndex, startFileIndex);
+        this.#boardSymbols.fill(endRankIndex, endFileIndex, pieceSymbol);
+        //update piece info
+        pieceToMove.SetPosition(move.endRank, move.endFile);
+        //change playing color
+        this.#playingColor = pieceToMove.oppositeColor; // ****** create swap color method
+    }
+
+    UnmakeMove(move) {
+        let reverseMove = new Move(move.endRank, move.endFile, move.startRank, move.startFile);
+        this.MakeMove(reverseMove);
     }
 
     /**
@@ -337,7 +445,7 @@ class Board {
         for (let rankIndex = 0; rankIndex < 8; rankIndex++) {
             for (let fileIndex = 0; fileIndex < 8; fileIndex++) {
 
-                let piece = this.#piecesMatrix.read(rankIndex, fileIndex);
+                let piece = this.#boardSymbols.read(rankIndex, fileIndex);
 
                 if (piece === null) {
                     string += " #";
