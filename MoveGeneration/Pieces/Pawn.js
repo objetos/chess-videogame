@@ -9,6 +9,7 @@ class Pawn extends Piece {
         let antiDiagonalSquare;
         let oneSquareFront;
         let twoSquaresFront;
+        let targetRankForJumping;
 
         //calculate destination squares based on color
         switch (this.color) {
@@ -17,12 +18,14 @@ class Pawn extends Piece {
                 antiDiagonalSquare = (this.position << 9n);
                 oneSquareFront = (this.position << 8n);
                 twoSquaresFront = (this.position << 16n);
+                targetRankForJumping = 4;
                 break;
             case E_PieceColor.Black:
                 diagonalSquare = (this.position >> 7n);
                 antiDiagonalSquare = (this.position >> 9n);
                 oneSquareFront = (this.position >> 8n);
                 twoSquaresFront = (this.position >> 16n);
+                targetRankForJumping = 5;
                 break;
             case E_PieceColor.None:
                 throw new Error("No color specified");
@@ -30,11 +33,22 @@ class Pawn extends Piece {
                 throw new Error("No color specified");
         }
 
-        //calculate moves ****** document better
-        let rightCapture = diagonalSquare & board.GetPiecesOfColor(this.oppositeColor) & ~(Board.GetFile(8) | Board.GetFile(1));
-        let leftCapture = antiDiagonalSquare & board.GetPiecesOfColor(this.oppositeColor) & ~(Board.GetFile(8) | Board.GetFile(1));
-        let frontMove = oneSquareFront & board.GetEmptySpaces() & ~Board.GetRank(1) & ~Board.GetRank(8);
-        let frontJump = twoSquaresFront & board.GetEmptySpaces() & (Board.GetRank(4) | Board.GetRank(5)) & GetBooleanBitboard(frontMove > 1);
+        //calculate capture moves
+        let rightCapture = diagonalSquare &
+            board.GetSpacesWithPieces(this.oppositeColor, E_PieceType.Any); //There's an enemy piece in that square
+
+        let leftCapture = antiDiagonalSquare &
+            board.GetSpacesWithPieces(this.oppositeColor, E_PieceType.Any); //There's an enemy piece in that square
+
+        //calculate front move
+        let frontMove = oneSquareFront &
+            board.GetEmptySpaces(); //target square is empty
+
+        //calculate front jump
+        let frontJump = twoSquaresFront &
+            GetBooleanBitboard(frontMove > 1) & //a front move is possible
+            board.GetEmptySpaces() & //target square is empty 
+            BoardImplementation.GetRank(targetRankForJumping); //pawn can only jump from their initial rank
 
         return rightCapture | leftCapture | frontMove | frontJump;
     }
