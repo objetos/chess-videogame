@@ -1,13 +1,30 @@
 class King extends Piece {
     #attackMask = 0x70507n;
-    #hasMoved = false;
+    #hasChangedPosition = false;
+    #instantiatedOnInitialSquare;
+
+    constructor(color, rank, file) {
+        super(color, rank, file);
+        switch (this.color) {
+            case E_PieceColor.White:
+                this.#instantiatedOnInitialSquare = (rank === 1 && file === 5);
+                break;
+            case E_PieceColor.Black:
+                this.#instantiatedOnInitialSquare = (rank === 8 && file === 5);
+                break;
+            case E_PieceColor.None:
+                throw new Error("No color specified");
+            default:
+                throw new Error("No color specified");
+        }
+    }
 
     GetType() {
         return E_PieceType.King;
     }
     /**
      * 
-     * @param {Board} board 
+     * @param {BoardImplementation} board 
      * @returns 
      */
     GetMoves(board) {
@@ -24,23 +41,23 @@ class King extends Piece {
 
         //remove bits that "wrapped around" the sides
         if (this.file < 3) {
-            moves = moves & ~Board.GetFile(7) & ~Board.GetFile(8);
+            moves = moves & ~BoardImplementation.GetFile(7) & ~BoardImplementation.GetFile(8);
         } else if (6 < this.file) {
-            moves = moves & ~Board.GetFile(1) & ~Board.GetFile(2);
+            moves = moves & ~BoardImplementation.GetFile(1) & ~BoardImplementation.GetFile(2);
         }
         //remove pieces of same color
-        moves = moves & ~board.GetPiecesOfColor(this.color);
+        moves = moves & ~board.GetSpacesWithPieces(this.color, E_PieceType.Any);
 
         return moves;
     }
 
     SetPosition(rank, file) {
         super.SetPosition(rank, file);
-        this.#hasMoved = true;
+        this.#hasChangedPosition = true;
     }
 
     get hasMoved() {
-        return this.#hasMoved;
+        return this.#hasChangedPosition || !this.#instantiatedOnInitialSquare;
     }
 
 }
