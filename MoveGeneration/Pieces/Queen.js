@@ -8,7 +8,7 @@ class Queen extends SlidingPiece {
         let antiDiagonalNumber = this.file + this.rank - 1;
         let diagonalNumber = (9 - this.file) + this.rank - 1;
 
-        return [Board.GetRank(this.rank), Board.GetFile(this.file), Board.GetDiagonal(diagonalNumber), Board.GetAntiDiagonal(antiDiagonalNumber)];
+        return [BoardImplementation.GetRank(this.rank), BoardImplementation.GetFile(this.file), BoardImplementation.GetDiagonal(diagonalNumber), BoardImplementation.GetAntiDiagonal(antiDiagonalNumber)];
     }
 
     GetMoves(board) {

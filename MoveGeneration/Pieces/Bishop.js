@@ -8,7 +8,7 @@ class Bishop extends SlidingPiece {
         let antiDiagonalNumber = this.file + this.rank - 1;
         let diagonalNumber = (9 - this.file) + this.rank - 1;
 
-        return [Board.GetDiagonal(diagonalNumber), Board.GetAntiDiagonal(antiDiagonalNumber)];
+        return [BoardImplementation.GetDiagonal(diagonalNumber), BoardImplementation.GetAntiDiagonal(antiDiagonalNumber)];
     }
 
 

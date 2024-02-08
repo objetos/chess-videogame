@@ -1,5 +1,5 @@
 /*
-****** class prolog, document interface
+****** class prolog
 */
 class Piece {
     #color = E_PieceColor.None;
@@ -87,18 +87,10 @@ class Piece {
 
     /**
      * Returns bitboard that contains legal positions this piece can move to
-     * @param {Board} board 
+     * @param {BoardImplementation} board 
      */
     GetMoves(board) {
         throw new Error("Method 'GetMoves()' must be implemented.");
-    }
-
-    ToString() {
-        let colorString = this.#color.toString();
-        colorString = colorString.charAt(7);
-        let typeString = this.GetType().toString();
-        typeString = typeString.charAt(7);
-        return colorString + typeString;
     }
 }
 
