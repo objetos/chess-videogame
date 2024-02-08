@@ -1,4 +1,4 @@
-//****** Document methods
+//******  Class prolog
 class Board {
     #board;
     #boardImplementation;

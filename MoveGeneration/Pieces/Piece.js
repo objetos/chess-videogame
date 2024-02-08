@@ -9,6 +9,8 @@ class Piece {
     #position = 0;
 
     /**
+     * Creates new piece object
+     * 
      * @param {E_PieceColor} color Color of piece.
      * @param {number} file File of piece's position.
      * @param {number} rank Rank of piece's position.
@@ -20,9 +22,9 @@ class Piece {
         }
 
         console.assert(Object.values(E_PieceColor).includes(color), "Piece color not defined");
-        console.assert(typeof file === "number", "File is of incorrect type");
+        console.assert(typeof file === "number", "File Invalid");
         console.assert(file >= 1 && file <= 8, "File " + file + " is out of bounds.");
-        console.assert(typeof rank === "number", "Rank is of incorrect type");
+        console.assert(typeof rank === "number", "Rank Invalid");
         console.assert(rank >= 1 && rank <= 8, "File " + rank + " is out of bounds.");
 
         this.#color = color;

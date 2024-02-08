@@ -1,6 +1,7 @@
+//****** CLASS PROLOG
 class MoveGenerator {
     //g_LastPawnJump = null; ******
-    #castlingMasks = { //****** change name
+    #castlingMasks = {
         [E_PieceColor.White]: {
             1: 0b01110000n,
             8: 0b0110n
@@ -16,13 +17,8 @@ class MoveGenerator {
      * @param {E_PieceColor} pieceColor
      * @returns {Move[]} Array of legal moves of pieces of given color
      */
-    GenerateMoves(board, pieceColor) {//****** assertions
-        //secrets: how are moves calculated, transformation from bitboard to moves
-        //input:board with pieces
-        //output:array of moves with start and end position
-        //test: visual test with individual pieces, premade arrays of moves, 
-        //errors: null board --> crash,
-
+    GenerateMoves(board, pieceColor) {
+        console.assert(board instanceof Board, "Invalid board");
 
         let legalMoves = [];
         let playingPieces = [];
@@ -39,26 +35,27 @@ class MoveGenerator {
             let testBit = 1n;
             //for each square
             for (let index = 0; index < 64; index++) {
-                //if square is permitted
-                let squarePermitted = (pieceMoves & testBit) > 0n;
-                if (squarePermitted) {
-                    //calculate end rank and file
-                    let endRank = Math.floor((index) / 8) + 1;
-                    let endFile = 8 - (index % 8);
-                    let moveFlag = E_MoveFlag.Regular;
 
-                    //check for pawn special moves
-                    if (piece.GetType() === E_PieceType.Pawn) {
-                        if (this.#CanPromote(piece, endRank)) moveFlag = E_MoveFlag.Promotion;
-                        else if (this.#CanCaptureEnPassant(piece)) moveFlag = E_MoveFlag.EnPassant;
-                    }
+                //if square is attacked by piece
+                let squareAttacked = (pieceMoves & testBit) > 0n;
+                if (!squareAttacked) continue;
 
-                    //create move
-                    let newMove = new Move(piece.rank, piece.file, endRank, endFile, moveFlag);
+                //calculate end rank and file
+                let endRank = Math.floor((index) / 8) + 1;
+                let endFile = 8 - (index % 8);
+                let moveFlag = E_MoveFlag.Regular;
 
-                    //add move to array
-                    legalMoves.push(newMove);
+                //check for pawn special moves
+                if (piece.GetType() === E_PieceType.Pawn) {
+                    if (this.#CanPromote(piece, endRank)) moveFlag = E_MoveFlag.Promotion;
+                    else if (this.#CanCaptureEnPassant(piece)) moveFlag = E_MoveFlag.EnPassant;
                 }
+
+                //create move
+                let newMove = new Move(piece.rank, piece.file, endRank, endFile, moveFlag);
+
+                //add move to array
+                legalMoves.push(newMove);
                 //continue to next square
                 testBit = testBit << 1n;
             }

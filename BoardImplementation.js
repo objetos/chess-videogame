@@ -1,5 +1,4 @@
-//******  CLASS PROLOG, ASSERT FLOATING INPUTS, DOCUMENT CONSTRUCTOR, REMOVE MAGIC NUMBERS, TEST NEW METHODS, 
-//ADD ERROR CHECKING IN METHODS
+//******  CLASS PROLOG, ASSERT FLOATING INPUTS,  REMOVE MAGIC NUMBERS
 class BoardImplementation {
     static #FIRST_FILE = 0x0101010101010101n;
     static #FIRST_RANK = 0xFFn;
@@ -12,7 +11,7 @@ class BoardImplementation {
      * @returns {BigInt} Bitboard that contains the specified file.
      */
     static GetFile(fileNumber) {
-        console.assert(typeof fileNumber === "number", "File is of incorrect type");
+        console.assert(typeof fileNumber === "number", "File Invalid");
         console.assert(fileNumber >= 1 && fileNumber <= 8, "File " + fileNumber + " is out of bounds.");
 
         let fileBitboard = this.#FIRST_FILE;
@@ -27,7 +26,7 @@ class BoardImplementation {
      * @returns {BigInt} Bitboard that contains the specified rank.
      */
     static GetRank(rankNumber) {
-        console.assert(typeof rankNumber === "number", "Rank is of incorrect type");
+        console.assert(typeof rankNumber === "number", "Rank Invalid");
         console.assert(rankNumber >= 1 && rankNumber <= 8, "Rank " + rankNumber + " is out of bounds.");
 
         let rankBitboard = this.#FIRST_RANK;
@@ -43,7 +42,7 @@ class BoardImplementation {
      * @returns {BigInt} Bitboard that contains the specified diagonal.
      */
     static GetDiagonal(inputDiagonalNumber) {
-        console.assert(typeof inputDiagonalNumber === "number", "Diagonal is of incorrect type");
+        console.assert(typeof inputDiagonalNumber === "number", "Diagonal Invalid");
         console.assert(inputDiagonalNumber >= 1 && inputDiagonalNumber <= 15, "Diagonal " + inputDiagonalNumber + " is out of bounds.");
 
         // Calculate for up to the eight diagonal
@@ -73,7 +72,7 @@ class BoardImplementation {
      * @returns {BigInt} Bitboard that contains the specified antidiagonal.
      */
     static GetAntiDiagonal(inputAntiDiagonalNumber) {
-        console.assert(typeof inputAntiDiagonalNumber === "number", "AntiDiagonal is of incorrect type");
+        console.assert(typeof inputAntiDiagonalNumber === "number", "AntiDiagonal Invalid");
         console.assert(inputAntiDiagonalNumber >= 1 && inputAntiDiagonalNumber <= 15, "AntiDiagonal " + inputAntiDiagonalNumber + " is out of bounds.");
 
         // Get a normal diagonal
@@ -151,7 +150,13 @@ class BoardImplementation {
         return bitboard;
     }
 
+    /**
+     * Creates a new chess board
+     * @param {string} inputFen FEN of board
+     */
     constructor(inputFen) {
+        console.assert(typeof inputFen === 'string', "Invalid FEN");
+
         let inputBoard = new Quadrille(inputFen);
 
         //initialize dictionary of pieces
@@ -225,21 +230,13 @@ class BoardImplementation {
         return piecesBitboard;
     }
 
-    //****** use quadrille methods
     /**
      * @returns Bitboard that contains all spaces occupied by a piece.
      */
     GetOccupiedSpaces() {
-        //get board occupied by white pieces
-        let whitePieces = this.GetSpacesWithPieces(E_PieceColor.White, E_PieceType.Any);
-        //get board occupied by black pieces
-        let blackPieces = this.GetSpacesWithPieces(E_PieceColor.Black, E_PieceType.Any);
-        //join white board and black board
-        let occupied = whitePieces | blackPieces;
-        return occupied;
+        return this.#board.toBigInt();
     }
 
-    //****** use quadrille methods
     /**
      * @returns Bitboard that contains all spaces not occupied by a piece.
      */
@@ -360,7 +357,6 @@ class BoardImplementation {
                 break;
             default:
                 throw new Error("Incorrect piece type:" + piece);
-                break;
         }
         return pieceObject;
     }
