@@ -1,6 +1,5 @@
 class MoveGenerator {
     //g_LastPawnJump = null; ******
-
     #castlingMasks = { //****** change name
         [E_PieceColor.White]: {
             1: 0b01110000n,
@@ -48,10 +47,10 @@ class MoveGenerator {
                     let endFile = 8 - (index % 8);
                     let moveFlag = E_MoveFlag.Regular;
 
-                    //check for pawn promotion or en passant
+                    //check for pawn special moves
                     if (piece.GetType() === E_PieceType.Pawn) {
                         if (this.#CanPromote(piece, endRank)) moveFlag = E_MoveFlag.Promotion;
-                        //else if (this.#CanCaptureEnPassant(piece)) moveFlag = E_MoveFlag.EnPassant;
+                        else if (this.#CanCaptureEnPassant(piece)) moveFlag = E_MoveFlag.EnPassant;
                     }
 
                     //create move
@@ -75,7 +74,9 @@ class MoveGenerator {
     }
 
     #CanPromote(pawn, endRank) {
+        //white pawn reaches 8th rank
         if (pawn.color === E_PieceColor.White && endRank === 8) return true;
+        //black pawn reaches 1st rank
         else if (pawn.color === E_PieceColor.Black && endRank === 1) return true;
         else false;
     }
@@ -121,25 +122,24 @@ class MoveGenerator {
     }
 
     #CanCaptureEnPassant(pawn) {
+        //The en passant capture must be performed on the turn immediately after the pawn being captured moves.
+        if (g_LastPawnJump == null) return false;
 
+        //The capturing pawn must have advanced exactly three ranks to perform this move.
+        let capturingPawnRank;
+        if (pawn.color === E_PieceColor.White) {
+            capturingPawnRank = 5;
+        } else if (pawn.color === E_PieceColor.Black) {
+            capturingPawnRank = 4;
+        }
+        if (pawn.rank === capturingPawnRank) {
+            //The captured pawn must be right next to the capturing pawn.
+            let fileDiff = Math.abs(g_LastPawnJump.endFile - pawn.file);
+            if (fileDiff === 1) {
+                //You move your pawn diagonally to an adjacent square, one rank farther from where it had been, on the same file where the enemy's pawn is
+                return new Move(pawn.rank, pawn.file, pawn.rank + 1, g_LastPawnJump.endFile);
+            }
+        }
     }
-
-    // GenerateEnPassant(pawns) {
-    //     let capturingPawnRank = 0;
-    //     if (g_PLAYING_COLOR === E_PieceColor.White) {
-    //         capturingPawnRank = 5;
-    //     } else if (g_PLAYING_COLOR === E_PieceColor.Black) {
-    //         capturingPawnRank = 4;
-    //     }
-
-    //     pawns.forEach(pawn => {
-    //         if (pawn.rank === capturingPawnRank) {
-    //             let fileDiff = Math.abs(g_LastPawnJump.endFile - pawn.rank);
-    //             if (fileDiff === 1) {
-    //                 return new Move(pawn.rank, pawn.file, pawn.rank + 1, g_LastPawnJump.endFile);
-    //             }
-    //         }
-    //     });
-    // }
 
 }
