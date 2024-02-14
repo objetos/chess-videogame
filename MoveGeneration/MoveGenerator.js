@@ -1,14 +1,14 @@
 //****** CLASS PROLOG
 class MoveGenerator {
-    //g_LastPawnJump = null; ******
+    #g_LastPawnJump = null;// ******
     #castlingMasks = {
         [E_PieceColor.White]: {
-            1: 0b01110000n,
-            8: 0b0110n
+            [E_MoveFlag.QueenSideCastling]: 0b01110000n,
+            [E_MoveFlag.KingSideCastling]: 0b0110n
         },
         [E_PieceColor.Black]: {
-            1: 0x7000000000000000n,
-            8: 0x600000000000000n
+            [E_MoveFlag.QueenSideCastling]: 0x7000000000000000n,
+            [E_MoveFlag.KingSideCastling]: 0x600000000000000n
         }
     }
 
@@ -17,8 +17,8 @@ class MoveGenerator {
      * @param {E_PieceColor} pieceColor
      * @returns {Move[]} Array of legal moves of pieces of given color
      */
-    GenerateMoves(board, pieceColor) {
-        console.assert(board instanceof Board, "Invalid board");
+    GenerateMoves(board, pieceColor) { //****** simplify
+        console.assert(board instanceof BoardImplementation, "Invalid board");
 
         let legalMoves = [];
         let playingPieces = [];
@@ -30,32 +30,37 @@ class MoveGenerator {
 
         //calculate regular moves for each piece
         playingPieces.forEach(piece => {
+
             //get board with permitted moves
             let pieceMoves = piece.GetMoves(board);
             let testBit = 1n;
+
+            //continue if this piece has no moves
+            if (pieceMoves === 0n) return;
+
             //for each square
             for (let index = 0; index < 64; index++) {
 
                 //if square is attacked by piece
                 let squareAttacked = (pieceMoves & testBit) > 0n;
-                if (!squareAttacked) continue;
+                if (squareAttacked) {
+                    //calculate end rank and file
+                    let endRank = Math.floor((index) / 8) + 1;
+                    let endFile = 8 - (index % 8);
+                    let moveFlag = E_MoveFlag.Regular;
 
-                //calculate end rank and file
-                let endRank = Math.floor((index) / 8) + 1;
-                let endFile = 8 - (index % 8);
-                let moveFlag = E_MoveFlag.Regular;
+                    //check for pawn special moves
+                    if (piece.GetType() === E_PieceType.Pawn) {
+                        if (this.#CanPromote(piece, endRank)) moveFlag = E_MoveFlag.Promotion;
+                        else if (this.#CanCaptureEnPassant(piece)) moveFlag = E_MoveFlag.EnPassant;
+                    }
 
-                //check for pawn special moves
-                if (piece.GetType() === E_PieceType.Pawn) {
-                    if (this.#CanPromote(piece, endRank)) moveFlag = E_MoveFlag.Promotion;
-                    else if (this.#CanCaptureEnPassant(piece)) moveFlag = E_MoveFlag.EnPassant;
+                    //create move
+                    let newMove = new Move(piece.rank, piece.file, endRank, endFile, moveFlag);
+                    //add move to array
+                    legalMoves.push(newMove);
                 }
 
-                //create move
-                let newMove = new Move(piece.rank, piece.file, endRank, endFile, moveFlag);
-
-                //add move to array
-                legalMoves.push(newMove);
                 //continue to next square
                 testBit = testBit << 1n;
             }
@@ -78,7 +83,7 @@ class MoveGenerator {
         else false;
     }
 
-    //****** Your king can NOT be in check. Your king can not pass through check. Imrpove method. Check for rank and file. Assertions
+    //****** Your king can NOT be in check. Your king can not pass through check. Check for rank and file. Assertions
     /**
      * 
      * @param {King} king 
@@ -99,17 +104,25 @@ class MoveGenerator {
             //The rook can not have moved
             if (rook.hasMoved) return;
 
+            //is it a queen-side or king-side castling?
+            let castlingMoveFlag;
+            if (king.file > rook.file) {
+                castlingMoveFlag = E_MoveFlag.QueenSideCastling;
+            } else {
+                castlingMoveFlag = E_MoveFlag.KingSideCastling;
+            }
+
             //No pieces can be between the king and rook.
             let emptySquares = board.GetEmptySpaces();
-            let castlingMask = this.#castlingMasks[rook.color][rook.file];
+            let castlingMask = this.#castlingMasks[rook.color][castlingMoveFlag];
             let castlingPathClear = (emptySquares & castlingMask) === castlingMask;
 
             if (castlingPathClear) {
-                let kingTargetFile = king.file - 2 * Math.sign(king.file - rook.file);
-                let rookTargetFile = king.file - 1 * Math.sign(king.file - rook.file);
+                let kingTargetFile = Board.CASTLING_FILES[castlingMoveFlag][E_PieceType.King][1];
+                let rookTargetFile = Board.CASTLING_FILES[castlingMoveFlag][E_PieceType.Rook][1];
 
-                let kingMove = new Move(king.rank, king.file, king.rank, kingTargetFile, E_MoveFlag.Castling);
-                let rookMove = new Move(rook.rank, rook.file, rook.rank, rookTargetFile, E_MoveFlag.Castling);
+                let kingMove = new Move(king.rank, king.file, king.rank, kingTargetFile, castlingMoveFlag);
+                let rookMove = new Move(rook.rank, rook.file, rook.rank, rookTargetFile, castlingMoveFlag);
 
                 castlingMoves.push(kingMove, rookMove);
             }
@@ -120,7 +133,7 @@ class MoveGenerator {
 
     #CanCaptureEnPassant(pawn) {
         //The en passant capture must be performed on the turn immediately after the pawn being captured moves.
-        if (g_LastPawnJump == null) return false;
+        if (this.#g_LastPawnJump == null) return false;
 
         //The capturing pawn must have advanced exactly three ranks to perform this move.
         let capturingPawnRank;
