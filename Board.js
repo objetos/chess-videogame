@@ -1,18 +1,7 @@
-//******  Class prolog
+//******  CLASS PROLOG, ASSERT FLOATING INPUTS,  REMOVE MAGIC NUMBERS, DOCUMENT NEW METHODS, TESTING
 class Board {
     static #FIRST_FILE = 0x0101010101010101n;
     static #FIRST_RANK = 0xFFn;
-
-    static CASTLING_FILES = {//****** move to a global context, change array for smth else
-        [E_MoveFlag.QueenSideCastling]: {
-            [E_PieceType.King]: [5, 3],
-            [E_PieceType.Rook]: [1, 4]
-        },
-        [E_MoveFlag.KingSideCastling]: {
-            [E_PieceType.King]: [5, 7],
-            [E_PieceType.Rook]: [8, 6]
-        }
-    }
 
     #piecesDictionary = {}; //pieces categorized by color and type.
     #board = new Quadrille(8, 8);//board with piece objects.
@@ -483,9 +472,9 @@ class Board {
             //move rook
             let rookMove = new Move(
                 move.startRank,
-                Board.CASTLING_FILES[move.flag][E_PieceType.Rook][0],
+                CASTLING_FILES[move.flag][E_PieceType.Rook][0],
                 move.startRank,
-                Board.CASTLING_FILES[move.flag][E_PieceType.Rook][1],
+                CASTLING_FILES[move.flag][E_PieceType.Rook][1],
                 E_MoveFlag.Regular
             );
             this.#MakeRegularMove(rookMove);
@@ -494,9 +483,9 @@ class Board {
             //move king
             let rookMove = new Move(
                 move.startRank,
-                Board.CASTLING_FILES[move.flag][E_PieceType.King][0],
+                CASTLING_FILES[move.flag][E_PieceType.King][0],
                 move.startRank,
-                Board.CASTLING_FILES[move.flag][E_PieceType.King][1],
+                CASTLING_FILES[move.flag][E_PieceType.King][1],
                 E_MoveFlag.Regular
             );
             this.#MakeRegularMove(rookMove);
