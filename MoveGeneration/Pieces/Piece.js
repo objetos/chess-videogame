@@ -3,7 +3,6 @@
 */
 class Piece {
     #color = E_PieceColor.None;
-    #oppositeColor = E_PieceColor.None;
     #rank = 0;
     #file = 0;
     #position = 0;
@@ -28,19 +27,6 @@ class Piece {
         console.assert(rank >= 1 && rank <= 8, "File " + rank + " is out of bounds.");
 
         this.#color = color;
-        switch (color) {
-            case E_PieceColor.White:
-                this.#oppositeColor = E_PieceColor.Black;
-                break;
-            case E_PieceColor.Black:
-                this.#oppositeColor = E_PieceColor.White;
-                break;
-            case E_PieceColor.None:
-                throw new Error("No color specified");
-            default:
-                throw new Error("No color specified");
-        }
-
         this.#rank = rank;
         this.#file = file;
 
@@ -68,11 +54,6 @@ class Piece {
 
     get color() {
         return this.#color;
-    }
-
-    // ****** method in piece?
-    get oppositeColor() {
-        return this.#oppositeColor;
     }
 
     get rank() {
