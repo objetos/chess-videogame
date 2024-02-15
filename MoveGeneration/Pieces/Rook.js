@@ -23,7 +23,7 @@ class Rook extends SlidingPiece {
     }
 
     GetSlidingMasks() {
-        return [BoardImplementation.GetFile(this.file), BoardImplementation.GetRank(this.rank)];
+        return [Board.GetFile(this.file), Board.GetRank(this.rank)];
     }
 
     GetMoves(board) {

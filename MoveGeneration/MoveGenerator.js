@@ -13,16 +13,15 @@ class MoveGenerator {
     }
 
     /**
-     * @param {BoardImplementation} board 
+     * @param {Board} board 
      * @param {E_PieceColor} pieceColor
      * @returns {Move[]} Array of legal moves of pieces of given color
      */
-    GenerateMoves(board, pieceColor) { //****** simplify
-        console.assert(board instanceof BoardImplementation, "Invalid board");
+    GenerateMoves(board, pieces, pieceColor) { //****** simplify. assumptions: board is a standard board of chess
+        console.assert(board instanceof Board, "Invalid board");
 
         let legalMoves = [];
         let playingPieces = [];
-        let pieces = board.GetPieces();
 
         for (let pieceType of Object.values(E_PieceType)) {
             playingPieces = playingPieces.concat(pieces[pieceColor][pieceType]);
@@ -67,7 +66,7 @@ class MoveGenerator {
         });
 
         //generate castling moves
-        let king = pieces[pieceColor][E_PieceType.King].pop();
+        let king = pieces[pieceColor][E_PieceType.King][0];
         let rooks = pieces[pieceColor][E_PieceType.Rook];
         let castlingMoves = this.#GenerateCastling(king, rooks, board);
         legalMoves = legalMoves.concat(castlingMoves);
@@ -88,11 +87,11 @@ class MoveGenerator {
      * 
      * @param {King} king 
      * @param {Rook[]} rooks 
-     * @param {BoardImplementation} board 
+     * @param {Board} board 
      * @returns 
      */
     #GenerateCastling(king, rooks, board) {
-        //assumptions: king is a piece object. rooks is an array.
+        //assumptions: king is a piece object. There's only one king. rooks is an array.
         if (king === undefined) return [];
         if (rooks === undefined || rooks.length === 0) return [];
 

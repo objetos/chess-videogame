@@ -9,7 +9,7 @@ class SlidingPiece extends Piece {
     }
     /**
      * 
-     * @param {BoardImplementation} board 
+     * @param {Board} board 
      * @returns Array of legal moves
      */
     GetMoves(board) {

@@ -89,10 +89,28 @@ class Piece {
 
     /**
      * Returns bitboard that contains legal positions this piece can move to
-     * @param {BoardImplementation} board 
+     * @param {Board} board 
      */
     GetMoves(board) {
         throw new Error("Method 'GetMoves()' must be implemented.");
+    }
+
+    toString() {
+        let typeString = this.GetType().toString();
+
+        if (this.GetType() === E_PieceType.Knight) {
+            typeString = typeString.charAt(8);
+        } else {
+            typeString = typeString.charAt(7);
+        }
+
+        if (this.#color === E_PieceColor.Black) {
+            typeString = typeString.toLowerCase();
+        } else {
+            typeString = typeString.toUpperCase();
+        }
+
+        return typeString;
     }
 }
 
