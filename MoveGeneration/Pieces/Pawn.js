@@ -36,15 +36,16 @@ class Pawn extends Piece {
         //calculate capture moves
         let rightCapture = diagonalSquare &
             board.GetSpacesWithPieces(OppositePieceColor(this.color), E_PieceType.Any) & //There's an enemy piece in that square
-            ~Board.GetRank(1); //remove right capture from 8th rank to 1st rank
+            ~Board.GetFile(1); //remove right capture from 8th file to 1st file
 
         let leftCapture = antiDiagonalSquare &
             board.GetSpacesWithPieces(OppositePieceColor(this.color), E_PieceType.Any) & //There's an enemy piece in that square
-            ~Board.GetRank(8); //remove right capture from 1st rank to 8th rank
+            ~Board.GetFile(8); //remove right capture from 1st file to 8th file
 
         //calculate front move
         let frontMove = oneSquareFront &
-            board.GetEmptySpaces(); //target square is empty
+            board.GetEmptySpaces() & //target square is empty
+            ~Board.GetRank(1) & ~Board.GetRank(8); //exclude promotions
 
         //calculate front jump
         let frontJump = twoSquaresFront &
