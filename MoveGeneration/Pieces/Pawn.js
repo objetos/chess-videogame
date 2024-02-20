@@ -1,28 +1,28 @@
 class Pawn extends Piece {
-
     GetType() {
         return E_PieceType.Pawn;
     }
 
     GetMoves(board) {
-        let diagonalSquare;
-        let antiDiagonalSquare;
+        let rightDiagonalSquare;
+        let leftDiagonalSquare;
         let oneSquareFront;
         let twoSquaresFront;
         let targetRankForJumping;
 
-        //calculate destination squares based on color
+        //****** transfer to data structure
+        //calculate destination squares based on color 
         switch (this.color) {
             case E_PieceColor.White:
-                diagonalSquare = (this.position << 7n);
-                antiDiagonalSquare = (this.position << 9n);
+                rightDiagonalSquare = (this.position << 7n);
+                leftDiagonalSquare = (this.position << 9n);
                 oneSquareFront = (this.position << 8n);
                 twoSquaresFront = (this.position << 16n);
                 targetRankForJumping = 4;
                 break;
             case E_PieceColor.Black:
-                diagonalSquare = (this.position >> 7n);
-                antiDiagonalSquare = (this.position >> 9n);
+                rightDiagonalSquare = (this.position >> 9n);
+                leftDiagonalSquare = (this.position >> 7n);
                 oneSquareFront = (this.position >> 8n);
                 twoSquaresFront = (this.position >> 16n);
                 targetRankForJumping = 5;
@@ -34,18 +34,17 @@ class Pawn extends Piece {
         }
 
         //calculate capture moves
-        let rightCapture = diagonalSquare &
+        let rightCapture = rightDiagonalSquare &
             board.GetSpacesWithPieces(OppositePieceColor(this.color), E_PieceType.Any) & //There's an enemy piece in that square
             ~Board.GetFile(1); //remove right capture from 8th file to 1st file
 
-        let leftCapture = antiDiagonalSquare &
+        let leftCapture = leftDiagonalSquare &
             board.GetSpacesWithPieces(OppositePieceColor(this.color), E_PieceType.Any) & //There's an enemy piece in that square
             ~Board.GetFile(8); //remove right capture from 1st file to 8th file
 
         //calculate front move
         let frontMove = oneSquareFront &
-            board.GetEmptySpaces() & //target square is empty
-            ~Board.GetRank(1) & ~Board.GetRank(8); //exclude promotions
+            board.GetEmptySpaces(); //target square is empty
 
         //calculate front jump
         let frontJump = twoSquaresFront &

@@ -9,6 +9,16 @@ const CASTLING_FILES = {//******  change array for smth else
     }
 }
 
+const RANKS_TO_PROMOTE = {
+    [E_PieceColor.White]: 7,
+    [E_PieceColor.Black]: 2
+}
+
+const ENPASSANT_CAPTURING_RANKS = {
+    [E_PieceColor.White]: 5,
+    [E_PieceColor.Black]: 4
+}
+
 function OppositePieceColor(color) {
     switch (color) {
         case E_PieceColor.White:
