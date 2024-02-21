@@ -125,7 +125,7 @@ class MoveGenerator {
         }
     }
 
-    //****** Your king can NOT be in check. Your king can not pass through check. Check for rank and file. Assertions
+    //****** Check for rank and file. Assertions
     /**
      * 
      * @param {King} king 
@@ -133,18 +133,20 @@ class MoveGenerator {
      * @param {Board} board 
      * @returns 
      */
-    #GenerateCastling(king, rooks, enemyMoves, board) {
+    #GenerateCastling(king, rooks, attackedSquares, board) {
         //assumptions: king is a piece object. There's only one king. rooks is an array.
         if (king === undefined) return [];
         if (rooks === undefined || rooks.length === 0) return [];
 
         //The king can not have moved
         if (king.hasMoved) return [];
+        //The king cannot be in check
+        if (this.#IsKingInCheck(king, attackedSquares)) return [];
 
         let castlingMoves = [];
-        rooks.forEach(rook => {
+        for (let rook of rooks) {
             //The rook can not have moved
-            if (rook.hasMoved) return;
+            if (rook.hasMoved) continue;
 
             //is it a queen-side or king-side castling?
             let castlingMoveFlag;
@@ -154,12 +156,15 @@ class MoveGenerator {
                 castlingMoveFlag = E_MoveFlag.KingSideCastling;
             }
 
-            //No pieces can be between the king and rook.
-            let emptySquares = board.GetEmptySpaces();
-            let castlingMask = this.#castlingMasks[rook.color][castlingMoveFlag];
-            let castlingPathClear = (emptySquares & castlingMask) === castlingMask;
+            //Calculate path to castle
+            let castlingPath = this.#castlingPaths[rook.color][castlingMoveFlag];
 
-            if (castlingPathClear) {
+            //No pieces can be between the king and rook
+            let isCastlingPathClear = (board.GetEmptySpaces() & castlingPath) === castlingPath;
+            //Your king can not pass through check
+            let isCastlingPathAttacked = attackedSquares & castlingPath;
+
+            if (isCastlingPathClear && !isCastlingPathAttacked) {
                 let kingTargetFile = CASTLING_FILES[castlingMoveFlag][E_PieceType.King][1];
                 let rookTargetFile = CASTLING_FILES[castlingMoveFlag][E_PieceType.Rook][1];
 
@@ -168,8 +173,7 @@ class MoveGenerator {
 
                 castlingMoves.push(kingMove, rookMove);
             }
-        });
-
+        }
         return castlingMoves;
     }
 
