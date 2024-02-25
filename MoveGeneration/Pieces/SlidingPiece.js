@@ -23,10 +23,8 @@ class SlidingPiece extends Piece {
         let slidingMoves = 0n;
 
         masks.forEach(mask => {
-            let blockers = occupied & mask;
-            let positiveRayMoves = ((blockers - 2n * position) ^ occupied) & mask;
-            let negativeRayMoves = (Reverse((Reverse(blockers) - 2n * Reverse(position))) ^ occupied) & mask;
-            slidingMoves = slidingMoves | positiveRayMoves | negativeRayMoves;
+            let moveRays = HyperbolaQuintessenceAlgorithm(occupied, position, mask);
+            slidingMoves = slidingMoves | moveRays[0] | moveRays[1];
         });
         return slidingMoves & ~board.GetSpacesWithPieces(this.color, E_PieceType.Any);
     }

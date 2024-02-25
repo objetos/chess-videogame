@@ -30,11 +30,8 @@ class Piece {
         this.#rank = rank;
         this.#file = file;
 
-        //move to rank
-        this.#position = 1n << BigInt(8 - file);
+        this.#position = RankFileToBitboard(rank, file);
         this.#rank = rank;
-        //move to file
-        this.#position = this.#position << BigInt((rank - 1) * 8);
         this.#file = file;
     }
 
@@ -74,6 +71,10 @@ class Piece {
      */
     GetMoves(board) {
         throw new Error("Method 'GetMoves()' must be implemented.");
+    }
+
+    IsSlider() {
+        return this instanceof SlidingPiece;
     }
 
     toString() {
