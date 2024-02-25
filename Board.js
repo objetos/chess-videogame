@@ -38,29 +38,33 @@ class Board {
     }
 
     /**
-     * Gives a bitboard with a single diagonal.
-     * @param {number} inputDiagonalNumber Number of the diagonal, going from 1 to 15, where 1 is the bottom right diagonal 
-     * and 15 the top left diagonal of the board.
-     * @returns {BigInt} Bitboard that contains the specified diagonal.
+     * Gives a bitboard with a single diagonal that contains the square given by rank and file.
+     * @param {number} rank 
+     * @param {number} file 
+     * @returns {BigInt} Bitboard that contains the diagonal.
      */
-    static GetDiagonal(inputDiagonalNumber) {
-        console.assert(typeof inputDiagonalNumber === "number", "Diagonal Invalid");
-        console.assert(inputDiagonalNumber >= 1 && inputDiagonalNumber <= 15, "Diagonal " + inputDiagonalNumber + " is out of bounds.");
+    static GetDiagonal(rank, file) {
 
+        console.assert(typeof rank === "number", "Rank Invalid");
+        console.assert(rank >= 1 && rank <= 8, "Rank " + rank + " is out of bounds.");
+        console.assert(typeof file === "number", "File Invalid");
+        console.assert(file >= 1 && file <= 8, "File " + file + " is out of bounds.");
+
+        let diagonalNumber = (9 - file) + rank - 1;
         // Calculate for up to the eight diagonal
-        let diagonalNumber = inputDiagonalNumber;
+        let clampedDiagonalNumber = diagonalNumber;
         if (8 < diagonalNumber) {
-            diagonalNumber = 8 - (diagonalNumber % 8);
+            clampedDiagonalNumber = 8 - (diagonalNumber % 8);
         }
 
         //Build the diagonal procedurally
         let diagonalBitboard = 1n;
-        for (let i = 1; i < diagonalNumber; i++) {
+        for (let i = 1; i < clampedDiagonalNumber; i++) {
             diagonalBitboard = (diagonalBitboard << 1n) | (1n << BigInt(8 * i))
         }
 
         // Flip diagonally for diagonals greater than the eight one.
-        if (8 < inputDiagonalNumber) {
+        if (8 < diagonalNumber) {
             diagonalBitboard = this.#FlipDiagonally(diagonalBitboard);
         }
 
@@ -68,17 +72,20 @@ class Board {
     }
 
     /**
-     * Gives a bitboard with a single antidiagonal.
-     * @param {number} inputAntiDiagonalNumber Number of the antidiagonal, going from 1 to 15, where 1 is the bottom left antidiagonal 
-     * and 15 the top right antidiagonal of the board.
-     * @returns {BigInt} Bitboard that contains the specified antidiagonal.
+     * Gives a bitboard with a single antidiagonal that contains the square given by rank and file.
+     * @param {number} rank 
+     * @param {number} file
+     * @returns {BigInt} Bitboard that contains the antidiagonal.
      */
-    static GetAntiDiagonal(inputAntiDiagonalNumber) {
-        console.assert(typeof inputAntiDiagonalNumber === "number", "AntiDiagonal Invalid");
-        console.assert(inputAntiDiagonalNumber >= 1 && inputAntiDiagonalNumber <= 15, "AntiDiagonal " + inputAntiDiagonalNumber + " is out of bounds.");
+    static GetAntiDiagonal(rank, file) {
+
+        console.assert(typeof rank === "number", "Rank Invalid");
+        console.assert(rank >= 1 && rank <= 8, "Rank " + rank + " is out of bounds.");
+        console.assert(typeof file === "number", "File Invalid");
+        console.assert(file >= 1 && file <= 8, "File " + file + " is out of bounds.");
 
         // Get a normal diagonal
-        let diagonalBitboard = this.GetDiagonal(inputAntiDiagonalNumber);
+        let diagonalBitboard = this.GetDiagonal(rank, 9 - file);
         // Mirror the diagonal horizontally to get an antiDiagonal.
         let antiDiagonalBitboard = this.#MirrorHorizontally(diagonalBitboard);
         return antiDiagonalBitboard;
@@ -184,7 +191,7 @@ class Board {
                 let file = fileIndex + 1;
                 let pieceObject = this.#CreatePiece(piece, rank, file);
                 //add piece
-                this.#AddPiece(pieceObject, rank, file);
+                this.AddPiece(pieceObject, rank, file);
             }
         }
 
@@ -436,28 +443,28 @@ class Board {
         //if there's a piece in destination
         if (this.#GetPiece(move.endRank, move.endFile) !== null) {
             //capture it
-            this.#RemovePiece(move.endRank, move.endFile);
+            this.RemovePiece(move.endRank, move.endFile);
         }
         //move piece
         let pieceToMove = this.#GetPiece(move.startRank, move.startFile);
-        this.#RemovePiece(move.startRank, move.startFile);
-        this.#AddPiece(pieceToMove, move.endRank, move.endFile);
+        this.RemovePiece(move.startRank, move.startFile);
+        this.AddPiece(pieceToMove, move.endRank, move.endFile);
         pieceToMove.SetPosition(move.endRank, move.endFile);
     }
 
     //****** choose promotion from captured pieces
     #MakePromotionMove(move) {
         //remove pawn
-        this.#RemovePiece(move.startRank, move.startFile);
+        this.RemovePiece(move.startRank, move.startFile);
         //if promotion occurs on rank 8
         if (move.endRank === 8) {
             //add a white queen
             let whiteQueen = this.#CreatePiece('Q', move.endRank, move.endFile);
-            this.#AddPiece(whiteQueen, move.endRank, move.endFile);
+            this.AddPiece(whiteQueen, move.endRank, move.endFile);
         } else if (move.endRank === 1) { //else if it occurs on rank 1
             //add a black queen
             let blackQueen = this.#CreatePiece('q', move.endRank, move.endFile);
-            this.#AddPiece(blackQueen, move.endRank, move.endFile);
+            this.AddPiece(blackQueen, move.endRank, move.endFile);
         } else {
             //error ******
         }
@@ -498,10 +505,10 @@ class Board {
         //move pawn
         this.#MakeRegularMove(move);
         //remove captured pawn
-        this.#RemovePiece(move.startRank, move.endFile);
+        this.RemovePiece(move.startRank, move.endFile);
     }
 
-    #AddPiece(piece, rank, file) {
+    AddPiece(piece, rank, file) {
         let rankIndex = 8 - rank;
         let fileIndex = file - 1;
         if (this.#GetPiece(rank, file) !== null) {
@@ -511,7 +518,7 @@ class Board {
         this.#board.fill(rankIndex, fileIndex, piece);
     }
 
-    #RemovePiece(rank, file) {
+    RemovePiece(rank, file) {
         let rankIndex = 8 - rank;
         let fileIndex = file - 1;
         let piece = this.#GetPiece(rank, file);
