@@ -41,12 +41,12 @@ class King extends Piece {
 
         //remove bits that "wrapped around" the sides
         if (this.file < 3) {
-            moves = moves & ~Board.GetFile(7) & ~Board.GetFile(8);
+            moves = moves & ~Board.getFile(7) & ~Board.getFile(8);
         } else if (6 < this.file) {
-            moves = moves & ~Board.GetFile(1) & ~Board.GetFile(2);
+            moves = moves & ~Board.getFile(1) & ~Board.getFile(2);
         }
         //remove pieces of same color
-        moves = moves & ~board.GetSpacesWithPieces(this.color, E_PieceType.Any);
+        moves = moves & ~board.getSpacesWithPieces(this.color, E_PieceType.Any);
 
         return moves;
     }

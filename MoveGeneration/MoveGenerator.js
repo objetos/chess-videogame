@@ -8,7 +8,7 @@ class MoveGenerator {
      * @param {E_PieceColor} pieceColor
      * @returns {Move[]} Array of legal moves of pieces of given color
      */
-    GenerateMoves(board, piecesDict, pieceColor) { //****** simplify. assumptions: board is a standard board of chess
+    generateMoves(board, piecesDict, pieceColor) { //****** simplify. assumptions: board is a standard board of chess
         console.assert(board instanceof Board, "Invalid board");
 
         let legalMoves = [];
@@ -21,7 +21,7 @@ class MoveGenerator {
         }
 
         //calculate squares attacked by enemy
-        let attackedSquaresByEnemy = this.#CalculateSquaresAttacked(enemyPieces, board);
+        let attackedSquaresByEnemy = this.#calculateSquaresAttacked(enemyPieces, board);
 
         //King safety
         let king = piecesDict[pieceColor][E_PieceType.King][0];
@@ -50,7 +50,7 @@ class MoveGenerator {
                 if (!piece.IsSlider()) {
 
                     //check if piece checks king
-                    if (this.#IsKingInCheck(king, piece.GetMoves(board))) {
+                    if (this.#isKingInCheck(king, piece.GetMoves(board))) {
                         checkers.push(piece);
                     }
 
@@ -62,7 +62,7 @@ class MoveGenerator {
                         enemyCapturingMovesInEmptyBoard = piece.GetMoves(emptyBoard);
                     }
 
-                    protectedPieces |= enemyCapturingMovesInEmptyBoard & board.GetSpacesWithPieces(OppositePieceColor(king.color), E_PieceType.Any);
+                    protectedPieces |= enemyCapturingMovesInEmptyBoard & board.getSpacesWithPieces(OppositePieceColor(king.color), E_PieceType.Any);
                 } else {//if it is a slider
                     let slider = piece;
 
@@ -84,8 +84,8 @@ class MoveGenerator {
                     //check for pinned pieces and discovered checkers.
                     //Taken from https://www.chessprogramming.org/Checks_and_Pinned_Pieces_(Bitboards)
 
-                    let attacksFromSliderToKing = HyperbolaQuintessenceAlgorithm(board.GetOccupiedSpaces(), slider.position, emptySpaceBetweenSliderAndKing);
-                    let attacksFromKingToSlider = HyperbolaQuintessenceAlgorithm(board.GetOccupiedSpaces(), king.position, emptySpaceBetweenSliderAndKing);
+                    let attacksFromSliderToKing = HyperbolaQuintessenceAlgorithm(board.getOccupiedSpaces(), slider.position, emptySpaceBetweenSliderAndKing);
+                    let attacksFromKingToSlider = HyperbolaQuintessenceAlgorithm(board.getOccupiedSpaces(), king.position, emptySpaceBetweenSliderAndKing);
                     let intersection = (attacksFromKingToSlider[0] | attacksFromKingToSlider[1]) & (attacksFromSliderToKing[0] | attacksFromSliderToKing[1]);
 
                     //if there's no intersection
@@ -93,14 +93,14 @@ class MoveGenerator {
                         //there are two or more pieces in between slider and king. 
                         //Therefore, slider is not checking king and there are not pinned pieces nor enemy discovered checkes.
                         continue
-                    } else if ((intersection & board.GetEmptySpaces()) === emptySpaceBetweenSliderAndKing) {
+                    } else if ((intersection & board.getEmptySpaces()) === emptySpaceBetweenSliderAndKing) {
                         //There's no pieces in between slider and king. Slider is distant-cheking the king
                         checkers.push(slider);
                         continue;
                     } else {
                         //There's one piece in between slider and king
                         //if the piece is an ally
-                        let isPieceAnAlly = (intersection & board.GetSpacesWithPieces(king.color, E_PieceType.Any)) > 0n;
+                        let isPieceAnAlly = (intersection & board.getSpacesWithPieces(king.color, E_PieceType.Any)) > 0n;
                         if (isPieceAnAlly) {
                             //piece is pinned
                             moveFilterForPinnedPieces[intersection] = emptySpaceBetweenSliderAndKing | slider.position;
@@ -113,7 +113,7 @@ class MoveGenerator {
             }
 
 
-            let kingMoves = this.#GenerateKingMoves(king, enemyPieces, protectedPieces, board);
+            let kingMoves = this.#generateKingMoves(king, enemyPieces, protectedPieces, board);
 
             //if there's more than one checker
             if (1 < checkers.length) {
@@ -121,7 +121,7 @@ class MoveGenerator {
                 return kingMoves;
             } else if (checkers.length === 1) {
                 //create filter so moves can block the check
-                squaresToAvoidCheck = this.#CalculateSquaresToAvoidCheck(king, checkers[0], board);
+                squaresToAvoidCheck = this.#calculateSquaresToAvoidCheck(king, checkers[0], board);
             }
 
             legalMoves = legalMoves.concat(kingMoves);
@@ -150,35 +150,35 @@ class MoveGenerator {
                 let pawn = piece;
 
                 if (pawn.CanPromote()) {
-                    let promotionsMoves = this.ConvertBitboard(pawn, pieceMovesBitboard, E_MoveFlag.Promotion);
+                    let promotionsMoves = this.#convertBitboard(pawn, pieceMovesBitboard, E_MoveFlag.Promotion);
                     legalMoves = legalMoves.concat(promotionsMoves);
                     continue;
                 } else {
-                    let enPassant = this.#GenerateEnPassantMove(pawn);
+                    let enPassant = this.#generateEnPassantMove(pawn);
                     legalMoves = legalMoves.concat(enPassant);
                 }
             }
 
-            let pieceMoves = this.ConvertBitboard(piece, pieceMovesBitboard, E_MoveFlag.Regular);
+            let pieceMoves = this.#convertBitboard(piece, pieceMovesBitboard, E_MoveFlag.Regular);
             legalMoves = legalMoves.concat(pieceMoves);
         }
 
         //generate castling moves
         let rooks = piecesDict[pieceColor][E_PieceType.Rook];
-        let castlingMoves = this.#GenerateCastlingMoves(king, rooks, attackedSquaresByEnemy, board);
+        let castlingMoves = this.#generateCastlingMoves(king, rooks, attackedSquaresByEnemy, board);
         legalMoves = legalMoves.concat(castlingMoves);
 
         return legalMoves;
     }
 
-    #CalculateSquaresToAvoidCheck(king, checker, board) {
+    #calculateSquaresToAvoidCheck(king, checker, board) {
         let pathFromCheckerToKing = 0n;
 
         if (checker.IsSlider()) {
             let checkerMoves = checker.GetMoves(board);
             for (let slidingDirection of checker.GetSlidingMasks()) {
                 let checkerMovesInDirection = checkerMoves & slidingDirection;
-                if (this.#IsKingInCheck(king, checkerMovesInDirection)) {
+                if (this.#isKingInCheck(king, checkerMovesInDirection)) {
                     pathFromCheckerToKing = checkerMovesInDirection & ~king.position;
                     break;
                 }
@@ -190,7 +190,7 @@ class MoveGenerator {
         return checker.position | pathFromCheckerToKing;
     }
 
-    #CalculateSquaresAttacked(enemyPieces, board) { //****** implement in board
+    #calculateSquaresAttacked(enemyPieces, board) { //****** implement in board
         let attackedSquares = 0n;
         enemyPieces.forEach(piece => {
             let enemyPieceMoves = piece.GetMoves(board);
@@ -199,10 +199,10 @@ class MoveGenerator {
         return attackedSquares;
     }
 
-    #GenerateKingMoves(king, enemyPieces, protectedPieces, board) {
+    #generateKingMoves(king, enemyPieces, protectedPieces, board) {
 
         let dangerSquaresForKing = 0n;
-        board.RemovePiece(king.rank, king.file);
+        board.RemovePiece(king.rank, king.file, false);
 
         enemyPieces.forEach(piece => {
             if (piece.GetType() === E_PieceType.Pawn) {
@@ -213,22 +213,21 @@ class MoveGenerator {
 
         });
 
-        board.AddPiece(king, king.rank, king.file);
+        board.AddPiece(king, king.rank, king.file, false);
 
         let kingRegularMoves = king.GetMoves(board);
 
-        PrintBitboard(protectedPieces);
         dangerSquaresForKing = dangerSquaresForKing | protectedPieces;
 
         let kingMovesBitboard = kingRegularMoves & ~dangerSquaresForKing;
-        return this.ConvertBitboard(king, kingMovesBitboard, E_MoveFlag.Regular);
+        return this.#convertBitboard(king, kingMovesBitboard, E_MoveFlag.Regular);
     }
 
-    #IsKingInCheck(king, attackedSquares) {
+    #isKingInCheck(king, attackedSquares) {
         return (king.position & attackedSquares) > 1n;
     }
 
-    #GenerateEnPassantMove(pawn) {
+    #generateEnPassantMove(pawn) {
         //The en passant capture must be performed on the turn immediately after the pawn being captured moves.
         if (this.#g_LastPawnJump == null) return [];
 
@@ -254,7 +253,7 @@ class MoveGenerator {
      * @param {Board} board 
      * @returns 
      */
-    #GenerateCastlingMoves(king, rooks, attackedSquares, board) {
+    #generateCastlingMoves(king, rooks, attackedSquares, board) {
         //assumptions: king is a piece object. There's only one king. rooks is an array.
         if (king === undefined) return [];
         if (rooks === undefined || rooks.length === 0) return [];
@@ -262,7 +261,7 @@ class MoveGenerator {
         //The king can not have moved
         if (king.hasMoved) return [];
         //The king cannot be in check
-        if (this.#IsKingInCheck(king, attackedSquares)) return [];
+        if (this.#isKingInCheck(king, attackedSquares)) return [];
 
         let castlingMoves = [];
         for (let rook of rooks) {
@@ -277,7 +276,7 @@ class MoveGenerator {
             let castlingPath = castlingMoveFlag === E_MoveFlag.QueenSideCastling ?
                 king.position << 1n | king.position << 2n | king.position << 3n :
                 king.position >> 1n | king.position >> 2n;
-            let isCastlingPathClear = (board.GetEmptySpaces() & castlingPath) === castlingPath;
+            let isCastlingPathClear = (board.getEmptySpaces() & castlingPath) === castlingPath;
 
             //Your king can not pass through check
             let kingPathToCastle = castlingMoveFlag === E_MoveFlag.QueenSideCastling ?
@@ -301,7 +300,7 @@ class MoveGenerator {
     }
 
     //****** change name
-    ConvertBitboard(piece, movesBitboard, moveFlag) {
+    #convertBitboard(piece, movesBitboard, moveFlag) {
         let moves = [];
         let testBit = 1n;
 

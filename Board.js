@@ -6,13 +6,14 @@ class Board {
     #piecesDictionary = {}; //pieces categorized by color and type.
     #board = new Quadrille(8, 8);//board with piece objects.
     #moveGenerator;
+    #boardChanges = [];
 
     /**
      * Gives a bitboard with a single file.
      * @param {number} fileNumber Number of the file, going from 1 to 8, where 1 is the leftmost column of the board.
      * @returns {BigInt} Bitboard that contains the specified file.
      */
-    static GetFile(fileNumber) {
+    static getFile(fileNumber) {
         console.assert(typeof fileNumber === "number", "File Invalid");
         console.assert(fileNumber >= 1 && fileNumber <= 8, "File " + fileNumber + " is out of bounds.");
 
@@ -27,7 +28,7 @@ class Board {
      * @param {number} rankNumber Number of the rank, going from 1 to 8, where 1 is the bottom row of the board.
      * @returns {BigInt} Bitboard that contains the specified rank.
      */
-    static GetRank(rankNumber) {
+    static getRank(rankNumber) {
         console.assert(typeof rankNumber === "number", "Rank Invalid");
         console.assert(rankNumber >= 1 && rankNumber <= 8, "Rank " + rankNumber + " is out of bounds.");
 
@@ -43,7 +44,7 @@ class Board {
      * @param {number} file 
      * @returns {BigInt} Bitboard that contains the diagonal.
      */
-    static GetDiagonal(rank, file) {
+    static getDiagonal(rank, file) {
 
         console.assert(typeof rank === "number", "Rank Invalid");
         console.assert(rank >= 1 && rank <= 8, "Rank " + rank + " is out of bounds.");
@@ -65,7 +66,7 @@ class Board {
 
         // Flip diagonally for diagonals greater than the eight one.
         if (8 < diagonalNumber) {
-            diagonalBitboard = this.#FlipDiagonally(diagonalBitboard);
+            diagonalBitboard = this.#flipDiagonally(diagonalBitboard);
         }
 
         return diagonalBitboard;
@@ -77,7 +78,7 @@ class Board {
      * @param {number} file
      * @returns {BigInt} Bitboard that contains the antidiagonal.
      */
-    static GetAntiDiagonal(rank, file) {
+    static getAntiDiagonal(rank, file) {
 
         console.assert(typeof rank === "number", "Rank Invalid");
         console.assert(rank >= 1 && rank <= 8, "Rank " + rank + " is out of bounds.");
@@ -85,9 +86,9 @@ class Board {
         console.assert(file >= 1 && file <= 8, "File " + file + " is out of bounds.");
 
         // Get a normal diagonal
-        let diagonalBitboard = this.GetDiagonal(rank, 9 - file);
+        let diagonalBitboard = this.getDiagonal(rank, 9 - file);
         // Mirror the diagonal horizontally to get an antiDiagonal.
-        let antiDiagonalBitboard = this.#MirrorHorizontally(diagonalBitboard);
+        let antiDiagonalBitboard = this.#mirrorHorizontally(diagonalBitboard);
         return antiDiagonalBitboard;
     }
 
@@ -97,7 +98,7 @@ class Board {
      * @param {BigInt} bitboard 
      * @returns {BigInt} Flipped bitboard
      */
-    static #FlipDiagonally(bitboard) {
+    static #flipDiagonally(bitboard) {
         console.assert(typeof bitboard === "bigint", "Incorrect type");
 
         let k4 = 0xf0f0f0f00f0f0f0fn;
@@ -121,7 +122,7 @@ class Board {
      * @param {BigInt} bitboard 
      * @returns {BigInt} Flipped bitboard
      */
-    static #FlipAntiDiagonally(bitboard) {
+    static #flipAntiDiagonally(bitboard) {
         console.assert(typeof bitboard === "bigint", "Incorrect type");
 
         let k4 = 0x0f0f0f0f00000000n;
@@ -145,7 +146,7 @@ class Board {
      * @param {BigInt} bitboard 
      * @returns {BigInt} Mirrored bitboard 
      */
-    static #MirrorHorizontally(bitboard) {
+    static #mirrorHorizontally(bitboard) {
         console.assert(typeof bitboard === "bigint", "Incorrect type");
 
         let k1 = 0x5555555555555555n;
@@ -189,9 +190,9 @@ class Board {
                 //create a piece
                 let rank = 8 - rankIndex;
                 let file = fileIndex + 1;
-                let pieceObject = this.#CreatePiece(piece, rank, file);
+                let pieceObject = this.#createPiece(piece, rank, file);
                 //add piece
-                this.AddPiece(pieceObject, rank, file);
+                this.addPiece(pieceObject, rank, file, false);
             }
         }
 
@@ -237,16 +238,16 @@ class Board {
      * @param {E_PieceColor} color
      * @return {Move[]} Array of legal moves of pieces of given color 
      */
-    GenerateMoves(pieceColor) {
+    generateMoves(pieceColor) {
         console.assert(Object.values(E_PieceColor).includes(pieceColor), "Piece color not defined");
-        return this.#moveGenerator.GenerateMoves(this, this.#piecesDictionary, pieceColor);
+        return this.#moveGenerator.generateMoves(this, this.#piecesDictionary, pieceColor);
     }
 
     /**
      * 
      * @param {Move} move Applies move to board
      */
-    MakeMove(move) {
+    makeMove(move) {
         //secrets: how are moves are done, information changed internally
         //preconditions: move is legal and within board range. special moves have a flag to identify them
         //postconditions: info will be updated 
@@ -259,44 +260,68 @@ class Board {
         //check start and destination squares are not the same ****** 
         //assert move
 
-        let pieceToMove = this.#GetPiece(move.startRank, move.startFile);
+        let pieceToMove = this.#getPiece(move.startRank, move.startFile);
         //if no piece in start square
         if (pieceToMove === null) {
             console.log(move);
             throw new Error("Failed making move. No piece in start square");
         }
         try {
+            this.#boardChanges.push([]);
             switch (move.flag) {
                 case E_MoveFlag.Regular:
-                    this.#MakeRegularMove(move);
+                    this.#makeRegularMove(move);
                     break;
                 case E_MoveFlag.Promotion:
-                    this.#MakePromotionMove(move);
+                    this.#makePromotionMove(move);
                     break;
                 case E_MoveFlag.KingSideCastling:
-                    this.#MakeCastlingMove(move);
+                    this.#makeCastlingMove(move);
                     break;
                 case E_MoveFlag.QueenSideCastling:
-                    this.#MakeCastlingMove(move);
+                    this.#makeCastlingMove(move);
                     break;
                 case E_MoveFlag.EnPassant:
-                    this.#MakeEnPassantMove(move);
+                    this.#makeEnPassantMove(move);
                     break;
                 case E_MoveFlag.None:
                     throw new Error("Failed making move. Move has no flag");
                 default:
                     throw new Error("Failed making move. Move has no flag");
             }
+
         } catch (error) {
             console.log(move);
-            this.Print();
+            this.print();
+            this.#boardChanges.pop();
             throw error;
         }
+
     }
 
-    UnmakeMove(move) {
-        let reverseMove = new Move(move.endRank, move.endFile, move.startRank, move.startFile);
-        this.MakeMove(reverseMove);
+    unmakeMove() {
+        //secrets: how are moves are unmade, information changed internally
+        //preconditions: a move was made (move history is not empty). 
+        //postconditions: board will be updated to last state.
+        //input:move
+        //output:none
+        //test: Visual test. 
+        //errors: move to same spot, move out of bounds, no piece on rank or file, two pieces of same color in same square,
+
+        //pop changes from stack 
+        let lastChanges = this.#boardChanges.pop();
+        let numberOfChanges = lastChanges.length;
+        for (let i = 0; i < numberOfChanges; i++) {
+            let change = lastChanges.pop();
+            //if change was an addition
+            if (change.type == "a") {
+                //remove piece
+                this.removePiece(change.rank, change.file, false);
+            } else if (change.type == "r") { //else if change was a removal 
+                //add piece
+                this.addPiece(change.piece, change.rank, change.file, false);
+            }
+        }
     }
 
     /**
@@ -305,14 +330,14 @@ class Board {
      * @param {E_PieceType} pieceType 
      * @returns {BigInt} Bitboard that contains pieces of given characteristics.
      */
-    GetSpacesWithPieces(pieceColor = E_PieceColor.Any, pieceType = E_PieceType.Any) {
+    getSpacesWithPieces(pieceColor = E_PieceColor.Any, pieceType = E_PieceType.Any) { //****** compress in get occupied routine
         console.assert(Object.values(E_PieceType).includes(pieceType), "Piece type not defined");
         console.assert(Object.values(E_PieceColor).includes(pieceColor), "Piece color not defined");
 
         let piecesBitboard = 0n;
         let pieces = [];
 
-        if (pieceColor === E_PieceColor.Any && pieceType === E_PieceType.Any) return this.GetOccupiedSpaces();
+        if (pieceColor === E_PieceColor.Any && pieceType === E_PieceType.Any) return this.getOccupiedSpaces();
 
         if (pieceColor === E_PieceColor.Any) {
             for (let color of Object.values(E_PieceColor)) {
@@ -340,22 +365,23 @@ class Board {
     /**
      * @returns Bitboard that contains all spaces occupied by a piece.
      */
-    GetOccupiedSpaces() {
+    getOccupiedSpaces() {
         return this.#board.toBigInt();
     }
 
     /**
      * @returns Bitboard that contains all spaces not occupied by a piece.
      */
-    GetEmptySpaces() {
+    getEmptySpaces() {
         //get board occupied by pieces
-        let occupied = this.GetOccupiedSpaces();
+        let occupied = this.getOccupiedSpaces();
         //reverse board to obtain empty spaces
         let empty = ~occupied;
         return empty;
     }
 
-    Draw() {
+    draw() {
+        //background(255);
         drawQuadrille(this.#board, {
             objectDisplay: ({ graphics, value, cellLength = Quadrille.cellLength } = {}) => {
                 let piece = value;
@@ -373,7 +399,7 @@ class Board {
      * Lowercase letters refer to black pieces. Uppercase letters refer to white pieces.
      * W = White. B = Black. P = Pawn. R = Rook. N = Knight. B = Bishop. Q = Queen. K = King. # = Empty.
      */
-    Print() {
+    print() {
         let string = "";
 
         visitQuadrille(this.#board, (row, col) => {
@@ -393,7 +419,7 @@ class Board {
         console.log(string);
     }
 
-    #CreatePiece(piece, rank, file) {
+    #createPiece(piece, rank, file) {
         let pieceObject = null;
         switch (piece) {
             case 'K':
@@ -439,41 +465,40 @@ class Board {
     }
 
 
-    #MakeRegularMove(move) {
+    #makeRegularMove(move) {
         //if there's a piece in destination
-        if (this.#GetPiece(move.endRank, move.endFile) !== null) {
+        if (this.#getPiece(move.endRank, move.endFile) !== null) {
             //capture it
-            this.RemovePiece(move.endRank, move.endFile);
+            this.removePiece(move.endRank, move.endFile);
         }
         //move piece
-        let pieceToMove = this.#GetPiece(move.startRank, move.startFile);
-        this.RemovePiece(move.startRank, move.startFile);
-        this.AddPiece(pieceToMove, move.endRank, move.endFile);
-        pieceToMove.SetPosition(move.endRank, move.endFile);
+        let pieceToMove = this.#getPiece(move.startRank, move.startFile);
+        this.removePiece(move.startRank, move.startFile);
+        this.addPiece(pieceToMove, move.endRank, move.endFile);
     }
 
     //****** choose promotion from captured pieces
-    #MakePromotionMove(move) {
+    #makePromotionMove(move) {
         //remove pawn
-        this.RemovePiece(move.startRank, move.startFile);
+        this.removePiece(move.startRank, move.startFile);
         //if promotion occurs on rank 8
         if (move.endRank === 8) {
             //add a white queen
-            let whiteQueen = this.#CreatePiece('Q', move.endRank, move.endFile);
-            this.AddPiece(whiteQueen, move.endRank, move.endFile);
+            let whiteQueen = this.#createPiece('Q', move.endRank, move.endFile);
+            this.addPiece(whiteQueen, move.endRank, move.endFile);
         } else if (move.endRank === 1) { //else if it occurs on rank 1
             //add a black queen
-            let blackQueen = this.#CreatePiece('q', move.endRank, move.endFile);
-            this.AddPiece(blackQueen, move.endRank, move.endFile);
+            let blackQueen = this.#createPiece('q', move.endRank, move.endFile);
+            this.addPiece(blackQueen, move.endRank, move.endFile);
         } else {
             //error ******
         }
     }
 
-    #MakeCastlingMove(move) {
-        let piece = this.#GetPiece(move.startRank, move.startFile);
+    #makeCastlingMove(move) {
+        let piece = this.#getPiece(move.startRank, move.startFile);
         //move piece
-        this.#MakeRegularMove(move);
+        this.#makeRegularMove(move);
         //if king moved
         if (piece.GetType() === E_PieceType.King) {
             //move rook
@@ -484,7 +509,7 @@ class Board {
                 CASTLING_FILES[move.flag][E_PieceType.Rook][1],
                 E_MoveFlag.Regular
             );
-            this.#MakeRegularMove(rookMove);
+            this.#makeRegularMove(rookMove);
         } //else if rook moved
         else if (piece.GetType() === E_PieceType.Rook) {
             //move king
@@ -495,36 +520,47 @@ class Board {
                 CASTLING_FILES[move.flag][E_PieceType.King][1],
                 E_MoveFlag.Regular
             );
-            this.#MakeRegularMove(rookMove);
+            this.#makeRegularMove(rookMove);
         } else {
             //error ******
         }
     }
 
-    #MakeEnPassantMove(move) {
+    #makeEnPassantMove(move) {
         //move pawn
-        this.#MakeRegularMove(move);
+        this.#makeRegularMove(move);
         //remove captured pawn
-        this.RemovePiece(move.startRank, move.endFile);
+        this.removePiece(move.startRank, move.endFile);
     }
 
-    AddPiece(piece, rank, file) {
+    addPiece(piece, rank, file, recordChange = true) {
         let rankIndex = 8 - rank;
         let fileIndex = file - 1;
-        if (this.#GetPiece(rank, file) !== null) {
+        if (this.#getPiece(rank, file) !== null) {
             throw new Error("Cannot add piece in a occupied square");
         }
         this.#piecesDictionary[piece.color][piece.GetType()].push(piece);
         this.#board.fill(rankIndex, fileIndex, piece);
+        piece.SetPosition(rank, file);
+
+        if (recordChange) {
+            let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
+            lastChanges.push({ "type": "a", "rank": rank, "file": file, "piece": piece });
+        }
     }
 
-    RemovePiece(rank, file) {
+    removePiece(rank, file, recordChange = true) {
         let rankIndex = 8 - rank;
         let fileIndex = file - 1;
-        let piece = this.#GetPiece(rank, file);
+        let piece = this.#getPiece(rank, file);
 
         if (piece === null) {
             throw new Error("No piece to remove in given rank and file")
+        }
+
+        if (recordChange) {
+            let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
+            lastChanges.push({ "type": "r", "rank": rank, "file": file, "piece": piece });
         }
 
         let pieceIndex = this.#piecesDictionary[piece.color][piece.GetType()].indexOf(piece);
@@ -537,7 +573,7 @@ class Board {
         this.#board.clear(rankIndex, fileIndex);
     }
 
-    #GetPiece(rank, file) {
+    #getPiece(rank, file) {
         let rankIndex = 8 - rank;
         let fileIndex = file - 1;
         return this.#board.read(rankIndex, fileIndex);

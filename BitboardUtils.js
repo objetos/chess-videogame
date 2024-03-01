@@ -21,18 +21,18 @@ function GetRay(startRank, startFile, endRank, endFile, includeStart = true, inc
     let mask = 0n;
 
     if (startRank === endRank) {
-        mask = Board.GetRank(startRank);
+        mask = Board.getRank(startRank);
         isPositiveRay = startFile > endFile;
     } else if (startFile === endFile) {
-        mask = Board.GetFile(startFile);
+        mask = Board.getFile(startFile);
         isPositiveRay = startRank < endRank;
     } else if (Math.abs(rankDiff) === Math.abs(fileDiff)) {
         let isDiagonal = Math.sign(rankDiff) === Math.sign(fileDiff);
         if (isDiagonal) {
-            mask = Board.GetDiagonal(startRank, startFile);
+            mask = Board.getDiagonal(startRank, startFile);
             isPositiveRay = rankDiff < 0 && fileDiff < 0;
         } else {
-            mask = Board.GetAntiDiagonal(startRank, startFile);
+            mask = Board.getAntiDiagonal(startRank, startFile);
             isPositiveRay = 0 < rankDiff && fileDiff > 0;
         }
     } else {

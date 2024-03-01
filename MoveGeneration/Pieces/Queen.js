@@ -5,10 +5,10 @@ class Queen extends SlidingPiece {
     }
 
     GetSlidingMasks() {
-        return [Board.GetRank(this.rank),
-        Board.GetFile(this.file),
-        Board.GetDiagonal(this.rank, this.file),
-        Board.GetAntiDiagonal(this.rank, this.file)];
+        return [Board.getRank(this.rank),
+        Board.getFile(this.file),
+        Board.getDiagonal(this.rank, this.file),
+        Board.getAntiDiagonal(this.rank, this.file)];
     }
 
     GetMoves(board) {

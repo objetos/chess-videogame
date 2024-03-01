@@ -39,7 +39,7 @@ class Pawn extends Piece {
         let frontJump = twoSquaresFront &
             GetBooleanBitboard(frontMove > 1) & //a front move is possible
             board.GetEmptySpaces() & //target square is empty 
-            Board.GetRank(targetRankForJumping); //pawn can only jump from their initial rank
+            Board.getRank(targetRankForJumping); //pawn can only jump from their initial rank
 
         return frontJump | frontMove;
     }
@@ -68,11 +68,11 @@ class Pawn extends Piece {
         //calculate capture moves
         let rightCapture = rightDiagonalSquare &
             board.GetSpacesWithPieces(OppositePieceColor(this.color), E_PieceType.Any) & //There's an enemy piece in that square
-            ~Board.GetFile(1); //remove right capture from 8th file to 1st file
+            ~Board.getFile(1); //remove right capture from 8th file to 1st file
 
         let leftCapture = leftDiagonalSquare &
             board.GetSpacesWithPieces(OppositePieceColor(this.color), E_PieceType.Any) & //There's an enemy piece in that square
-            ~Board.GetFile(8); //remove right capture from 1st file to 8th file
+            ~Board.getFile(8); //remove right capture from 1st file to 8th file
 
         return leftCapture | rightCapture;
     }
@@ -100,10 +100,10 @@ class Pawn extends Piece {
 
         //calculate capture moves
         let rightCapture = rightDiagonalSquare &
-            ~Board.GetFile(1); //remove right capture from 8th file to 1st file
+            ~Board.getFile(1); //remove right capture from 8th file to 1st file
 
         let leftCapture = leftDiagonalSquare &
-            ~Board.GetFile(8); //remove right capture from 1st file to 8th file
+            ~Board.getFile(8); //remove right capture from 1st file to 8th file
 
         return rightCapture | leftCapture;
     }

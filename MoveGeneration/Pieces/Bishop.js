@@ -5,7 +5,7 @@ class Bishop extends SlidingPiece {
     }
 
     GetSlidingMasks() {
-        return [Board.GetDiagonal(this.rank, this.file), Board.GetAntiDiagonal(this.rank, this.file)];
+        return [Board.getDiagonal(this.rank, this.file), Board.getAntiDiagonal(this.rank, this.file)];
     }
 
 
