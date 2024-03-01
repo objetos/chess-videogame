@@ -24,7 +24,7 @@ class Knight extends Piece {
             moves = moves & ~Board.getFile(1) & ~Board.getFile(2);
         }
         //remove pieces of same color
-        moves = moves & ~board.GetSpacesWithPieces(this.color, E_PieceType.Any);
+        moves = moves & ~board.getSpacesWithPieces(this.color, E_PieceType.Any);
 
         return moves;
     }

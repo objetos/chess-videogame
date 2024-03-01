@@ -202,7 +202,7 @@ class MoveGenerator {
     #generateKingMoves(king, enemyPieces, protectedPieces, board) {
 
         let dangerSquaresForKing = 0n;
-        board.RemovePiece(king.rank, king.file, false);
+        board.removePiece(king.rank, king.file, false);
 
         enemyPieces.forEach(piece => {
             if (piece.GetType() === E_PieceType.Pawn) {
@@ -213,7 +213,7 @@ class MoveGenerator {
 
         });
 
-        board.AddPiece(king, king.rank, king.file, false);
+        board.addPiece(king, king.rank, king.file, false);
 
         let kingRegularMoves = king.GetMoves(board);
 
