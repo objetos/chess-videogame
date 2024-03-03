@@ -364,13 +364,6 @@ class Board {
     }
 
     /**
-     * @returns Bitboard that contains all spaces occupied by a piece.
-     */
-    getOccupiedSpaces() {
-        return this.#board.toBigInt();
-    }
-
-    /**
      * @returns Bitboard that contains all spaces not occupied by a piece.
      */
     getEmptySpaces() {
