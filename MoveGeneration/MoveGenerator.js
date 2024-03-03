@@ -171,23 +171,12 @@ class MoveGenerator {
         return legalMoves;
     }
 
-    #calculateSquaresToAvoidCheck(king, checker, board) {
-        let pathFromCheckerToKing = 0n;
-
+    #calculateSquaresToAvoidCheck(king, checker) {
         if (checker.IsSlider()) {
-            let checkerMoves = checker.GetMoves(board);
-            for (let slidingDirection of checker.GetSlidingMasks()) {
-                let checkerMovesInDirection = checkerMoves & slidingDirection;
-                if (this.#isKingInCheck(king, checkerMovesInDirection)) {
-                    pathFromCheckerToKing = checkerMovesInDirection & ~king.position;
-                    break;
-                }
-            }
+            return GetRay(checker.rank, checker.file, king.rank, king.file, true, false);
         } else {
-            pathFromCheckerToKing = 0n;
+            return checker.position;
         }
-
-        return checker.position | pathFromCheckerToKing;
     }
 
     #calculateSquaresAttacked(enemyPieces, board) { //****** implement in board
@@ -276,7 +265,8 @@ class MoveGenerator {
             let castlingPath = castlingMoveFlag === E_MoveFlag.QueenSideCastling ?
                 king.position << 1n | king.position << 2n | king.position << 3n :
                 king.position >> 1n | king.position >> 2n;
-            let isCastlingPathClear = (board.getEmptySpaces() & castlingPath) === castlingPath;
+
+            let isCastlingPathObstructed = (board.getEmptySpaces() & castlingPath) !== castlingPath;
 
             //Your king can not pass through check
             let kingPathToCastle = castlingMoveFlag === E_MoveFlag.QueenSideCastling ?
@@ -286,7 +276,7 @@ class MoveGenerator {
             let isKingPathChecked = (kingPathToCastle & attackedSquares) > 1n;
 
 
-            if (isCastlingPathClear && !isKingPathChecked) {
+            if (!isCastlingPathObstructed && !isKingPathChecked) {
                 let kingTargetFile = CASTLING_FILES[castlingMoveFlag][E_PieceType.King][1];
                 let rookTargetFile = CASTLING_FILES[castlingMoveFlag][E_PieceType.Rook][1];
 
