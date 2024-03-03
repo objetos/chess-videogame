@@ -4,7 +4,11 @@ class Knight extends Piece {
     GetType() {
         return E_PieceType.Knight;
     }
-
+    /**
+     * 
+     * @param {Board} board 
+     * @returns 
+     */
     GetMoves(board) {
         //calculate current square
         let currentSquare = (this.rank - 1) * 8 + (9 - this.file);
@@ -24,7 +28,7 @@ class Knight extends Piece {
             moves = moves & ~Board.getFile(1) & ~Board.getFile(2);
         }
         //remove pieces of same color
-        moves = moves & ~board.getSpacesWithPieces(this.color, E_PieceType.Any);
+        moves = moves & ~board.getOccupied(this.color, E_PieceType.Any);
 
         return moves;
     }

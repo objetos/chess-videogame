@@ -331,14 +331,14 @@ class Board {
      * @param {E_PieceType} pieceType 
      * @returns {BigInt} Bitboard that contains pieces of given characteristics.
      */
-    getSpacesWithPieces(pieceColor = E_PieceColor.Any, pieceType = E_PieceType.Any) { //****** compress in get occupied routine
+    getOccupied(pieceColor = E_PieceColor.Any, pieceType = E_PieceType.Any) { //****** compress in get occupied routine
         console.assert(Object.values(E_PieceType).includes(pieceType), "Piece type not defined");
         console.assert(Object.values(E_PieceColor).includes(pieceColor), "Piece color not defined");
 
         let piecesBitboard = 0n;
         let pieces = [];
 
-        if (pieceColor === E_PieceColor.Any && pieceType === E_PieceType.Any) return this.getOccupiedSpaces();
+        if (pieceColor === E_PieceColor.Any && pieceType === E_PieceType.Any) return this.#board.toBigInt();
 
         if (pieceColor === E_PieceColor.Any) {
             for (let color of Object.values(E_PieceColor)) {
@@ -375,7 +375,7 @@ class Board {
      */
     getEmptySpaces() {
         //get board occupied by pieces
-        let occupied = this.getOccupiedSpaces();
+        let occupied = this.getOccupied();
         //reverse board to obtain empty spaces
         let empty = ~occupied;
         return empty;

@@ -3,10 +3,21 @@ class Pawn extends Piece {
         return E_PieceType.Pawn;
     }
 
+    /**
+     * 
+     * @param {Board} board 
+     * @returns 
+     */
     GetMoves(board) {
         return this.GetCapturingMoves(board) | this.GetNonCapturingMoves(board);
     }
 
+
+    /**
+     * 
+     * @param {Board} board 
+     * @returns 
+     */
     GetNonCapturingMoves(board) {
         let oneSquareFront;
         let twoSquaresFront;
@@ -44,6 +55,11 @@ class Pawn extends Piece {
         return frontJump | frontMove;
     }
 
+    /**
+     * 
+     * @param {Board} board 
+     * @returns 
+     */
     GetCapturingMoves(board) {
         let rightDiagonalSquare;
         let leftDiagonalSquare;
@@ -67,11 +83,11 @@ class Pawn extends Piece {
 
         //calculate capture moves
         let rightCapture = rightDiagonalSquare &
-            board.getSpacesWithPieces(OppositePieceColor(this.color), E_PieceType.Any) & //There's an enemy piece in that square
+            board.getOccupied(OppositePieceColor(this.color), E_PieceType.Any) & //There's an enemy piece in that square
             ~Board.getFile(1); //remove right capture from 8th file to 1st file
 
         let leftCapture = leftDiagonalSquare &
-            board.getSpacesWithPieces(OppositePieceColor(this.color), E_PieceType.Any) & //There's an enemy piece in that square
+            board.getOccupied(OppositePieceColor(this.color), E_PieceType.Any) & //There's an enemy piece in that square
             ~Board.getFile(8); //remove right capture from 1st file to 8th file
 
         return leftCapture | rightCapture;

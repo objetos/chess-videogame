@@ -49,7 +49,7 @@ class MoveGenerator {
                         enemyCapturingMovesInEmptyBoard = enemyPiece.GetMoves(emptyBoard);
                     }
 
-                    protectedPieces |= enemyCapturingMovesInEmptyBoard & board.getSpacesWithPieces(OppositePieceColor(king.color), E_PieceType.Any);
+                    protectedPieces |= enemyCapturingMovesInEmptyBoard & board.getOccupied(OppositePieceColor(king.color), E_PieceType.Any);
 
                 } else {//if it is a slider
                     let slider = enemyPiece;
@@ -72,8 +72,8 @@ class MoveGenerator {
                     //check for pinned pieces and discovered checkers.
                     //Taken from https://www.chessprogramming.org/Checks_and_Pinned_Pieces_(Bitboards)
 
-                    let attacksFromSliderToKing = HyperbolaQuintessenceAlgorithm(board.getOccupiedSpaces(), slider.position, emptySpaceBetweenSliderAndKing);
-                    let attacksFromKingToSlider = HyperbolaQuintessenceAlgorithm(board.getOccupiedSpaces(), king.position, emptySpaceBetweenSliderAndKing);
+                    let attacksFromSliderToKing = HyperbolaQuintessenceAlgorithm(board.getOccupied(), slider.position, emptySpaceBetweenSliderAndKing);
+                    let attacksFromKingToSlider = HyperbolaQuintessenceAlgorithm(board.getOccupied(), king.position, emptySpaceBetweenSliderAndKing);
                     let intersection = (attacksFromKingToSlider[0] | attacksFromKingToSlider[1]) & (attacksFromSliderToKing[0] | attacksFromSliderToKing[1]);
 
                     //if there's no intersection
@@ -88,7 +88,7 @@ class MoveGenerator {
                     } else {
                         //There's one piece in between slider and king
                         //if the piece is an ally
-                        let isPieceAnAlly = (intersection & board.getSpacesWithPieces(king.color, E_PieceType.Any)) > 0n;
+                        let isPieceAnAlly = (intersection & board.getOccupied(king.color, E_PieceType.Any)) > 0n;
                         if (isPieceAnAlly) {
                             //piece is pinned
                             moveFilterForPinnedPieces[intersection] = emptySpaceBetweenSliderAndKing | slider.position;
