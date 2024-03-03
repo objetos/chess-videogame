@@ -474,6 +474,11 @@ class Board {
 
     //****** choose promotion from captured pieces
     #makePromotionMove(move) {
+        //if there's a piece in destination
+        if (this.#getPiece(move.endRank, move.endFile) !== null) {
+            //capture it
+            this.removePiece(move.endRank, move.endFile);
+        }
         //remove pawn
         this.removePiece(move.startRank, move.startFile);
         //if promotion occurs on rank 8
