@@ -26,6 +26,6 @@ class SlidingPiece extends Piece {
             let moveRays = HyperbolaQuintessenceAlgorithm(occupied, position, mask);
             slidingMoves = slidingMoves | moveRays[0] | moveRays[1];
         });
-        return slidingMoves & ~board.getOccupied(this.color, E_PieceType.Any);
+        return slidingMoves & ~board.getOccupied(this.color);
     }
 }

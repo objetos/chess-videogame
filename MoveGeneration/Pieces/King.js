@@ -46,7 +46,7 @@ class King extends Piece {
             moves = moves & ~Board.getFile(1) & ~Board.getFile(2);
         }
         //remove pieces of same color
-        moves = moves & ~board.getOccupied(this.color, E_PieceType.Any);
+        moves = moves & ~board.getOccupied(this.color);
 
         return moves;
     }

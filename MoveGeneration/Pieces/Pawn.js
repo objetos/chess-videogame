@@ -83,11 +83,11 @@ class Pawn extends Piece {
 
         //calculate capture moves
         let rightCapture = rightDiagonalSquare &
-            board.getOccupied(OppositePieceColor(this.color), E_PieceType.Any) & //There's an enemy piece in that square
+            board.getOccupied(OppositePieceColor(this.color)) & //There's an enemy piece in that square
             ~Board.getFile(1); //remove right capture from 8th file to 1st file
 
         let leftCapture = leftDiagonalSquare &
-            board.getOccupied(OppositePieceColor(this.color), E_PieceType.Any) & //There's an enemy piece in that square
+            board.getOccupied(OppositePieceColor(this.color)) & //There's an enemy piece in that square
             ~Board.getFile(8); //remove right capture from 1st file to 8th file
 
         return leftCapture | rightCapture;

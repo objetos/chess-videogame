@@ -49,7 +49,7 @@ class MoveGenerator {
                         enemyCapturingMovesInEmptyBoard = enemyPiece.GetMoves(emptyBoard);
                     }
 
-                    protectedPieces |= enemyCapturingMovesInEmptyBoard & board.getOccupied(OppositePieceColor(king.color), E_PieceType.Any);
+                    protectedPieces |= enemyCapturingMovesInEmptyBoard & board.getOccupied(OppositePieceColor(king.color));
 
                 } else {//if it is a slider
                     let slider = enemyPiece;
@@ -88,7 +88,7 @@ class MoveGenerator {
                     } else {
                         //There's one piece in between slider and king
                         //if the piece is an ally
-                        let isPieceAnAlly = (intersection & board.getOccupied(king.color, E_PieceType.Any)) > 0n;
+                        let isPieceAnAlly = (intersection & board.getOccupied(king.color)) > 0n;
                         if (isPieceAnAlly) {
                             //piece is pinned
                             moveFilterForPinnedPieces[intersection] = emptySpaceBetweenSliderAndKing | slider.position;
