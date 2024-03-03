@@ -31,40 +31,28 @@ class MoveGenerator {
         let protectedPieces = 0n;
 
         if (king !== undefined) {
-            // let checker;
-            // let numberOfCheckers = 0;
-            // if (this.#IsKingInCheck(king, attackedSquaresByEnemy)) {
-            //     //capture checkers or block their path to check
-            //     enemyPieces.forEach(piece => {
-            //         if (this.#IsKingInCheck(king, piece.GetMoves(board))) {
-            //             numberOfCheckers++;
-            //             checker = piece;
-            //         }
-            //     });
-            // }
-
-
             //for every enemy piece
-            for (let piece of enemyPieces) {
+            for (let enemyPiece of enemyPieces) {
                 //if is not a slider
-                if (!piece.IsSlider()) {
+                if (!enemyPiece.IsSlider()) {
 
                     //check if piece checks king
-                    if (this.#isKingInCheck(king, piece.GetMoves(board))) {
-                        checkers.push(piece);
+                    if (this.#isKingInCheck(king, enemyPiece.GetMoves(board))) {
+                        checkers.push(enemyPiece);
                     }
 
                     let emptyBoard = new Board('8/8/8/8/8/8/8/8');
                     let enemyCapturingMovesInEmptyBoard;
-                    if (piece.GetType() === E_PieceType.Pawn) {
-                        enemyCapturingMovesInEmptyBoard = piece.GetCaptureSquares();
+                    if (enemyPiece.GetType() === E_PieceType.Pawn) {
+                        enemyCapturingMovesInEmptyBoard = enemyPiece.GetCaptureSquares();
                     } else {
-                        enemyCapturingMovesInEmptyBoard = piece.GetMoves(emptyBoard);
+                        enemyCapturingMovesInEmptyBoard = enemyPiece.GetMoves(emptyBoard);
                     }
 
                     protectedPieces |= enemyCapturingMovesInEmptyBoard & board.getSpacesWithPieces(OppositePieceColor(king.color), E_PieceType.Any);
+
                 } else {//if it is a slider
-                    let slider = piece;
+                    let slider = enemyPiece;
 
                     //if there's no space between slider and king
                     let emptySpaceBetweenSliderAndKing = GetRay(king.rank, king.file, slider.rank, slider.file, false, false);
@@ -120,7 +108,7 @@ class MoveGenerator {
                 //the only legal moves are king moves
                 return kingMoves;
             } else if (checkers.length === 1) {
-                //create filter so moves can block the check
+                //create filter to only allow moves that can block the check
                 squaresToAvoidCheck = this.#calculateSquaresToAvoidCheck(king, checkers[0], board);
             }
 
@@ -190,14 +178,14 @@ class MoveGenerator {
 
     #generateKingMoves(king, enemyPieces, protectedPieces, board) {
 
-        let dangerSquaresForKing = 0n;
+        let dangerousSquaresForKing = 0n;
         board.removePiece(king.rank, king.file, false);
 
         enemyPieces.forEach(piece => {
             if (piece.GetType() === E_PieceType.Pawn) {
-                dangerSquaresForKing = dangerSquaresForKing | piece.GetCaptureSquares();
+                dangerousSquaresForKing = dangerousSquaresForKing | piece.GetCaptureSquares();
             } else {
-                dangerSquaresForKing = dangerSquaresForKing | piece.GetMoves(board);
+                dangerousSquaresForKing = dangerousSquaresForKing | piece.GetMoves(board);
             }
 
         });
@@ -206,9 +194,9 @@ class MoveGenerator {
 
         let kingRegularMoves = king.GetMoves(board);
 
-        dangerSquaresForKing = dangerSquaresForKing | protectedPieces;
+        dangerousSquaresForKing = dangerousSquaresForKing | protectedPieces;
 
-        let kingMovesBitboard = kingRegularMoves & ~dangerSquaresForKing;
+        let kingMovesBitboard = kingRegularMoves & ~dangerousSquaresForKing;
         return this.#convertBitboard(king, kingMovesBitboard, E_MoveFlag.Regular);
     }
 

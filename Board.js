@@ -1,4 +1,4 @@
-//******  CLASS PROLOG, ASSERT FLOATING INPUTS,  REMOVE MAGIC NUMBERS, DOCUMENT NEW METHODS, TESTING
+//******  CLASS PROLOG, ASSERT FLOATING INPUTS IN GETTING RANK FILE, ASSERT NEW METHODS,  REMOVE MAGIC NUMBERS, DOCUMENT NEW METHODS, TESTING NEW METHODS
 class Board {
     static #FIRST_FILE = 0x0101010101010101n;
     static #FIRST_RANK = 0xFFn;
@@ -320,6 +320,7 @@ class Board {
             } else if (change.type == "r") { //else if change was a removal 
                 //add piece
                 this.addPiece(change.piece, change.rank, change.file, false);
+                change.piece.SetPositionPerft(change.rank, change.file);
             }
         }
     }
@@ -475,6 +476,7 @@ class Board {
         let pieceToMove = this.#getPiece(move.startRank, move.startFile);
         this.removePiece(move.startRank, move.startFile);
         this.addPiece(pieceToMove, move.endRank, move.endFile);
+        pieceToMove.SetPosition(move.endRank, move.endFile);
     }
 
     //****** choose promotion from captured pieces
@@ -533,7 +535,7 @@ class Board {
         this.removePiece(move.startRank, move.endFile);
     }
 
-    addPiece(piece, rank, file, recordChange = true) {
+    addPiece(piece, rank, file, recordChange = true) {//****** piece already has rank and file???? pubilc ?????? 
         let rankIndex = 8 - rank;
         let fileIndex = file - 1;
         if (this.#getPiece(rank, file) !== null) {
@@ -541,7 +543,6 @@ class Board {
         }
         this.#piecesDictionary[piece.color][piece.GetType()].push(piece);
         this.#board.fill(rankIndex, fileIndex, piece);
-        piece.SetPosition(rank, file);
 
         if (recordChange) {
             let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];

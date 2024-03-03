@@ -48,6 +48,15 @@ class Piece {
         this.#position = this.#position << BigInt((rank - 1) * 8);
         this.#file = file;
     }
+    SetPositionPerft(rank, file) {
+        //****** assertions, test
+        //move to rank
+        this.#position = 1n << BigInt(8 - file);
+        this.#rank = rank;
+        //move to file
+        this.#position = this.#position << BigInt((rank - 1) * 8);
+        this.#file = file;
+    }
 
     get color() {
         return this.#color;
