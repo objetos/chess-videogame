@@ -20,9 +20,6 @@ class MoveGenerator {
             enemyPieces = enemyPieces.concat(piecesDict[OppositePieceColor(pieceColor)][pieceType]);
         }
 
-        //calculate squares attacked by enemy
-        let attackedSquaresByEnemy = this.#calculateSquaresAttacked(enemyPieces, board);
-
         //King safety
         let king = piecesDict[pieceColor][E_PieceType.King][0];
         let squaresToAvoidCheck = GetBooleanBitboard(true);
@@ -37,26 +34,28 @@ class MoveGenerator {
                 if (!enemyPiece.IsSlider()) {
 
                     //check if piece checks king
-                    if (this.#isKingInCheck(king, enemyPiece.GetMoves(board))) {
+                    let enemyCapturingMoves = enemyPiece.GetMoves(board) & board.getOccupied(OppositePieceColor(enemyPiece.color));
+                    let pieceChecksKing = (enemyCapturingMoves & king.position) > 1n;
+                    if (pieceChecksKing) {
                         checkers.push(enemyPiece);
                     }
 
-                    let emptyBoard = new Board('8/8/8/8/8/8/8/8');
-                    let enemyCapturingMovesInEmptyBoard;
-                    if (enemyPiece.GetType() === E_PieceType.Pawn) {
-                        enemyCapturingMovesInEmptyBoard = enemyPiece.GetCaptureSquares();
-                    } else {
-                        enemyCapturingMovesInEmptyBoard = enemyPiece.GetMoves(emptyBoard);
+                    let enemyPieceType = enemyPiece.GetType();
+                    if (enemyPieceType === E_PieceType.Pawn) {
+                        let pawnCapturingSquares = enemyPiece.GetCapturingSquares();
+                        protectedPieces |= pawnCapturingSquares & board.getOccupied(enemyPiece.color);
+                    } else if (enemyPieceType === E_PieceType.Knight | enemyPieceType === E_PieceType.King) {
+                        let emptyBoard = new Board('8/8/8/8/8/8/8/8');
+                        let enemyMovesInEmptyBoard = enemyPiece.GetMoves(emptyBoard);
+                        protectedPieces |= enemyMovesInEmptyBoard & board.getOccupied(enemyPiece.color);
                     }
-
-                    protectedPieces |= enemyCapturingMovesInEmptyBoard & board.getOccupied(OppositePieceColor(king.color));
 
                 } else {//if it is a slider
                     let slider = enemyPiece;
 
                     //if there's no space between slider and king
-                    let emptySpaceBetweenSliderAndKing = GetRay(king.rank, king.file, slider.rank, slider.file, false, false);
-                    if (emptySpaceBetweenSliderAndKing === 0n) {
+                    let rayFromSliderToKing = GetRay(king.rank, king.file, slider.rank, slider.file, false, false);
+                    if (rayFromSliderToKing === 0n) {
                         //if slider is right next to the king
                         let isSliderBesidesKing = (king.GetMoves(board) & slider.position) > 0n;
                         if (isSliderBesidesKing) {
@@ -72,16 +71,16 @@ class MoveGenerator {
                     //check for pinned pieces and discovered checkers.
                     //Taken from https://www.chessprogramming.org/Checks_and_Pinned_Pieces_(Bitboards)
 
-                    let attacksFromSliderToKing = HyperbolaQuintessenceAlgorithm(board.getOccupied(), slider.position, emptySpaceBetweenSliderAndKing);
-                    let attacksFromKingToSlider = HyperbolaQuintessenceAlgorithm(board.getOccupied(), king.position, emptySpaceBetweenSliderAndKing);
+                    let attacksFromSliderToKing = HyperbolaQuintessenceAlgorithm(board.getOccupied(), slider.position, rayFromSliderToKing);
+                    let attacksFromKingToSlider = HyperbolaQuintessenceAlgorithm(board.getOccupied(), king.position, rayFromSliderToKing);
                     let intersection = (attacksFromKingToSlider[0] | attacksFromKingToSlider[1]) & (attacksFromSliderToKing[0] | attacksFromSliderToKing[1]);
 
                     //if there's no intersection
                     if (intersection === 0n) {
                         //there are two or more pieces in between slider and king. 
-                        //Therefore, slider is not checking king and there are not pinned pieces nor enemy discovered checkes.
+                        //Therefore, slider is not checking king and there are not pinned pieces.
                         continue
-                    } else if ((intersection & board.getEmptySpaces()) === emptySpaceBetweenSliderAndKing) {
+                    } else if ((intersection & board.getEmptySpaces()) === rayFromSliderToKing) {
                         //There's no pieces in between slider and king. Slider is distant-cheking the king
                         checkers.push(slider);
                         continue;
@@ -91,7 +90,7 @@ class MoveGenerator {
                         let isPieceAnAlly = (intersection & board.getOccupied(king.color)) > 0n;
                         if (isPieceAnAlly) {
                             //piece is pinned
-                            moveFilterForPinnedPieces[intersection] = emptySpaceBetweenSliderAndKing | slider.position;
+                            moveFilterForPinnedPieces[intersection] = rayFromSliderToKing | slider.position;
                         } else { //else piece is an enemy
                             //piece creates a discovered check
                             protectedPieces |= intersection;
@@ -101,7 +100,7 @@ class MoveGenerator {
             }
 
 
-            let kingMoves = this.#generateKingMoves(king, enemyPieces, protectedPieces, board);
+            let kingMoves = this.#generateKingMoves(king, protectedPieces, board);
 
             //if there's more than one checker
             if (1 < checkers.length) {
@@ -153,7 +152,7 @@ class MoveGenerator {
 
         //generate castling moves
         let rooks = piecesDict[pieceColor][E_PieceType.Rook];
-        let castlingMoves = this.#generateCastlingMoves(king, rooks, attackedSquaresByEnemy, board);
+        let castlingMoves = this.#generateCastlingMoves(king, rooks, board);
         legalMoves = legalMoves.concat(castlingMoves);
 
         return legalMoves;
@@ -167,41 +166,24 @@ class MoveGenerator {
         }
     }
 
-    #calculateSquaresAttacked(enemyPieces, board) { //****** implement in board
-        let attackedSquares = 0n;
-        enemyPieces.forEach(piece => {
-            let enemyPieceMoves = piece.GetMoves(board);
-            attackedSquares = attackedSquares | enemyPieceMoves;
-        });
-        return attackedSquares;
-    }
-
-    #generateKingMoves(king, enemyPieces, protectedPieces, board) {
+    /**
+     * 
+     * @param {King} king 
+     * @param {bigint} protectedPieces 
+     * @param {Board} board 
+     * @returns 
+     */
+    #generateKingMoves(king, protectedPieces, board) {
 
         let dangerousSquaresForKing = 0n;
         board.removePiece(king.rank, king.file, false);
-
-        enemyPieces.forEach(piece => {
-            if (piece.GetType() === E_PieceType.Pawn) {
-                dangerousSquaresForKing = dangerousSquaresForKing | piece.GetCaptureSquares();
-            } else {
-                dangerousSquaresForKing = dangerousSquaresForKing | piece.GetMoves(board);
-            }
-
-        });
-
+        dangerousSquaresForKing |= board.getAttackedSquares(OppositePieceColor(king.color));
         board.addPiece(king, king.rank, king.file, false);
-
-        let kingRegularMoves = king.GetMoves(board);
 
         dangerousSquaresForKing = dangerousSquaresForKing | protectedPieces;
 
-        let kingMovesBitboard = kingRegularMoves & ~dangerousSquaresForKing;
+        let kingMovesBitboard = king.GetMoves(board) & ~dangerousSquaresForKing;
         return this.#convertBitboard(king, kingMovesBitboard, E_MoveFlag.Regular);
-    }
-
-    #isKingInCheck(king, attackedSquares) {
-        return (king.position & attackedSquares) > 1n;
     }
 
     #generateEnPassantMove(pawn) {
@@ -230,7 +212,7 @@ class MoveGenerator {
      * @param {Board} board 
      * @returns 
      */
-    #generateCastlingMoves(king, rooks, attackedSquares, board) {
+    #generateCastlingMoves(king, rooks, board) {
         //assumptions: king is a piece object. There's only one king. rooks is an array.
         if (king === undefined) return [];
         if (rooks === undefined || rooks.length === 0) return [];
@@ -238,7 +220,7 @@ class MoveGenerator {
         //The king can not have moved
         if (king.hasMoved) return [];
         //The king cannot be in check
-        if (this.#isKingInCheck(king, attackedSquares)) return [];
+        if (board.isKingInCheck(king.color)) return [];
 
         let castlingMoves = [];
         for (let rook of rooks) {
@@ -257,12 +239,12 @@ class MoveGenerator {
             let isCastlingPathObstructed = (board.getEmptySpaces() & castlingPath) !== castlingPath;
 
             //Your king can not pass through check
+            let attackedSquares = board.getAttackedSquares(OppositePieceColor(king.color));
             let kingPathToCastle = castlingMoveFlag === E_MoveFlag.QueenSideCastling ?
                 king.position << 1n | king.position << 2n :
                 king.position >> 1n | king.position >> 2n;
 
-            let isKingPathChecked = (kingPathToCastle & attackedSquares) > 1n;
-
+            let isKingPathChecked = (kingPathToCastle & attackedSquares) > 0n;
 
             if (!isCastlingPathObstructed && !isKingPathChecked) {
                 let kingTargetFile = CASTLING_FILES[castlingMoveFlag][E_PieceType.King][1];

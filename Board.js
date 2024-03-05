@@ -340,17 +340,7 @@ class Board {
 
         if (pieceColor === E_PieceColor.Any && pieceType === E_PieceType.Any) return this.#board.toBigInt();
 
-        if (pieceColor === E_PieceColor.Any) {
-            for (let color of Object.values(E_PieceColor)) {
-                pieces = pieces.concat(this.#piecesDictionary[color][pieceType]);
-            }
-        } else if (pieceType === E_PieceType.Any) {
-            for (let type of Object.values(E_PieceType)) {
-                pieces = pieces.concat(this.#piecesDictionary[pieceColor][type]);
-            }
-        } else {
-            pieces = pieces.concat(this.#piecesDictionary[pieceColor][pieceType]);
-        }
+        pieces = this.#getPieces(pieceColor, pieceType);
 
         //for each piece of given type    
         for (let piece of pieces) {
@@ -388,6 +378,31 @@ class Board {
         });
     }
 
+    getAttackedSquares(pieceColor = E_PieceColor.Any, pieceType = E_PieceType.Any) {// ****** assert, document
+        console.assert(Object.values(E_PieceType).includes(pieceType), "Piece type not defined");
+        console.assert(Object.values(E_PieceColor).includes(pieceColor), "Piece color not defined");
+        let attacksBitboard = 0n;
+        //for every piece of given characteristics
+        let pieces = this.#getPieces(pieceColor, pieceType);
+        pieces.forEach(piece => {
+            let pieceAttackMoves;
+            if (piece.GetType() === E_PieceType.Pawn) {
+                pieceAttackMoves = piece.GetCapturingSquares();
+            } else {
+                pieceAttackMoves = piece.GetMoves(this);
+            }
+            attacksBitboard |= pieceAttackMoves;
+        });
+
+        return attacksBitboard;
+    }
+
+    isKingInCheck(kingColor) {// ****** assert, document
+        let king = this.#getPieces(kingColor, E_PieceType.King);;
+        let squaresAttackedByEnemy = this.getAttackedSquares(OppositePieceColor(kingColor));
+        return (king.position & squaresAttackedByEnemy > 0n);
+    }
+
     /**
      * Prints 8x8 chess board in the console showing pieces' position and type. 
      * Lowercase letters refer to black pieces. Uppercase letters refer to white pieces.
@@ -422,7 +437,7 @@ class Board {
             case 'Q':
                 pieceObject = new Queen(E_PieceColor.White, rank, file);
                 break;
-            case 'B':
+            case 'B': 8
                 pieceObject = new Bishop(E_PieceColor.White, rank, file);
                 break;
             case 'R':
@@ -576,5 +591,28 @@ class Board {
         let rankIndex = 8 - rank;
         let fileIndex = file - 1;
         return this.#board.read(rankIndex, fileIndex);
+    }
+
+    #getPieces(pieceColor = E_PieceType.Any, pieceType = E_PieceType.Any) {
+        let pieces = [];
+        if (pieceColor === E_PieceColor.Any && pieceType === E_PieceType.Any) {
+            for (let color of Object.values(E_PieceColor)) {
+                for (let type of Object.values(E_PieceType)) {
+                    pieces = pieces.concat(this.#piecesDictionary[color][type]);
+                }
+            }
+        } else if (pieceColor === E_PieceColor.Any && pieceType !== E_PieceType.Any) {
+            for (let color of Object.values(E_PieceColor)) {
+                pieces = pieces.concat(this.#piecesDictionary[color][pieceType]);
+            }
+        } else if (pieceColor !== E_PieceColor.Any && pieceType === E_PieceType.Any) {
+            for (let type of Object.values(E_PieceType)) {
+                pieces = pieces.concat(this.#piecesDictionary[pieceColor][type]);
+            }
+        } else {
+            pieces = pieces.concat(this.#piecesDictionary[pieceColor][pieceType]);
+        }
+
+        return pieces;
     }
 }
