@@ -217,22 +217,17 @@ class MoveGenerator {
         if (king === undefined) return [];
         if (rooks === undefined || rooks.length === 0) return [];
 
-        //The king can not have moved
-        if (king.hasMoved) return [];
         //The king cannot be in check
         if (board.isKingInCheck(king.color)) return [];
 
         let castlingMoves = [];
         for (let rook of rooks) {
-            //The rook can not have moved
-            if (rook.hasMoved) continue;
-
             //is it a queen-side or king-side castling?
-            let castlingMoveFlag = king.file > rook.file ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
+            let castlingSide = king.file > rook.file ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
+            //This side must have castling rights. That is, rooks cannot have moved or been captured and king cannot have moved.
+            if (!board.hasCastlingRights(rook.color, castlingSide)) return [];
 
-            //No pieces can be between the king and rook
-            //let castlingPath = this.#castlingPaths[rook.color][castlingMoveFlag];
-            let castlingPath = castlingMoveFlag === E_MoveFlag.QueenSideCastling ?
+            let castlingPath = castlingSide === E_MoveFlag.QueenSideCastling ?
                 king.position << 1n | king.position << 2n | king.position << 3n :
                 king.position >> 1n | king.position >> 2n;
 
@@ -240,18 +235,18 @@ class MoveGenerator {
 
             //Your king can not pass through check
             let attackedSquares = board.getAttackedSquares(OppositePieceColor(king.color));
-            let kingPathToCastle = castlingMoveFlag === E_MoveFlag.QueenSideCastling ?
+            let kingPathToCastle = castlingSide === E_MoveFlag.QueenSideCastling ?
                 king.position << 1n | king.position << 2n :
                 king.position >> 1n | king.position >> 2n;
 
             let isKingPathChecked = (kingPathToCastle & attackedSquares) > 0n;
 
             if (!isCastlingPathObstructed && !isKingPathChecked) {
-                let kingTargetFile = CASTLING_FILES[castlingMoveFlag][E_PieceType.King][1];
-                let rookTargetFile = CASTLING_FILES[castlingMoveFlag][E_PieceType.Rook][1];
+                let kingTargetFile = CASTLING_FILES[castlingSide][E_PieceType.King][1];
+                let rookTargetFile = CASTLING_FILES[castlingSide][E_PieceType.Rook][1];
 
-                let kingMove = new Move(king.rank, king.file, king.rank, kingTargetFile, castlingMoveFlag);
-                let rookMove = new Move(rook.rank, rook.file, rook.rank, rookTargetFile, castlingMoveFlag);
+                let kingMove = new Move(king.rank, king.file, king.rank, kingTargetFile, castlingSide);
+                let rookMove = new Move(rook.rank, rook.file, rook.rank, rookTargetFile, castlingSide);
 
                 castlingMoves.push(kingMove, rookMove);
             }

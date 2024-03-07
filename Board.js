@@ -16,6 +16,7 @@ class Board {
             [E_MoveFlag.QueenSideCastling]: false
         }
     }
+    #lastPawnJump;
 
     /**
      * Gives a bitboard with a single file.
@@ -267,6 +268,7 @@ class Board {
         try {
             this.#boardChanges.push([]);
             this.#updateCastlingRights(move);//****** assert or any move flag
+            this.#updateLastPawnJump(move);
             switch (move.flag) {
                 case E_MoveFlag.Regular:
                     this.#makeRegularMove(move);
@@ -319,7 +321,7 @@ class Board {
                 this.addPiece(change.piece, change.rank, change.file, false);
                 change.piece.SetPositionPerft(change.rank, change.file);
             } else if (change.type == "c") {
-                this.#setCastlingRights(change.color, change.castlingSide, true);
+                this.#setCastlingRights(change.color, change.side, true);
             }
         }
     }
@@ -509,12 +511,31 @@ class Board {
         }
     }
 
-    #hasCastlingRights(color, castlingSide) {
+    hasCastlingRights(color, castlingSide) {
         return this.#castlingRigths[color][castlingSide];
+    }
+
+    getLastPawnJump() {
+        return this.#lastPawnJump;
     }
 
     #setCastlingRights(color, castlingSide, bool) {
         this.#castlingRigths[color][castlingSide] = bool;
+    }
+
+    #updateLastPawnJump(move) {
+        let pieceInStart = this.#getPiece(move.startRank, move.startFile);
+        if (pieceInStart.GetType() === E_PieceType.Pawn) {
+            let rankDiff = Math.abs(move.startRank - move.endFile);
+            if (rankDiff === 2) {
+                this.#lastPawnJump = move;
+            } else {
+                this.#lastPawnJump = null;
+            }
+        } else {
+            this.#lastPawnJump = null;
+        }
+
     }
 
     #updateCastlingRights(move) {//****** simplify
@@ -525,13 +546,13 @@ class Board {
         if (isCastlingMove) {
             let castlingSide = move.flag;
             let oppositeCastlingSide = move.flag === E_MoveFlag.KingSideCastling ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
-            if (this.#hasCastlingRights(pieceInStart.color, castlingSide)) {
+            if (this.hasCastlingRights(pieceInStart.color, castlingSide)) {
                 this.#setCastlingRights(pieceInStart.color, castlingSide, false);
                 let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
                 lastChanges.push({ "type": "c", "color": pieceInStart.color, "side": castlingSide });
             }
 
-            if (this.#hasCastlingRights(pieceInStart.color, oppositeCastlingSide)) {
+            if (this.hasCastlingRights(pieceInStart.color, oppositeCastlingSide)) {
                 this.#setCastlingRights(pieceInStart.color, oppositeCastlingSide, false);
                 let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
                 lastChanges.push({ "type": "c", "color": pieceInStart.color, "side": oppositeCastlingSide });
@@ -545,10 +566,10 @@ class Board {
 
             let isRookInInitialSquare = rook.color === E_PieceColor.White ?
                 (rook.rank === 1 && rook.file === 1) | (rook.rank === 1 && rook.file === 8) :
-                (rook.rank === 8 && rook.file === 2) | (rook.rank === 8 && rook.file === 8);
+                (rook.rank === 8 && rook.file === 1) | (rook.rank === 8 && rook.file === 8);
             if (isRookInInitialSquare) {
                 let castlingSide = rook.file === 1 ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
-                if (this.#hasCastlingRights(rook.color, castlingSide)) {
+                if (this.hasCastlingRights(rook.color, castlingSide)) {
                     this.#setCastlingRights(rook.color, castlingSide, false);
                     let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
                     lastChanges.push({ "type": "c", "color": rook.color, "side": castlingSide })
@@ -563,12 +584,12 @@ class Board {
                 (king.rank === 8 && king.file === 5);
 
             if (isKingInInitialSquare) {
-                if (this.#hasCastlingRights(king.color, E_MoveFlag.KingSideCastling)) {
+                if (this.hasCastlingRights(king.color, E_MoveFlag.KingSideCastling)) {
                     this.#setCastlingRights(king.color, E_MoveFlag.KingSideCastling, false);
                     let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
                     lastChanges.push({ "type": "c", "color": king.color, "side": E_MoveFlag.KingSideCastling })
                 }
-                if (this.#hasCastlingRights(king.color, E_MoveFlag.QueenSideCastling)) {
+                if (this.hasCastlingRights(king.color, E_MoveFlag.QueenSideCastling)) {
                     this.#setCastlingRights(king.color, E_MoveFlag.QueenSideCastling, false);
                     let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
                     lastChanges.push({ "type": "c", "color": king.color, "side": E_MoveFlag.QueenSideCastling });
@@ -583,7 +604,7 @@ class Board {
                 (rook.rank === 8 && rook.file === 1) | (rook.rank === 8 && rook.file === 8);
             if (isRookInInitialSquare) {
                 let castlingSide = rook.file === 1 ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
-                if (this.#hasCastlingRights(rook.color, castlingSide)) {
+                if (this.hasCastlingRights(rook.color, castlingSide)) {
                     this.#setCastlingRights(rook.color, castlingSide, false);
                     let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
                     lastChanges.push({ "type": "c", "color": rook.color, "side": castlingSide })
