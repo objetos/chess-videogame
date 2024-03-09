@@ -1,11 +1,34 @@
 var asyncDebugWaitTime = 300;
-var resultsInitialPosition = [1, 20, 400, 8902, 197281, 4865609, 119060324, 3195901860, 84998978956];
-//var resultsPosition5 = [44	1, 486	62, 379	2, 103, 487	89, 941, 194]
+
+var testPositions = {
+    standard: {
+        fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR',
+        positions: [20, 400, 8902, 197281]
+    },
+    pos2_kiwipet: {
+        fen: 'r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R',
+        positions: [48, 2039, 97862, 4085603]
+    },
+    pos3: {
+        fen: '8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8',
+        positions: [14, 191, 2812, 43238, 674624]
+    },
+    pos4: {
+        fen: 'r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1',
+        positions: [6, 264, 9467, 422333]
+    },
+    pos5: {
+        fen: 'rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R',
+        positions: [44, 1486, 62379, 2103487, 89941194]
+    },
+
+}
 
 
-function runPerftTest(board) {
-    for (let i = 0; i < resultsInitialPosition.length; i++) {
-        console.log("Depth: " + (i) + "  Result: " + perftTest(board, i) + "  Expected: " + resultsInitialPosition[i]);
+function runPerftTest(testPosition) {
+    let board = new Board(testPosition.fen);
+    for (let i = 0; i < testPosition.positions.length; i++) {
+        console.log("Depth: " + (i + 1) + "  Result: " + perftTest(board, i + 1) + "  Expected: " + testPosition.positions[i]);
     }
 }
 
@@ -23,7 +46,7 @@ async function runPerftTestAsync(board) {
  * @param {Board} board
  * @param {Number} depth
  */
-function perftTest(board, depth) {
+function perftTest(board, depth, debug) {
     if (depth == 0) {
         return 1;
     }
@@ -34,9 +57,11 @@ function perftTest(board, depth) {
     for (let move of moves) {
         board.makeMove(move);
         playingColor = OppositePieceColor(playingColor);
-        numberOfPositions += perftTest(board, depth - 1);
+        let positions = perftTest(board, depth - 1, false);
+        numberOfPositions += positions;
         board.unmakeMove();
         playingColor = OppositePieceColor(playingColor);
+        if (debug) console.log(MoveToString(move) + ": " + positions + "\n");
     }
 
     return numberOfPositions;
@@ -72,4 +97,16 @@ async function perftTestAsync(board, depth) {
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
+/**
+ * 
+ * @param {Move} move 
+ */
+function MoveToString(move) {
+    let startFileLetter = FileToLetter(move.startFile);
+    let endFileLetter = FileToLetter(move.endFile);
+    return startFileLetter + move.startRank + endFileLetter + move.endRank;
+}
 
+function FileToLetter(file) {
+    return String.fromCharCode(96 + file);
+}
