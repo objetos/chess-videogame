@@ -16,7 +16,7 @@ class Board {
             [E_MoveFlag.QueenSideCastling]: false
         }
     }
-    #lastPawnJump;
+    #lastPawnJump = null;
 
     /**
      * Gives a bitboard with a single file.
@@ -322,6 +322,8 @@ class Board {
                 change.piece.SetPositionPerft(change.rank, change.file);
             } else if (change.type == "c") {
                 this.#setCastlingRights(change.color, change.side, true);
+            } else if (change.type == "e") {
+                this.#lastPawnJump = change.state === true ? null : change.jump;
             }
         }
     }
@@ -525,14 +527,24 @@ class Board {
 
     #updateLastPawnJump(move) {
         let pieceInStart = this.#getPiece(move.startRank, move.startFile);
-        if (pieceInStart.GetType() === E_PieceType.Pawn) {
-            let rankDiff = Math.abs(move.startRank - move.endFile);
+        if (move.flag === E_MoveFlag.EnPassant) {
+            let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
+            lastChanges.push({ "type": "e", "state": false, "jump": this.#lastPawnJump });
+            this.#lastPawnJump = null;
+        } else if (pieceInStart.GetType() === E_PieceType.Pawn) {
+            let rankDiff = Math.abs(move.startRank - move.endRank);
             if (rankDiff === 2) {
                 this.#lastPawnJump = move;
-            } else {
+                let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
+                lastChanges.push({ "type": "e", "state": true });
+            } else if (this.#lastPawnJump !== null) {
+                let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
+                lastChanges.push({ "type": "e", "state": false, "jump": this.#lastPawnJump });
                 this.#lastPawnJump = null;
             }
-        } else {
+        } else if (this.#lastPawnJump !== null) {
+            let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
+            lastChanges.push({ "type": "e", "state": false, "jump": this.#lastPawnJump });
             this.#lastPawnJump = null;
         }
 

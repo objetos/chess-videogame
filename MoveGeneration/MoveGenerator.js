@@ -141,7 +141,7 @@ class MoveGenerator {
                     legalMoves = legalMoves.concat(promotionsMoves);
                     continue;
                 } else {
-                    let enPassant = this.#generateEnPassantMove(pawn);
+                    let enPassant = this.#generateEnPassantMove(pawn, board);
                     legalMoves = legalMoves.concat(enPassant);
                 }
             }
@@ -186,18 +186,29 @@ class MoveGenerator {
         return this.#convertBitboard(king, kingMovesBitboard, E_MoveFlag.Regular);
     }
 
-    #generateEnPassantMove(pawn) {
+    /**
+     * 
+     * @param {Pawn} pawn 
+     * @param {Board} board 
+     * @returns 
+     */
+    #generateEnPassantMove(pawn, board) {
+        let lastPawnJump = board.getLastPawnJump();
         //The en passant capture must be performed on the turn immediately after the pawn being captured moves.
-        if (this.#g_LastPawnJump == null) return [];
+        if (lastPawnJump === null) return [];
 
         //The capturing pawn must have advanced exactly three ranks to perform this move.
         if (pawn.rank === ENPASSANT_CAPTURING_RANKS[pawn.color]) {
             //The captured pawn must be right next to the capturing pawn.
-            let fileDiff = Math.abs(g_LastPawnJump.endFile - pawn.file);
-            if (fileDiff === 1) {
+            let fileDiff = Math.abs(lastPawnJump.endFile - pawn.file);
+            let rankDiff = Math.abs(lastPawnJump.endRank - pawn.rank);
+            if (fileDiff === 1 && rankDiff === 0) {
                 //You move your pawn diagonally to an adjacent square, one rank farther from where it had been, 
                 //on the same file where the enemy's pawn is.
-                return new Move(pawn.rank, pawn.file, pawn.rank + 1, g_LastPawnJump.endFile, E_MoveFlag.EnPassant);
+                let targetRank = pawn.color === E_PieceColor.White ? pawn.rank + 1 : pawn.rank - 1;
+                return new Move(pawn.rank, pawn.file, targetRank, lastPawnJump.endFile, E_MoveFlag.EnPassant);
+            } else {
+                return [];
             }
         } else {
             return [];
