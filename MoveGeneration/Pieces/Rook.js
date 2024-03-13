@@ -4,7 +4,7 @@ class Rook extends SlidingPiece {
         return E_PieceType.Rook;
     }
 
-    GetSlidingMasks() {
+    getSlidingRays() {
         return [Board.getFile(this.file), Board.getRank(this.rank)];
     }
 

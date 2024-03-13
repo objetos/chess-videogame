@@ -4,7 +4,7 @@ class Queen extends SlidingPiece {
         return E_PieceType.Queen;
     }
 
-    GetSlidingMasks() {
+    getSlidingRays() {
         return [Board.getRank(this.rank),
         Board.getFile(this.file),
         Board.getDiagonal(this.rank, this.file),

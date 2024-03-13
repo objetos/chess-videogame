@@ -15,14 +15,14 @@ function GetRay(startRank, startFile, endRank, endFile, includeStart = true, inc
         else return 0n;
     }
 
-    let rankDiff = startRank - endRank;
-    let fileDiff = startFile - endFile;
+    let rankDiff = endRank - startRank;
+    let fileDiff = endFile - startFile;
     let isPositiveRay = false;
     let mask = 0n;
 
     if (startRank === endRank) {
         mask = Board.getRank(startRank);
-        isPositiveRay = startFile > endFile;
+        isPositiveRay = endFile < startFile;
     } else if (startFile === endFile) {
         mask = Board.getFile(startFile);
         isPositiveRay = startRank < endRank;
@@ -30,10 +30,10 @@ function GetRay(startRank, startFile, endRank, endFile, includeStart = true, inc
         let isDiagonal = Math.sign(rankDiff) === Math.sign(fileDiff);
         if (isDiagonal) {
             mask = Board.getDiagonal(startRank, startFile);
-            isPositiveRay = rankDiff < 0 && fileDiff < 0;
+            isPositiveRay = 0 < rankDiff && 0 < fileDiff;
         } else {
             mask = Board.getAntiDiagonal(startRank, startFile);
-            isPositiveRay = 0 < rankDiff && fileDiff > 0;
+            isPositiveRay = 0 < rankDiff && fileDiff < 0;
         }
     } else {
         return 0n;

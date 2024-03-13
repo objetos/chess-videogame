@@ -51,22 +51,31 @@ class MoveGenerator {
                     }
 
                 } else {//if it is a slider
+
                     let slider = enemyPiece;
+                    let sliderRays = slider.getSlidingRays();
+                    //if (slider.GetType() === E_PieceType.Bishop) console.log(sliderRays);
+                    let rayFromSliderToKing = GetRay(slider.rank, slider.file, king.rank, king.file, false, true);
+                    //if (slider.GetType() === E_PieceType.Bishop) PrintBitboard(rayFromSliderToKing);
 
-                    //if there's no space between slider and king
-                    let rayFromSliderToKing = GetRay(king.rank, king.file, slider.rank, slider.file, false, false);
+                    //if there's no possible ray between slider and king
                     if (rayFromSliderToKing === 0n) {
-                        //if slider is right next to the king
-                        let isSliderBesidesKing = (king.GetMoves(board) & slider.position) > 0n;
-                        if (isSliderBesidesKing) {
-                            //slider is besides king, then it is checking he king.
-                            checkers.push(slider);
-                        } else {
-                            //king is not within slider's range, do nothing.
-                        }
+                        //king is not within slider's range, do nothing.
                         continue;
-                    }
+                    } else {
+                        let canSliderMoveOnRay = false;
+                        for (let ray of sliderRays) {
+                            //if (slider.GetType() === E_PieceType.Bishop) PrintBitboard(ray);
 
+                            if ((ray & rayFromSliderToKing) > 0n) {
+                                canSliderMoveOnRay = true;
+                            }
+                        }
+
+                        if (!canSliderMoveOnRay) {
+                            continue;
+                        }
+                    }
 
                     //check for pinned pieces and discovered checkers.
                     //Taken from https://www.chessprogramming.org/Checks_and_Pinned_Pieces_(Bitboards)
@@ -74,16 +83,18 @@ class MoveGenerator {
                     let attacksFromSliderToKing = HyperbolaQuintessenceAlgorithm(board.getOccupied(), slider.position, rayFromSliderToKing);
                     let attacksFromKingToSlider = HyperbolaQuintessenceAlgorithm(board.getOccupied(), king.position, rayFromSliderToKing);
                     let intersection = (attacksFromKingToSlider[0] | attacksFromKingToSlider[1]) & (attacksFromSliderToKing[0] | attacksFromSliderToKing[1]);
+                    let emptySpaceBetweenKingAndSlider = rayFromSliderToKing & ~king.position;
+                    let isSliderBesidesKing = (king.GetMoves(board) & slider.position) > 1n;
 
                     //if there's no intersection
-                    if (intersection === 0n) {
+                    if (intersection === 0n & !isSliderBesidesKing) {
                         //there are two or more pieces in between slider and king. 
                         //Therefore, slider is not checking king and there are not pinned pieces.
-                        continue
-                    } else if ((intersection & board.getEmptySpaces()) === rayFromSliderToKing) {
+                    } else if (intersection === 0n & isSliderBesidesKing) {
+                        checkers.push(slider);
+                    } else if ((intersection & board.getEmptySpaces()) === emptySpaceBetweenKingAndSlider) {
                         //There's no pieces in between slider and king. Slider is distant-cheking the king
                         checkers.push(slider);
-                        continue;
                     } else {
                         //There's one piece in between slider and king
                         //if the piece is an ally

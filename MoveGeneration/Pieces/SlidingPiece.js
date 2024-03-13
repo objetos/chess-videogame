@@ -4,7 +4,7 @@ class SlidingPiece extends Piece {
         throw new Error("Method 'GetType()' must be implemented.");
     }
 
-    GetSlidingMasks() {
+    getSlidingRays() {
         throw new Error("Method 'GetType()' must be implemented.");
     }
     /**
@@ -18,12 +18,12 @@ class SlidingPiece extends Piece {
         //Taken from https://www.youtube.com/watch?v=bCH4YK6oq8M&list=PLQV5mozTHmacMeRzJCW_8K3qw2miYqd0c&index=9&ab_channel=LogicCrazyChess.
 
         let occupied = board.getOccupied();
-        let masks = this.GetSlidingMasks();
+        let rays = this.getSlidingRays();
         let position = this.position;
         let slidingMoves = 0n;
 
-        masks.forEach(mask => {
-            let moveRays = HyperbolaQuintessenceAlgorithm(occupied, position, mask);
+        rays.forEach(ray => {
+            let moveRays = HyperbolaQuintessenceAlgorithm(occupied, position, ray);
             slidingMoves = slidingMoves | moveRays[0] | moveRays[1];
         });
         return slidingMoves & ~board.getOccupied(this.color);

@@ -3,7 +3,7 @@ var asyncDebugWaitTime = 300;
 var testPositions = {
     standard: {
         fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR',
-        positions: [20, 400, 8902, 197281]
+        positions: [20, 400, 8902, 197281, 4865609]
     },
     pos2_kiwipet: {
         fen: 'r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R',
@@ -46,7 +46,7 @@ async function runPerftTestAsync(board) {
  * @param {Board} board
  * @param {Number} depth
  */
-function perftTest(board, depth, debug) {
+function perftTest(board, depth, debug = false, playingColor = E_PieceColor.White) {
     if (depth == 0) {
         return 1;
     }
@@ -57,7 +57,7 @@ function perftTest(board, depth, debug) {
     for (let move of moves) {
         board.makeMove(move);
         playingColor = OppositePieceColor(playingColor);
-        let positions = perftTest(board, depth - 1, false);
+        let positions = perftTest(board, depth - 1, false, playingColor);
         numberOfPositions += positions;
         board.unmakeMove();
         playingColor = OppositePieceColor(playingColor);
