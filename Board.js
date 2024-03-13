@@ -640,17 +640,6 @@ class Board {
                 E_MoveFlag.Regular
             );
             this.#makeRegularMove(rookMove);
-        } //else if rook moved
-        else if (piece.GetType() === E_PieceType.Rook) {
-            //move king
-            let kingMove = new Move(
-                move.startRank,
-                CASTLING_FILES[move.flag][E_PieceType.King][0],
-                move.startRank,
-                CASTLING_FILES[move.flag][E_PieceType.King][1],
-                E_MoveFlag.Regular
-            );
-            this.#makeRegularMove(kingMove);
         } else {
             //error ******
         }

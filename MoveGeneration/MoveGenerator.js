@@ -268,9 +268,7 @@ class MoveGenerator {
                 let rookTargetFile = CASTLING_FILES[castlingSide][E_PieceType.Rook][1];
 
                 let kingMove = new Move(king.rank, king.file, king.rank, kingTargetFile, castlingSide);
-                let rookMove = new Move(rook.rank, rook.file, rook.rank, rookTargetFile, castlingSide);
-
-                castlingMoves.push(kingMove, rookMove);
+                castlingMoves.push(kingMove);
             }
         }
         return castlingMoves;
