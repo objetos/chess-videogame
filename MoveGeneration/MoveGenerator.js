@@ -247,14 +247,13 @@ class MoveGenerator {
             //is it a queen-side or king-side castling?
             let castlingSide = king.file > rook.file ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
             //This side must have castling rights. That is, rooks cannot have moved or been captured and king cannot have moved.
-            if (!board.hasCastlingRights(rook.color, castlingSide)) return [];
+            if (!board.hasCastlingRights(rook.color, castlingSide)) continue;
 
             let castlingPath = castlingSide === E_MoveFlag.QueenSideCastling ?
                 king.position << 1n | king.position << 2n | king.position << 3n :
                 king.position >> 1n | king.position >> 2n;
 
             let isCastlingPathObstructed = (board.getEmptySpaces() & castlingPath) !== castlingPath;
-
             //Your king can not pass through check
             let attackedSquares = board.getAttackedSquares(OppositePieceColor(king.color));
             let kingPathToCastle = castlingSide === E_MoveFlag.QueenSideCastling ?
