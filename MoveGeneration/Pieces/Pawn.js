@@ -79,7 +79,13 @@ class Pawn extends Piece {
                 throw new Error("No color specified");
         }
 
-        return rightDiagonalSquare | leftDiagonalSquare;
+        let rightCapture = rightDiagonalSquare &
+            ~Board.getFile(1); //remove right capture from 8th file to 1st file
+
+        let leftCapture = leftDiagonalSquare &
+            ~Board.getFile(8); //remove right capture from 1st file to 8th file
+
+        return rightCapture | leftCapture;
     }
 
 
