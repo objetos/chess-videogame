@@ -384,9 +384,10 @@ class Board {
     getAttackedSquares(pieceColor = E_PieceColor.Any, pieceType = E_PieceType.Any) {// ****** assert, document
         console.assert(Object.values(E_PieceType).includes(pieceType), "Piece type not defined");
         console.assert(Object.values(E_PieceColor).includes(pieceColor), "Piece color not defined");
+
+        let pieces = this.#getPieces(pieceColor, pieceType);
         let attacksBitboard = 0n;
         //for every piece of given characteristics
-        let pieces = this.#getPieces(pieceColor, pieceType);
         pieces.forEach(piece => {
             let pieceAttackMoves;
             if (piece.GetType() === E_PieceType.Pawn) {
@@ -401,9 +402,9 @@ class Board {
     }
 
     isKingInCheck(kingColor) {// ****** assert, document
-        let king = this.#getPieces(kingColor, E_PieceType.King);;
+        let king = this.#getPieces(kingColor, E_PieceType.King)[0];
         let squaresAttackedByEnemy = this.getAttackedSquares(OppositePieceColor(kingColor));
-        return (king.position & squaresAttackedByEnemy > 0n);
+        return (king.position & squaresAttackedByEnemy) > 0n;
     }
 
     /**
