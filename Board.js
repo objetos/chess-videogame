@@ -491,7 +491,7 @@ class Board {
         pieceToMove.SetPosition(move.endRank, move.endFile);
     }
 
-    //****** choose promotion from captured pieces
+    //****** choose promotion from captured pieces, assert
     #makePromotionMove(move) {
         //if there's a piece in destination
         if (this.#getPiece(move.endRank, move.endFile) !== null) {
@@ -500,18 +500,14 @@ class Board {
         }
         //remove pawn
         this.removePiece(move.startRank, move.startFile);
-        //if promotion occurs on rank 8
-        if (move.endRank === 8) {
-            //add a white queen
-            let whiteQueen = this.#createPiece('Q', move.endRank, move.endFile);
-            this.addPiece(whiteQueen, move.endRank, move.endFile);
-        } else if (move.endRank === 1) { //else if it occurs on rank 1
-            //add a black queen
-            let blackQueen = this.#createPiece('q', move.endRank, move.endFile);
-            this.addPiece(blackQueen, move.endRank, move.endFile);
-        } else {
-            //error ******
-        }
+        //create new piece 
+        let pieceType = Input.pieceSelectedForPromotion;
+        let pieceColor = move.endRank === 8 ? E_PieceColor.White : E_PieceColor.Black;
+        let pieceString = pieceColorTypeToString(pieceColor, pieceType);
+
+        let newPiece = this.#createPiece(pieceString, move.endRank, move.endFile);
+        this.addPiece(newPiece, move.endRank, move.endFile);
+
     }
 
     hasCastlingRights(color, castlingSide) {

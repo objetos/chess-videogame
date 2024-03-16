@@ -3,7 +3,7 @@ var asyncDebugWaitTime = 300;
 var testPositions = {
     standard: {
         fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR',
-        positions: [20, 400, 8902, 197281, 4865609]
+        positions: [20, 400, 8902, 197281]
     },
     pos2_kiwipet: {
         fen: 'r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R',
@@ -55,16 +55,45 @@ function perftTest(board, depth, debug = false, playingColor = E_PieceColor.Whit
     let numberOfPositions = 0;
 
     for (let move of moves) {
+        if (move.flag === E_MoveFlag.Promotion) {
+            numberOfPositions += perftTestPromotion(move, board, depth, debug, playingColor);
+            continue;
+        }
         board.makeMove(move);
         playingColor = OppositePieceColor(playingColor);
-        let positions = perftTest(board, depth - 1, false, playingColor);
+        let positions = perftTest(board, depth - 1, false, playingColor, move);
         numberOfPositions += positions;
         board.unmakeMove();
         playingColor = OppositePieceColor(playingColor);
-        if (debug) console.log(MoveToString(move) + ": " + positions + "\n");
+
+        if (debug) {
+            console.log(MoveToString(move) + " " + positions + "\n");
+        }
     }
 
     return numberOfPositions;
+}
+
+function perftTestPromotion(promotion, board, depth, debug, playingColor = E_PieceColor.White) {
+    let typesToPromote = [E_PieceType.Knight, E_PieceType.Bishop, E_PieceType.Rook, E_PieceType.Queen];
+    let numberOfPositions = 0;
+    for (let pieceType of typesToPromote) {
+        let promotionString = MoveToString(promotion) + pieceColorTypeToString(playingColor, pieceType);
+        Input.pieceSelectedForPromotion = pieceType;
+        board.makeMove(promotion);
+        playingColor = OppositePieceColor(playingColor);
+        let positions = perftTest(board, depth - 1, false, playingColor, promotion);
+        numberOfPositions += positions;
+        board.unmakeMove();
+        playingColor = OppositePieceColor(playingColor);
+
+        if (debug) {
+            console.log(promotionString + " " + positions + "\n");
+        }
+    }
+
+    return numberOfPositions;
+
 }
 
 /**

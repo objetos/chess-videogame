@@ -1,4 +1,4 @@
-const CASTLING_FILES = {//******  change array for smth else
+const CASTLING_FILES = {//******  change array for smth else, method?
     [E_MoveFlag.QueenSideCastling]: {
         [E_PieceType.King]: [5, 3],
         [E_PieceType.Rook]: [1, 4]
@@ -28,4 +28,35 @@ function OppositePieceColor(color) {
         default:
             throw Error("No color specified");
     }
+}
+function pieceColorTypeToString(pieceColor, pieceType) {
+    let pieceString = '';
+    switch (pieceType) {
+        case E_PieceType.King:
+            pieceString = 'k';
+            break;
+        case E_PieceType.Bishop:
+            pieceString = 'b';
+            break;
+        case E_PieceType.Knight:
+            pieceString = 'n';
+            break;
+        case E_PieceType.Queen:
+            pieceString = 'q';
+            break;
+        case E_PieceType.Pawn:
+            pieceString = 'p';
+            break;
+        case E_PieceType.Rook:
+            pieceString = 'r';
+            break;
+        default:
+            throw new Error("Incorrect piece type:" + piece);
+    }
+
+    if (pieceColor === E_PieceColor.White) {
+        pieceString = pieceString.toUpperCase();
+    }
+
+    return pieceString;
 }

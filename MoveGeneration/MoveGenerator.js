@@ -24,93 +24,13 @@ class MoveGenerator {
         let king = piecesDict[pieceColor][E_PieceType.King][0];
         let squaresToAvoidCheck = GetBooleanBitboard(true);
         let moveFilterForPinnedPieces = {};
-        let checkers = []
         let protectedPieces = 0n;
 
         if (king !== undefined) {
             //for every enemy piece
-            for (let enemyPiece of enemyPieces) {
-                //if is not a slider
-                if (!enemyPiece.IsSlider()) {
-
-                    //check if piece checks king
-                    let enemyCapturingMoves = enemyPiece.GetMoves(board) & board.getOccupied(OppositePieceColor(enemyPiece.color));
-                    let pieceChecksKing = (enemyCapturingMoves & king.position) > 1n;
-                    if (pieceChecksKing) {
-                        checkers.push(enemyPiece);
-                    }
-
-                    let enemyPieceType = enemyPiece.GetType();
-                    if (enemyPieceType === E_PieceType.Pawn) {
-                        let pawnCapturingSquares = enemyPiece.GetCapturingSquares();
-                        protectedPieces |= pawnCapturingSquares & board.getOccupied(enemyPiece.color);
-                    } else if (enemyPieceType === E_PieceType.Knight | enemyPieceType === E_PieceType.King) {
-                        let emptyBoard = new Board('8/8/8/8/8/8/8/8');
-                        let enemyMovesInEmptyBoard = enemyPiece.GetMoves(emptyBoard);
-                        protectedPieces |= enemyMovesInEmptyBoard & board.getOccupied(enemyPiece.color);
-                    }
-
-                } else {//if it is a slider
-
-                    let slider = enemyPiece;
-                    let sliderRays = slider.getSlidingRays();
-                    //if (slider.GetType() === E_PieceType.Bishop) console.log(sliderRays);
-                    let rayFromSliderToKing = GetRay(slider.rank, slider.file, king.rank, king.file, false, true);
-                    //if (slider.GetType() === E_PieceType.Bishop) PrintBitboard(rayFromSliderToKing);
-
-                    //if there's no possible ray between slider and king
-                    if (rayFromSliderToKing === 0n) {
-                        //king is not within slider's range, do nothing.
-                        continue;
-                    } else {
-                        let canSliderMoveOnRay = false;
-                        for (let ray of sliderRays) {
-                            //if (slider.GetType() === E_PieceType.Bishop) PrintBitboard(ray);
-
-                            if ((ray & rayFromSliderToKing) > 0n) {
-                                canSliderMoveOnRay = true;
-                            }
-                        }
-
-                        if (!canSliderMoveOnRay) {
-                            continue;
-                        }
-                    }
-
-                    //check for pinned pieces and discovered checkers.
-                    //Taken from https://www.chessprogramming.org/Checks_and_Pinned_Pieces_(Bitboards)
-
-                    let attacksFromSliderToKing = HyperbolaQuintessenceAlgorithm(board.getOccupied(), slider.position, rayFromSliderToKing);
-                    let attacksFromKingToSlider = HyperbolaQuintessenceAlgorithm(board.getOccupied(), king.position, rayFromSliderToKing);
-                    let intersection = (attacksFromKingToSlider[0] | attacksFromKingToSlider[1]) & (attacksFromSliderToKing[0] | attacksFromSliderToKing[1]);
-                    let emptySpaceBetweenKingAndSlider = rayFromSliderToKing & ~king.position;
-                    let isSliderBesidesKing = (king.GetMoves(board) & slider.position) > 1n;
-
-                    //if there's no intersection
-                    if (intersection === 0n & !isSliderBesidesKing) {
-                        //there are two or more pieces in between slider and king. 
-                        //Therefore, slider is not checking king and there are not pinned pieces.
-                    } else if (intersection === 0n & isSliderBesidesKing) {
-                        checkers.push(slider);
-                    } else if ((intersection & board.getEmptySpaces()) === emptySpaceBetweenKingAndSlider) {
-                        //There's no pieces in between slider and king. Slider is distant-cheking the king
-                        checkers.push(slider);
-                    } else {
-                        //There's one piece in between slider and king
-                        //if the piece is an ally
-                        let isPieceAnAlly = (intersection & board.getOccupied(king.color)) > 0n;
-                        if (isPieceAnAlly) {
-                            //piece is pinned
-                            moveFilterForPinnedPieces[intersection] = rayFromSliderToKing | slider.position;
-                        } else { //else piece is an enemy
-                            //piece creates a discovered check
-                            protectedPieces |= intersection;
-                        }
-                    }
-                }
-            }
-
-
+            moveFilterForPinnedPieces = this.#calculatePinnedPieces(enemyPieces, king, board);
+            let checkers = this.#calculateCheckers(enemyPieces, king, board);
+            protectedPieces = this.#calculateProtectedPieces(enemyPieces, board);
             let kingMoves = this.#generateKingMoves(king, protectedPieces, board);
 
             //if there's more than one checker
@@ -167,6 +87,100 @@ class MoveGenerator {
         legalMoves = legalMoves.concat(castlingMoves);
 
         return legalMoves;
+    }
+
+    #calculatePinnedPieces(enemyPieces, king, board) {
+        let moveFilterForPinnedPieces = {};
+        for (let enemyPiece of enemyPieces) {
+            //if it is  a slider
+            if (!enemyPiece.IsSlider()) continue;
+
+            let slider = enemyPiece;
+            let sliderRays = slider.getSlidingRays();
+            let rayFromSliderToKing = GetRay(slider.rank, slider.file, king.rank, king.file, false, true);
+
+            //if there's no possible ray between slider and king, king is not within slider's range, do nothing.
+            if (rayFromSliderToKing === 0n) continue;
+
+            let canSliderMoveOnRay = false;
+            for (let ray of sliderRays) {
+                if ((ray & rayFromSliderToKing) > 0n) {
+                    canSliderMoveOnRay = true;
+                }
+            }
+            //if slider can't move on ray, king is not within slider's range, do nothing. 
+            if (!canSliderMoveOnRay) continue;
+
+            //check for pinned pieces
+            //Taken from https://www.chessprogramming.org/Checks_and_Pinned_Pieces_(Bitboards)
+            let attacksFromSliderToKing = HyperbolaQuintessenceAlgorithm(board.getOccupied(), slider.position, rayFromSliderToKing);
+            let attacksFromKingToSlider = HyperbolaQuintessenceAlgorithm(board.getOccupied(), king.position, rayFromSliderToKing);
+            let intersection = (attacksFromKingToSlider[0] | attacksFromKingToSlider[1]) & (attacksFromSliderToKing[0] | attacksFromSliderToKing[1]);
+            let emptySpaceBetweenKingAndSlider = rayFromSliderToKing & ~king.position;
+
+            //if there's no intersection
+            if (intersection === 0n) {
+                //There are two or more pieces in between slider and king. Therefore, slider is not checking king and there are not pinned pieces.
+                //OR slider is besides the king and checking it.
+            } else if ((intersection & board.getEmptySpaces()) === emptySpaceBetweenKingAndSlider) {
+                //There's no pieces in between slider and king. Slider is distant-cheking the king
+            } else {
+                //There's one piece in between slider and king
+                //if the piece is an ally
+                let isPieceAnAlly = (intersection & board.getOccupied(king.color)) > 0n;
+                if (isPieceAnAlly) {
+                    //piece is pinned
+                    moveFilterForPinnedPieces[intersection] = rayFromSliderToKing | slider.position;
+                }
+            }
+        }
+        return moveFilterForPinnedPieces;
+    }
+
+    #calculateCheckers(enemyPieces, king, board) {
+        let checkers = [];
+        for (let enemyPiece of enemyPieces) {
+            let pieceChecksKing = (enemyPiece.GetMoves(board) & king.position) > 1n;
+            if (pieceChecksKing) {
+                checkers.push(enemyPiece);
+            }
+        }
+        return checkers;
+    }
+
+    #calculateProtectedPieces(enemyPieces, board) { // transfer to piece?
+        let protectedPieces = 0n;
+        //for every enemy piece
+        for (let enemyPiece of enemyPieces) {
+            //if it is a slider
+            if (enemyPiece.IsSlider()) {
+                let occupied = board.getOccupied();
+                let rays = enemyPiece.getSlidingRays();
+                let position = enemyPiece.position;
+                let slidingMoves = 0n;
+
+                rays.forEach(ray => {
+                    let moveRays = HyperbolaQuintessenceAlgorithm(occupied, position, ray);
+                    slidingMoves = slidingMoves | moveRays[0] | moveRays[1];
+                });
+
+
+                protectedPieces |= slidingMoves & board.getOccupied(enemyPiece.color);
+
+            } else if (enemyPiece.GetType() === E_PieceType.Pawn) {
+
+                let pawnCapturingSquares = enemyPiece.GetCapturingSquares();
+                protectedPieces |= pawnCapturingSquares & board.getOccupied(enemyPiece.color);
+
+            } else if (enemyPiece.GetType() === E_PieceType.Knight | enemyPiece.GetType() === E_PieceType.King) {
+                let emptyBoard = new Board('8/8/8/8/8/8/8/8');
+                let enemyMovesInEmptyBoard = enemyPiece.GetMoves(emptyBoard);
+                protectedPieces |= enemyMovesInEmptyBoard & board.getOccupied(enemyPiece.color);
+            }
+        }
+
+        return protectedPieces;
+
     }
 
     #calculateSquaresToAvoidCheck(king, checker) {
