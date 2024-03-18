@@ -24,25 +24,24 @@ class MoveGenerator {
         let king = piecesDict[pieceColor][E_PieceType.King][0];
         let squaresToAvoidCheck = GetBooleanBitboard(true);
         let moveFilterForPinnedPieces = {};
-        let protectedPieces = 0n;
 
         if (king !== undefined) {
             //for every enemy piece
-            moveFilterForPinnedPieces = this.#calculatePinnedPieces(enemyPieces, king, board);
             let checkers = this.#calculateCheckers(enemyPieces, king, board);
-            protectedPieces = this.#calculateProtectedPieces(enemyPieces, board);
-            let kingMoves = this.#generateKingMoves(king, protectedPieces, board);
+            let kingSafeMoves = this.#generateKingSafeMoves(king, enemyPieces, board);
 
             //if there's more than one checker
             if (1 < checkers.length) {
                 //the only legal moves are king moves
-                return kingMoves;
+                return kingSafeMoves;
             } else if (checkers.length === 1) {
                 //create filter to only allow moves that can block the check
                 squaresToAvoidCheck = this.#calculateSquaresToAvoidCheck(king, checkers[0], board);
+                //pinned pieces
             }
 
-            legalMoves = legalMoves.concat(kingMoves);
+            moveFilterForPinnedPieces = this.#calculatePinnedPieces(enemyPieces, king, board);
+            legalMoves = legalMoves.concat(kingSafeMoves);
         }
 
         //calculate regular moves for each piece
@@ -137,18 +136,18 @@ class MoveGenerator {
         return moveFilterForPinnedPieces;
     }
 
-    #calculateCheckers(enemyPieces, king, board) {
+    #calculateCheckers(enemyPieces, king, board) {//****** change arguments order
         let checkers = [];
         for (let enemyPiece of enemyPieces) {
             let pieceChecksKing = (enemyPiece.GetMoves(board) & king.position) > 1n;
             if (pieceChecksKing) {
-                checkers.push(enemyPiece);
+                checkers.push(enemyPiece); //****** check king checking king
             }
         }
         return checkers;
     }
 
-    #calculateProtectedPieces(enemyPieces, board) { // transfer to piece?
+    #calculateDangerousCaptures(enemyPieces, board) { // transfer to piece?
         let protectedPieces = 0n;
         //for every enemy piece
         for (let enemyPiece of enemyPieces) {
@@ -198,14 +197,15 @@ class MoveGenerator {
      * @param {Board} board 
      * @returns 
      */
-    #generateKingMoves(king, protectedPieces, board) {
-
+    #generateKingSafeMoves(king, enemyPieces, board) {
         let dangerousSquaresForKing = 0n;
+
         board.removePiece(king.rank, king.file, false);
-        dangerousSquaresForKing |= board.getAttackedSquares(OppositePieceColor(king.color));
+        let squaresAttackedByEnemy = board.getAttackedSquares(OppositePieceColor(king.color));
+        let dangerouseCapturesForKing = this.#calculateDangerousCaptures(enemyPieces, board);
         board.addPiece(king, king.rank, king.file, false);
 
-        dangerousSquaresForKing = dangerousSquaresForKing | protectedPieces;
+        dangerousSquaresForKing = dangerouseCapturesForKing | squaresAttackedByEnemy;
 
         let kingMovesBitboard = king.GetMoves(board) & ~dangerousSquaresForKing;
         return this.#convertBitboard(king, kingMovesBitboard, E_MoveFlag.Regular);
@@ -260,7 +260,7 @@ class MoveGenerator {
         board.addPiece(capturedPawn, capturedPawnRank, capturedPawnFile, false);
         board.addPiece(capturingPawn, capturingPawnRank, capturingPawnFile, false);
 
-        if (wasKingInCheck && !isKingInCheck) {//en passant blocks the check ****** organize if statements
+        if (wasKingInCheck && !isKingInCheck) {//en passant blocks the check or captures pawn that was checking ****** organize if statements
             return true;
         } else if (!wasKingInCheck & isKingInCheck) {//en passant discovers a check
             return false;
