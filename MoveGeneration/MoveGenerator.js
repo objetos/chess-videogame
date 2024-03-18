@@ -72,8 +72,8 @@ class MoveGenerator {
                     legalMoves = legalMoves.concat(promotionsMoves);
                     continue;
                 } else {
-                    let enPassant = this.#generateEnPassantMove(pawn, board);
-                    legalMoves = legalMoves.concat(enPassant);
+                    let enPassantMove = this.#generateEnPassantMove(pawn, board);
+                    if (enPassantMove !== null && this.#isEnPassantLegal(pawn.color, enPassantMove, board)) legalMoves = legalMoves.concat(enPassantMove);
                 }
             }
 
@@ -220,8 +220,7 @@ class MoveGenerator {
     #generateEnPassantMove(pawn, board) {
         let lastPawnJump = board.getLastPawnJump();
         //The en passant capture must be performed on the turn immediately after the pawn being captured moves.
-        if (lastPawnJump === null) return [];
-
+        if (lastPawnJump === null) return null;
         //The capturing pawn must have advanced exactly three ranks to perform this move.
         if (pawn.rank === ENPASSANT_CAPTURING_RANKS[pawn.color]) {
             //The captured pawn must be right next to the capturing pawn.
@@ -233,10 +232,42 @@ class MoveGenerator {
                 let targetRank = pawn.color === E_PieceColor.White ? pawn.rank + 1 : pawn.rank - 1;
                 return new Move(pawn.rank, pawn.file, targetRank, lastPawnJump.endFile, E_MoveFlag.EnPassant);
             } else {
-                return [];
+                return null;
             }
         } else {
-            return [];
+            return null;
+        }
+    }
+    /**
+     * 
+     * @param {Pawn} capturedPawn 
+     * @param {Pawn} capturingPawn 
+     * @param {King} king 
+     */
+    #isEnPassantLegal(playingColor, enPassant, board) {// assumptions: king is checked by 1 piece at most
+        let capturedPawnRank = enPassant.startRank;
+        let capturedPawnFile = enPassant.endFile;
+        let capturingPawnRank = enPassant.startRank;
+        let capturingPawnFile = enPassant.startFile;
+
+        let wasKingInCheck = board.isKingInCheck(playingColor);
+
+        let capturedPawn = board.removePiece(capturedPawnRank, capturedPawnFile, false);
+        let capturingPawn = board.removePiece(capturingPawnRank, capturingPawnFile, false);
+
+        let isKingInCheck = board.isKingInCheck(playingColor);
+
+        board.addPiece(capturedPawn, capturedPawnRank, capturedPawnFile, false);
+        board.addPiece(capturingPawn, capturingPawnRank, capturingPawnFile, false);
+
+        if (wasKingInCheck && !isKingInCheck) {//en passant blocks the check ****** organize if statements
+            return true;
+        } else if (!wasKingInCheck & isKingInCheck) {//en passant discovers a check
+            return false;
+        } else if (wasKingInCheck & isKingInCheck) {//en passant discovered another check or enpassant move does not block the check
+            return false;
+        } else if (!wasKingInCheck & !isKingInCheck) {
+            return true;
         }
     }
 

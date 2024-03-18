@@ -686,6 +686,7 @@ class Board {
         }
 
         this.#board.clear(rankIndex, fileIndex);
+        return piece;
     }
 
     #getPiece(rank, file) {
