@@ -209,11 +209,21 @@ class Board {
         //calculate castling rights
         for (let color of Object.values(E_PieceColor)) {
             if (color === E_PieceColor.None || color === E_PieceColor.Any) continue;
+
             let king = this.#getPieces(color, E_PieceType.King).pop();
             if (king === undefined) {
                 this.#setCastlingRights(color, E_MoveFlag.KingSideCastling, false);
                 this.#setCastlingRights(color, E_MoveFlag.QueenSideCastling, false);
                 continue;
+            } else {
+                let isKingInInitialSquare = king.color === E_PieceColor.White ?
+                    (king.rank === 1 && king.file === 5) :
+                    (king.rank === 8 && king.file === 5);
+                if (!isKingInInitialSquare) {
+                    this.#setCastlingRights(color, E_MoveFlag.KingSideCastling, false);
+                    this.#setCastlingRights(color, E_MoveFlag.QueenSideCastling, false);
+                    continue;
+                }
             }
 
             let rooks = this.#getPieces(color, E_PieceType.Rook);
@@ -590,7 +600,7 @@ class Board {
 
             let isKingInInitialSquare = king.color === E_PieceColor.White ?
                 (king.rank === 1 && king.file === 5) :
-                (king.rank === 8 && king.file === 5);
+                (king.rank === 8 && king.file === 5);//****** transfer
 
             if (isKingInInitialSquare) {
                 if (this.hasCastlingRights(king.color, E_MoveFlag.KingSideCastling)) {
