@@ -22,7 +22,7 @@ class MoveGenerator {
 
         //King safety
         let king = piecesDict[pieceColor][E_PieceType.King][0];
-        let squaresToAvoidCheck = GetBooleanBitboard(true);
+        let targetSquaresToAvoidCheck = GetBooleanBitboard(true);
         let moveFilterForPinnedPieces = {};
 
         if (king !== undefined) {
@@ -36,7 +36,7 @@ class MoveGenerator {
                 return kingSafeMoves;
             } else if (checkers.length === 1) {
                 //create filter to only allow moves that can block the check
-                squaresToAvoidCheck = this.#calculateSquaresToAvoidCheck(king, checkers[0], board);
+                targetSquaresToAvoidCheck = this.#calculateSquaresToAvoidCheck(king, checkers[0], board);
                 //pinned pieces
             }
 
@@ -51,16 +51,13 @@ class MoveGenerator {
             //get board with permitted moves
             let pieceMovesBitboard = piece.GetMoves(board);
             //filter moves if king is in check
-            pieceMovesBitboard = pieceMovesBitboard & squaresToAvoidCheck;
+            pieceMovesBitboard = pieceMovesBitboard & targetSquaresToAvoidCheck;
             //filter moves if piece is pinned
             let isPiecePinned = moveFilterForPinnedPieces[piece.position] !== undefined;
             if (isPiecePinned) {
                 let moveFilter = moveFilterForPinnedPieces[piece.position];
                 pieceMovesBitboard = pieceMovesBitboard & moveFilter;
             }
-
-            //continue if this piece has no moves
-            if (pieceMovesBitboard === 0n) continue;
 
             //check for pawn special moves
             if (piece.GetType() === E_PieceType.Pawn) {
@@ -264,7 +261,7 @@ class MoveGenerator {
             return true;
         } else if (!wasKingInCheck & isKingInCheck) {//en passant discovers a check
             return false;
-        } else if (wasKingInCheck & isKingInCheck) {//en passant discovered another check or enpassant move does not block the check
+        } else if (wasKingInCheck & isKingInCheck) {//en passant discovered another check or enpassant move does not remove the check
             return false;
         } else if (!wasKingInCheck & !isKingInCheck) {
             return true;
