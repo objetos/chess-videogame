@@ -18,6 +18,16 @@ class Board {
     }
     #lastPawnJump = null;
 
+    #E_BoardChangeType = Object.freeze({
+        Addition: Symbol("Addition"),
+        Removal: Symbol("Removal"),
+        CastlingRigthsChange: Symbol("CastlingRigthsChange"),
+        EnPassantRightChange: Symbol("EnPassantRightChange"),
+    })
+
+
+
+
     /**
      * Gives a bitboard with a single file.
      * @param {number} fileNumber Number of the file, going from 1 to 8, where 1 is the leftmost column of the board.
@@ -267,25 +277,32 @@ class Board {
         //test: Visual test.
         //errors: move to same spot, move out of bounds, no piece on rank or file, two pieces of same color in same square,
 
-        //pop changes from stack
+        //get last board changes 
         let lastChanges = this.#popBoardChanges();
-        if (lastChanges !== undefined) return;
+        if (lastChanges === undefined) return;
+
         let numberOfChanges = lastChanges.length;
+        //for each change
         for (let i = 0; i < numberOfChanges; i++) {
             let change = lastChanges.pop();
+            //undo change
+            switch (change.type) {
+                case this.#E_BoardChangeType.Addition:
+                    this.removePiece(change.rank, change.file, false);
+                    break;
+                case this.#E_BoardChangeType.Removal:
+                    this.addPiece(change.piece, change.rank, change.file, false);
+                    change.piece.SetPositionPerft(change.rank, change.file);
+                    break;
+                case this.#E_BoardChangeType.CastlingRigthsChange:
+                    this.#setCastlingRights(change.color, change.castlingSide, true);
+                    break;
+                case this.#E_BoardChangeType.EnPassantRightChange:
+                    this.#lastPawnJump = change.state === true ? null : change.jump;
+                    break;
+                default:
+                    throw new Error("Invalid board change");
 
-            //if change was an addition
-            if (change.type == "a") {
-                //remove piece
-                this.removePiece(change.rank, change.file, false);
-            } else if (change.type == "r") { //else if change was a removal
-                //add piece
-                this.addPiece(change.piece, change.rank, change.file, false);
-                change.piece.SetPositionPerft(change.rank, change.file);
-            } else if (change.type == "c") {
-                this.#setCastlingRights(change.color, change.side, true);
-            } else if (change.type == "e") {
-                this.#lastPawnJump = change.state === true ? null : change.jump;
             }
         }
     }
@@ -301,7 +318,13 @@ class Board {
         this.#board.fill(rankIndex, fileIndex, piece);
 
         if (recordChange) {
-            let addition = { "type": "a", "rank": rank, "file": file, "piece": piece };
+
+            let addition = {
+                type: this.#E_BoardChangeType.Addition,
+                rank: rank,
+                file: file
+            };
+
             this.#pushBoardChange(addition);
         }
     }
@@ -316,7 +339,12 @@ class Board {
         }
 
         if (recordChange) {
-            let removal = { "type": "r", "rank": rank, "file": file, "piece": piece };
+            let removal = {
+                type: this.#E_BoardChangeType.Removal,
+                rank: rank,
+                file: file,
+                piece: piece
+            };
             this.#pushBoardChange(removal);
         }
 
@@ -646,7 +674,11 @@ class Board {
     #disableCastlingRights(color, castlingSide) {
         if (this.hasCastlingRights(color, castlingSide)) {
             this.#castlingRigths[color][castlingSide] = false;
-            let disableCastlingRights = { "type": "c", "color": color, "side": castlingSide }
+            let disableCastlingRights = {
+                type: this.#E_BoardChangeType.CastlingRigthsChange,
+                color: color,
+                castlingSide: castlingSide
+            }
             this.#pushBoardChange(disableCastlingRights);
         }
     }
@@ -655,22 +687,22 @@ class Board {
         let pieceInStart = this.#getPieceOnRankFile(move.startRank, move.startFile);
         if (move.flag === E_MoveFlag.EnPassant) {
             let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
-            lastChanges.push({ "type": "e", "state": false, "jump": this.#lastPawnJump });
+            lastChanges.push({ "type": this.#E_BoardChangeType.EnPassantRightChange, "state": false, "jump": this.#lastPawnJump });
             this.#lastPawnJump = null;
         } else if (pieceInStart.GetType() === E_PieceType.Pawn) {
             let rankDiff = Math.abs(move.startRank - move.endRank);
             if (rankDiff === 2) {
                 this.#lastPawnJump = move;
                 let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
-                lastChanges.push({ "type": "e", "state": true });
+                lastChanges.push({ "type": this.#E_BoardChangeType.EnPassantRightChange, "state": true });
             } else if (this.#lastPawnJump !== null) {
                 let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
-                lastChanges.push({ "type": "e", "state": false, "jump": this.#lastPawnJump });
+                lastChanges.push({ "type": this.#E_BoardChangeType.EnPassantRightChange, "state": false, "jump": this.#lastPawnJump });
                 this.#lastPawnJump = null;
             }
         } else if (this.#lastPawnJump !== null) {
             let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
-            lastChanges.push({ "type": "e", "state": false, "jump": this.#lastPawnJump });
+            lastChanges.push({ "type": this.#E_BoardChangeType.EnPassantRightChange, "state": false, "jump": this.#lastPawnJump });
             this.#lastPawnJump = null;
         }
 

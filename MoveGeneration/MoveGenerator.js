@@ -232,11 +232,12 @@ class MoveGenerator {
             return null;
         }
     }
+
     /**
      * 
-     * @param {Pawn} capturedPawn 
-     * @param {Pawn} capturingPawn 
-     * @param {King} king 
+     * @param {E_PieceColor} playingColor 
+     * @param {Move} enPassant 
+     * @param {Board} board 
      */
     #isEnPassantLegal(playingColor, enPassant, board) {// assumptions: king is checked by 1 piece at most
         let capturedPawnRank = enPassant.startRank;
