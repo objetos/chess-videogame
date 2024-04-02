@@ -50,8 +50,8 @@ class Board {
 
     /**
      * Gives a bitboard with a single diagonal that contains the square given by rank and file.
-     * @param {number} rank 
-     * @param {number} file 
+     * @param {number} rank
+     * @param {number} file
      * @returns {BigInt} Bitboard that contains the diagonal.
      */
     static getDiagonal(rank, file) {
@@ -82,7 +82,7 @@ class Board {
 
     /**
      * Gives a bitboard with a single antidiagonal that contains the square given by rank and file.
-     * @param {number} rank 
+     * @param {number} rank
      * @param {number} file
      * @returns {BigInt} Bitboard that contains the antidiagonal.
      */
@@ -101,7 +101,7 @@ class Board {
     /**
      * Flips a bitboard along the 8th diagonal (middle diagonal).
      * Taken from: https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating
-     * @param {BigInt} bitboard 
+     * @param {BigInt} bitboard
      * @returns {BigInt} Flipped bitboard
      */
     static #flipDiagonally(bitboard) {
@@ -125,8 +125,8 @@ class Board {
     /**
      * Mirrors a bitboard along a vertical line.
      * Taken from: https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating
-     * @param {BigInt} bitboard 
-     * @returns {BigInt} Mirrored bitboard 
+     * @param {BigInt} bitboard
+     * @returns {BigInt} Mirrored bitboard
      */
     static #mirrorHorizontally(bitboard) {
         console.assert(typeof bitboard === "bigint", "Invalid bitboard");
@@ -209,7 +209,7 @@ class Board {
 
     /**
      * @param {E_PieceColor} color
-     * @return {Move[]} Array of legal moves of pieces of given color 
+     * @return {Move[]} Array of legal moves of pieces of given color
      */
     generateMoves(pieceColor) {
         console.assert(Object.values(E_PieceColor).includes(pieceColor), "Invalid piece color");
@@ -217,7 +217,7 @@ class Board {
     }
 
     /**
-     * 
+     *
      * @param {Move} move Applies move to board
      */
     makeMove(move) {
@@ -264,19 +264,21 @@ class Board {
      * Undo's last move made in the board. If no move has been made, it will do nothing.
      */
     unmakeMove() {
-        //test: Visual test. 
+        //test: Visual test.
         //errors: move to same spot, move out of bounds, no piece on rank or file, two pieces of same color in same square,
 
-        //pop changes from stack 
+        //pop changes from stack
         let lastChanges = this.#popBoardChanges();
+        if (lastChanges !== undefined) return;
         let numberOfChanges = lastChanges.length;
         for (let i = 0; i < numberOfChanges; i++) {
             let change = lastChanges.pop();
+
             //if change was an addition
             if (change.type == "a") {
                 //remove piece
                 this.removePiece(change.rank, change.file, false);
-            } else if (change.type == "r") { //else if change was a removal 
+            } else if (change.type == "r") { //else if change was a removal
                 //add piece
                 this.addPiece(change.piece, change.rank, change.file, false);
                 change.piece.SetPositionPerft(change.rank, change.file);
@@ -289,7 +291,7 @@ class Board {
     }
 
 
-    addPiece(piece, rank, file, recordChange = true) {//****** piece already has rank and file???? pubilc ?????? 
+    addPiece(piece, rank, file, recordChange = true) {//****** piece already has rank and file???? pubilc ??????
         let rankIndex = 8 - rank;
         let fileIndex = file - 1;
         if (this.#getPieceOnRankFile(rank, file) !== null) {
@@ -332,8 +334,8 @@ class Board {
 
     /**
      *
-     * @param {E_PieceColor} pieceColor 
-     * @param {E_PieceType} pieceType 
+     * @param {E_PieceColor} pieceColor
+     * @param {E_PieceType} pieceType
      * @returns {BigInt} Bitboard that contains pieces of given characteristics.
      */
     getOccupied(pieceColor = E_PieceColor.Any, pieceType = E_PieceType.Any) { //****** compress in get occupied routine
@@ -347,7 +349,7 @@ class Board {
 
         pieces = this.#getPiecesOfType(pieceColor, pieceType);
 
-        //for each piece of given type    
+        //for each piece of given type
         for (let piece of pieces) {
             //get location in board
             let position = piece.position;
@@ -419,7 +421,7 @@ class Board {
     }
 
     /**
-     * Prints 8x8 chess board in the console showing pieces' position and type. 
+     * Prints 8x8 chess board in the console showing pieces' position and type.
      * Lowercase letters refer to black pieces. Uppercase letters refer to white pieces.
      * W = White. B = Black. P = Pawn. R = Rook. N = Knight. B = Bishop. Q = Queen. K = King. # = Empty.
      */
@@ -538,7 +540,7 @@ class Board {
         this.#makeRegularMove(move);
         //remove pawn
         this.removePiece(move.endRank, move.endFile);
-        //create new piece 
+        //create new piece
         let pieceType = Input.pieceSelectedForPromotion;
         let pieceColor = move.endRank === 8 ? E_PieceColor.White : E_PieceColor.Black;
         let pieceString = pieceColorTypeToString(pieceColor, pieceType);
@@ -586,68 +588,67 @@ class Board {
         let pieceInStart = this.#getPieceOnRankFile(move.startRank, move.startFile);
         let pieceInDestination = this.#getPieceOnRankFile(move.endRank, move.endFile);
 
+        //if it is a castling move
         let isCastlingMove = move.flag === E_MoveFlag.KingSideCastling | move.flag === E_MoveFlag.QueenSideCastling;
         if (isCastlingMove) {
+
+            //remove castling rights from both sides
+            let king = pieceInStart;
             let castlingSide = move.flag;
             let oppositeCastlingSide = move.flag === E_MoveFlag.KingSideCastling ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
-            if (this.hasCastlingRights(pieceInStart.color, castlingSide)) {
-                this.#setCastlingRights(pieceInStart.color, castlingSide, false);
-                let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
-                lastChanges.push({ "type": "c", "color": pieceInStart.color, "side": castlingSide });
-            }
+            this.#disableCastlingRights(king.color, castlingSide);
+            this.#disableCastlingRights(king.color, oppositeCastlingSide);
 
-            if (this.hasCastlingRights(pieceInStart.color, oppositeCastlingSide)) {
-                this.#setCastlingRights(pieceInStart.color, oppositeCastlingSide, false);
-                let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
-                lastChanges.push({ "type": "c", "color": pieceInStart.color, "side": oppositeCastlingSide });
+        } else {
 
-            }
-            return;
-        }
+            //if a rook is moving
+            if (pieceInStart.GetType() === E_PieceType.Rook) {
+                let rook = pieceInStart;
+                let rookCastlingSide = rook.file === 1 ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
 
-        if (pieceInStart.GetType() === E_PieceType.Rook) {
-            let rook = pieceInStart;
-            if (rook.isOnInitialSquare()) {
-                let castlingSide = rook.file === 1 ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
-                if (this.hasCastlingRights(rook.color, castlingSide)) {
-                    this.#setCastlingRights(rook.color, castlingSide, false);
-                    let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
-                    lastChanges.push({ "type": "c", "color": rook.color, "side": castlingSide })
+                //if the rook that's moving is on its initial corner and hasn't moved
+                if (rook.isOnInitialSquare() && this.hasCastlingRights(rook.color, rookCastlingSide)) {
+                    //Remove castling rights from this rook's side
+                    this.#disableCastlingRights(rook.color, rookCastlingSide);
+                }
+            } //else if a king is moving
+            else if (pieceInStart.GetType() === E_PieceType.King) {
+                let king = pieceInStart;
+                //if the king has not moved before
+                let hasKingMoved = !(king.isOnInitialSquare() &&
+                    this.hasCastlingRights(king.color, E_MoveFlag.KingSideCastling) &&
+                    this.hasCastlingRights(king.color, E_MoveFlag.QueenSideCastling));
+                if (!hasKingMoved) {
+                    //remove castling rights from both sides
+                    this.#disableCastlingRights(king.color, E_MoveFlag.KingSideCastling);
+                    this.#disableCastlingRights(king.color, E_MoveFlag.QueenSideCastling);
                 }
             }
 
-        } else if (pieceInStart.GetType() === E_PieceType.King) {
-            let king = pieceInStart;
+            //if a rook is captured
+            if (pieceInDestination !== null && pieceInDestination.GetType() === E_PieceType.Rook) {
+                let rook = pieceInDestination;
+                let rookCastlingSide = rook.file === 1 ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
 
-            if (king.isOnInitialSquare()) {
-                if (this.hasCastlingRights(king.color, E_MoveFlag.KingSideCastling)) {
-                    this.#setCastlingRights(king.color, E_MoveFlag.KingSideCastling, false);
-                    let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
-                    lastChanges.push({ "type": "c", "color": king.color, "side": E_MoveFlag.KingSideCastling })
-                }
-                if (this.hasCastlingRights(king.color, E_MoveFlag.QueenSideCastling)) {
-                    this.#setCastlingRights(king.color, E_MoveFlag.QueenSideCastling, false);
-                    let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
-                    lastChanges.push({ "type": "c", "color": king.color, "side": E_MoveFlag.QueenSideCastling });
-                }
-            }
-        }
-
-        if (pieceInDestination !== null && pieceInDestination.GetType() === E_PieceType.Rook) {
-            let rook = pieceInDestination;
-            if (rook.isOnInitialSquare()) {
-                let castlingSide = rook.file === 1 ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
-                if (this.hasCastlingRights(rook.color, castlingSide)) {
-                    this.#setCastlingRights(rook.color, castlingSide, false);
-                    let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
-                    lastChanges.push({ "type": "c", "color": rook.color, "side": castlingSide })
+                //if the rook that's being captured is on its initial corner  and hasn't moved
+                if (rook.isOnInitialSquare() && this.hasCastlingRights(rook.color, rookCastlingSide)) {
+                    //remove castling rights from the captured rook's side
+                    this.#disableCastlingRights(rook.color, rookCastlingSide);
                 }
             }
         }
     }
 
-    #setCastlingRights(color, castlingSide, bool) {
-        this.#castlingRigths[color][castlingSide] = bool;
+    #setCastlingRights(color, castlingSide, enabled) {
+        this.#castlingRigths[color][castlingSide] = enabled;
+    }
+
+    #disableCastlingRights(color, castlingSide) {
+        if (this.hasCastlingRights(color, castlingSide)) {
+            this.#castlingRigths[color][castlingSide] = false;
+            let disableCastlingRights = { "type": "c", "color": color, "side": castlingSide }
+            this.#pushBoardChange(disableCastlingRights);
+        }
     }
 
     #updateLastPawnJump(move) {
