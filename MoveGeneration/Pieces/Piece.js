@@ -21,10 +21,8 @@ class Piece {
         }
 
         console.assert(Object.values(E_PieceColor).includes(color), "Piece color not defined");
-        console.assert(typeof file === "number", "File Invalid");
-        console.assert(file >= 1 && file <= 8, "File " + file + " is out of bounds.");
-        console.assert(typeof rank === "number", "Rank Invalid");
-        console.assert(rank >= 1 && rank <= 8, "File " + rank + " is out of bounds.");
+        assertRank(rank);
+        assertFile(file);
 
         this.#color = color;
         this.#rank = rank;
@@ -40,15 +38,6 @@ class Piece {
     }
 
     SetPosition(rank, file) {
-        //****** assertions, test
-        //move to rank
-        this.#position = 1n << BigInt(8 - file);
-        this.#rank = rank;
-        //move to file
-        this.#position = this.#position << BigInt((rank - 1) * 8);
-        this.#file = file;
-    }
-    SetPositionPerft(rank, file) {
         //****** assertions, test
         //move to rank
         this.#position = 1n << BigInt(8 - file);
