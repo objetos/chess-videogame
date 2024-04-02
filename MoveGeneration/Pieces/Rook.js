@@ -11,4 +11,10 @@ class Rook extends SlidingPiece {
     GetMoves(board) {
         return super.GetMoves(board);
     }
+
+    isOnInitialSquare() {
+        return this.color === E_PieceColor.White ?
+            (this.rank === 1 && this.file === 1) | (this.rank === 1 && this.file === 8) :
+            (this.rank === 8 && this.file === 1) | (this.rank === 8 && this.file === 8);
+    }
 }

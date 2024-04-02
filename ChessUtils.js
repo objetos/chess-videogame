@@ -1,11 +1,23 @@
-const CASTLING_FILES = {//******  change array for smth else, method?
+const CASTLING_FILES = {//******  method?
     [E_MoveFlag.QueenSideCastling]: {
-        [E_PieceType.King]: [5, 3],
-        [E_PieceType.Rook]: [1, 4]
+        [E_PieceType.King]: {
+            startFile: 5,
+            endFile: 3
+        },
+        [E_PieceType.Rook]: {
+            startFile: 1,
+            endFile: 4
+        },
     },
     [E_MoveFlag.KingSideCastling]: {
-        [E_PieceType.King]: [5, 7],
-        [E_PieceType.Rook]: [8, 6]
+        [E_PieceType.King]: {
+            startFile: 5,
+            endFile: 7
+        },
+        [E_PieceType.Rook]: {
+            startFile: 8,
+            endFile: 6
+        }
     }
 }
 

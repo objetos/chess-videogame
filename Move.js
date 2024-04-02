@@ -6,7 +6,10 @@ class Move {
     #endFile;
     #flag;
 
-    constructor(startRank, startFile, endRank, endFile, flag = E_MoveFlag.Regular) {
+    constructor(startRank, startFile, endRank, endFile, flag = E_MoveFlag.None) {
+
+        this.#assertMove(startRank, startFile, endRank, endFile, flag);
+
         this.#startRank = startRank;
         this.#startFile = startFile;
         this.#endRank = endRank;
@@ -34,4 +37,11 @@ class Move {
         return this.#flag;
     }
 
+    #assertMove(startRank, startFile, endRank, endFile, flag) {
+        assertRank(startRank);
+        assertRank(endRank);
+        assertFile(startFile);
+        assertFile(endFile);
+        assert(!((startRank === endRank) && (startFile === endFile)), "Invalid move. Start and destination squares are the same");
+    }
 }

@@ -24,8 +24,8 @@ class Board {
      * @returns {BigInt} Bitboard that contains the specified file.
      */
     static getFile(fileNumber) {
-        console.assert(typeof fileNumber === "number", "File Invalid");
-        console.assert(fileNumber >= 1 && fileNumber <= 8, "File " + fileNumber + " is out of bounds.");
+
+        assertFile(fileNumber);
 
         let fileBitboard = this.#FIRST_FILE;
         //Move first file n positions
@@ -39,8 +39,8 @@ class Board {
      * @returns {BigInt} Bitboard that contains the specified rank.
      */
     static getRank(rankNumber) {
-        console.assert(typeof rankNumber === "number", "Rank Invalid");
-        console.assert(rankNumber >= 1 && rankNumber <= 8, "Rank " + rankNumber + " is out of bounds.");
+
+        assertRank(rankNumber);
 
         let rankBitboard = this.#FIRST_RANK;
         //Move first rank n positions
@@ -56,10 +56,8 @@ class Board {
      */
     static getDiagonal(rank, file) {
 
-        console.assert(typeof rank === "number", "Rank Invalid");
-        console.assert(rank >= 1 && rank <= 8, "Rank " + rank + " is out of bounds.");
-        console.assert(typeof file === "number", "File Invalid");
-        console.assert(file >= 1 && file <= 8, "File " + file + " is out of bounds.");
+        assertRank(rank);
+        assertFile(file);
 
         let diagonalNumber = (9 - file) + rank - 1;
         // Calculate for up to the eight diagonal
@@ -90,10 +88,8 @@ class Board {
      */
     static getAntiDiagonal(rank, file) {
 
-        console.assert(typeof rank === "number", "Rank Invalid");
-        console.assert(rank >= 1 && rank <= 8, "Rank " + rank + " is out of bounds.");
-        console.assert(typeof file === "number", "File Invalid");
-        console.assert(file >= 1 && file <= 8, "File " + file + " is out of bounds.");
+        assertRank(rank);
+        assertFile(file);
 
         // Get a normal diagonal
         let diagonalBitboard = this.getDiagonal(rank, 9 - file);
@@ -109,7 +105,7 @@ class Board {
      * @returns {BigInt} Flipped bitboard
      */
     static #flipDiagonally(bitboard) {
-        console.assert(typeof bitboard === "bigint", "Incorrect type");
+        console.assert(typeof bitboard === "bigint", "Invalid bitboard");
 
         let k4 = 0xf0f0f0f00f0f0f0fn;
         let k2 = 0xcccc0000cccc0000n;
@@ -127,37 +123,13 @@ class Board {
     }
 
     /**
-     * Flips a bitboard along the 8th antidiagonal (middle antidiagonal).
-     * Taken from: https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating
-     * @param {BigInt} bitboard 
-     * @returns {BigInt} Flipped bitboard
-     */
-    static #flipAntiDiagonally(bitboard) {
-        console.assert(typeof bitboard === "bigint", "Incorrect type");
-
-        let k4 = 0x0f0f0f0f00000000n;
-        let k2 = 0x3333000033330000n;
-        let k1 = 0x5500550055005500n;
-        let t;
-
-        t = k4 & (bitboard ^ (bitboard << 28n));
-        bitboard ^= t ^ (t >> 28n);
-        t = k2 & (bitboard ^ (bitboard << 14n));
-        bitboard ^= t ^ (t >> 14n);
-        t = k1 & (bitboard ^ (bitboard << 7n));
-        bitboard ^= t ^ (t >> 7n);
-
-        return bitboard;
-    }
-
-    /**
      * Mirrors a bitboard along a vertical line.
      * Taken from: https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating
      * @param {BigInt} bitboard 
      * @returns {BigInt} Mirrored bitboard 
      */
     static #mirrorHorizontally(bitboard) {
-        console.assert(typeof bitboard === "bigint", "Incorrect type");
+        console.assert(typeof bitboard === "bigint", "Invalid bitboard");
 
         let k1 = 0x5555555555555555n;
         let k2 = 0x3333333333333333n;
@@ -177,7 +149,9 @@ class Board {
     constructor(inputFen) {
         console.assert(typeof inputFen === 'string', "Invalid FEN");
 
+        //initialize move generator
         this.#moveGenerator = new MoveGenerator();
+        //initialize board
         let inputBoard = new Quadrille(inputFen);
 
         //initialize dictionary of pieces
@@ -188,67 +162,57 @@ class Board {
             }
         }
 
+        //create pieces
         //for each square
         for (let rankIndex = 0; rankIndex < 8; rankIndex++) {
             for (let fileIndex = 0; fileIndex < 8; fileIndex++) {
 
                 //if there's a piece
                 let pieceSymbol = inputBoard.read(rankIndex, fileIndex);
-                if (pieceSymbol === null) continue;
-                let piece = Quadrille.chessKeys[pieceSymbol];
+                if (pieceSymbol !== null) {
+                    let piece = Quadrille.chessKeys[pieceSymbol];
 
-                //create a piece
-                let rank = 8 - rankIndex;
-                let file = fileIndex + 1;
-                let pieceObject = this.#createPiece(piece, rank, file);
-                //add piece
-                this.addPiece(pieceObject, rank, file, false);
+                    //create a piece
+                    let rank = 8 - rankIndex;
+                    let file = fileIndex + 1;
+                    let pieceObject = this.#createPiece(piece, rank, file);
+                    //add piece
+                    this.addPiece(pieceObject, rank, file, false);
+                }
             }
         }
 
         //calculate castling rights
+        //for each color
         for (let color of Object.values(E_PieceColor)) {
             if (color === E_PieceColor.None || color === E_PieceColor.Any) continue;
 
-            let king = this.#getPieces(color, E_PieceType.King).pop();
-            if (king === undefined) {
+            let king = this.#getPiecesOfType(color, E_PieceType.King).pop();
+            //if board has no king or king has moved from initial square
+            if (king === undefined || !king.isOnInitialSquare()) {
+                //no castling is possible
                 this.#setCastlingRights(color, E_MoveFlag.KingSideCastling, false);
                 this.#setCastlingRights(color, E_MoveFlag.QueenSideCastling, false);
                 continue;
-            } else {
-                let isKingInInitialSquare = king.color === E_PieceColor.White ?
-                    (king.rank === 1 && king.file === 5) :
-                    (king.rank === 8 && king.file === 5);
-                if (!isKingInInitialSquare) {
-                    this.#setCastlingRights(color, E_MoveFlag.KingSideCastling, false);
-                    this.#setCastlingRights(color, E_MoveFlag.QueenSideCastling, false);
-                    continue;
+            }
+
+            let rooks = this.#getPiecesOfType(color, E_PieceType.Rook);
+            for (let rook of rooks) {
+                if (rook.isOnInitialSquare()) {
+                    let castlingSide = rook.file === 1 ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
+                    this.#setCastlingRights(color, castlingSide, true);
                 }
             }
-
-            let rooks = this.#getPieces(color, E_PieceType.Rook);
-            for (let rook of rooks) {
-                let isRookInInitialSquare = rook.color === E_PieceColor.White ?
-                    (rook.rank === 1 && rook.file === 1) | (rook.rank === 1 && rook.file === 8) :
-                    (rook.rank === 8 && rook.file === 1) | (rook.rank === 8 && rook.file === 8);
-
-                if (!isRookInInitialSquare) continue;
-
-                let castlingSide = rook.file === 1 ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
-
-                this.#castlingRigths[rook.color][castlingSide] = true;
-            }
         }
-
-
     }
+
 
     /**
      * @param {E_PieceColor} color
      * @return {Move[]} Array of legal moves of pieces of given color 
      */
     generateMoves(pieceColor) {
-        console.assert(Object.values(E_PieceColor).includes(pieceColor), "Piece color not defined");
+        console.assert(Object.values(E_PieceColor).includes(pieceColor), "Invalid piece color");
         return this.#moveGenerator.generateMoves(this, this.#piecesDictionary, pieceColor);
     }
 
@@ -257,28 +221,18 @@ class Board {
      * @param {Move} move Applies move to board
      */
     makeMove(move) {
-        //secrets: how are moves are done, information changed internally
-        //preconditions: move is legal and within board range. special moves have a flag to identify them
-        //postconditions: info will be updated 
-        //input:move
-        //output:none
+        //preconditions: Move is legal.
         //test: Print to visualize move is done, input incorrect moves and see response
         //errors: move to same spot, move out of bounds, no piece on rank or file, two pieces of same color in same square,
 
-        //check rank and file are within bounds ******
-        //check start and destination squares are not the same ****** 
-        //assert move
-
-        let pieceToMove = this.#getPiece(move.startRank, move.startFile);
-        //if no piece in start square
-        if (pieceToMove === null) {
-            console.log(move);
-            throw new Error("Failed making move. No piece in start square");
-        }
+        assert(move instanceof Move, "Invalid input move");
         try {
-            this.#boardChanges.push([]);
+            //start recording new board changes
+            this.#recordNewBoardChanges();
+            //update board information
             this.#updateCastlingRights(move);//****** assert or any move flag
             this.#updateLastPawnJump(move);
+            //apply move
             switch (move.flag) {
                 case E_MoveFlag.Regular:
                     this.#makeRegularMove(move);
@@ -295,30 +249,26 @@ class Board {
                 case E_MoveFlag.EnPassant:
                     this.#makeEnPassantMove(move);
                     break;
-                case E_MoveFlag.None:
-                    throw new Error("Failed making move. Move has no flag");
                 default:
-                    throw new Error("Failed making move. Move has no flag");
+                    throw new Error("Failed making move. Move has no valid flag");
             }
         } catch (error) {
             console.log(move);
             this.print();
-            this.#boardChanges.pop();
+            this.#popBoardChanges();
             throw error;
         }
     }
 
+    /**
+     * Undo's last move made in the board. If no move has been made, it will do nothing.
+     */
     unmakeMove() {
-        //secrets: how are moves are unmade, information changed internally
-        //preconditions: a move was made (move history is not empty). 
-        //postconditions: board will be updated to last state.
-        //input:move
-        //output:none
         //test: Visual test. 
         //errors: move to same spot, move out of bounds, no piece on rank or file, two pieces of same color in same square,
 
         //pop changes from stack 
-        let lastChanges = this.#boardChanges.pop();
+        let lastChanges = this.#popBoardChanges();
         let numberOfChanges = lastChanges.length;
         for (let i = 0; i < numberOfChanges; i++) {
             let change = lastChanges.pop();
@@ -338,6 +288,48 @@ class Board {
         }
     }
 
+
+    addPiece(piece, rank, file, recordChange = true) {//****** piece already has rank and file???? pubilc ?????? 
+        let rankIndex = 8 - rank;
+        let fileIndex = file - 1;
+        if (this.#getPieceOnRankFile(rank, file) !== null) {
+            throw new Error("Cannot add piece in a occupied square");
+        }
+        this.#piecesDictionary[piece.color][piece.GetType()].push(piece);
+        this.#board.fill(rankIndex, fileIndex, piece);
+
+        if (recordChange) {
+            let addition = { "type": "a", "rank": rank, "file": file, "piece": piece };
+            this.#pushBoardChange(addition);
+        }
+    }
+
+    removePiece(rank, file, recordChange = true) {
+        let rankIndex = 8 - rank;
+        let fileIndex = file - 1;
+        let piece = this.#getPieceOnRankFile(rank, file);
+
+        if (piece === null) {
+            throw new Error("No piece to remove in given rank and file")
+        }
+
+        if (recordChange) {
+            let removal = { "type": "r", "rank": rank, "file": file, "piece": piece };
+            this.#pushBoardChange(removal);
+        }
+
+        let pieceIndex = this.#piecesDictionary[piece.color][piece.GetType()].indexOf(piece);
+        if (pieceIndex > -1) {
+            this.#piecesDictionary[piece.color][piece.GetType()].splice(pieceIndex, 1);
+        } else {
+            throw new Error("Piece not found in dictionary");
+        }
+
+        this.#board.clear(rankIndex, fileIndex);
+        return piece;
+    }
+
+
     /**
      *
      * @param {E_PieceColor} pieceColor 
@@ -353,7 +345,7 @@ class Board {
 
         if (pieceColor === E_PieceColor.Any && pieceType === E_PieceType.Any) return this.#board.toBigInt();
 
-        pieces = this.#getPieces(pieceColor, pieceType);
+        pieces = this.#getPiecesOfType(pieceColor, pieceType);
 
         //for each piece of given type    
         for (let piece of pieces) {
@@ -377,25 +369,12 @@ class Board {
         return empty;
     }
 
-    draw() {
-        //background(255);
-        drawQuadrille(this.#board, {
-            objectDisplay: ({ graphics, value, cellLength = Quadrille.cellLength } = {}) => {
-                let piece = value;
-                graphics.rect(0, 0, cellLength, cellLength);
-                let pieceKey = piece.toString();
-                graphics.textAlign(CENTER, CENTER);
-                graphics.textSize(cellLength * 0.8);
-                graphics.text(Quadrille.chessSymbols[pieceKey], 0, 0, cellLength, cellLength);
-            }
-        });
-    }
 
     getAttackedSquares(pieceColor = E_PieceColor.Any, pieceType = E_PieceType.Any) {// ****** assert, document
         console.assert(Object.values(E_PieceType).includes(pieceType), "Piece type not defined");
         console.assert(Object.values(E_PieceColor).includes(pieceColor), "Piece color not defined");
 
-        let pieces = this.#getPieces(pieceColor, pieceType);
+        let pieces = this.#getPiecesOfType(pieceColor, pieceType);
         let attacksBitboard = 0n;
         //for every piece of given characteristics
         pieces.forEach(piece => {
@@ -412,9 +391,31 @@ class Board {
     }
 
     isKingInCheck(kingColor) {// ****** assert, document
-        let king = this.#getPieces(kingColor, E_PieceType.King)[0];
+        let king = this.#getPiecesOfType(kingColor, E_PieceType.King)[0];
         let squaresAttackedByEnemy = this.getAttackedSquares(OppositePieceColor(kingColor));
         return (king.position & squaresAttackedByEnemy) > 0n;
+    }
+
+    hasCastlingRights(color, castlingSide) {
+        return this.#castlingRigths[color][castlingSide];
+    }
+
+    getLastPawnJump() {
+        return this.#lastPawnJump;
+    }
+
+    draw() {
+        //background(255);
+        drawQuadrille(this.#board, {
+            objectDisplay: ({ graphics, value, cellLength = Quadrille.cellLength } = {}) => {
+                let piece = value;
+                graphics.rect(0, 0, cellLength, cellLength);
+                let pieceKey = piece.toString();
+                graphics.textAlign(CENTER, CENTER);
+                graphics.textSize(cellLength * 0.8);
+                graphics.text(Quadrille.chessSymbols[pieceKey], 0, 0, cellLength, cellLength);
+            }
+        });
     }
 
     /**
@@ -451,7 +452,7 @@ class Board {
             case 'Q':
                 pieceObject = new Queen(E_PieceColor.White, rank, file);
                 break;
-            case 'B': 8
+            case 'B':
                 pieceObject = new Bishop(E_PieceColor.White, rank, file);
                 break;
             case 'R':
@@ -487,79 +488,103 @@ class Board {
         return pieceObject;
     }
 
+    #getPieceOnRankFile(rank, file) {
+        let rankIndex = 8 - rank;
+        let fileIndex = file - 1;
+        return this.#board.read(rankIndex, fileIndex);
+    }
+
+    #getPiecesOfType(pieceColor = E_PieceType.Any, pieceType = E_PieceType.Any) {
+        let pieces = [];
+        if (pieceColor === E_PieceColor.Any && pieceType === E_PieceType.Any) {
+            for (let color of Object.values(E_PieceColor)) {
+                for (let type of Object.values(E_PieceType)) {
+                    pieces = pieces.concat(this.#piecesDictionary[color][type]);
+                }
+            }
+        } else if (pieceColor === E_PieceColor.Any && pieceType !== E_PieceType.Any) {
+            for (let color of Object.values(E_PieceColor)) {
+                pieces = pieces.concat(this.#piecesDictionary[color][pieceType]);
+            }
+        } else if (pieceColor !== E_PieceColor.Any && pieceType === E_PieceType.Any) {
+            for (let type of Object.values(E_PieceType)) {
+                pieces = pieces.concat(this.#piecesDictionary[pieceColor][type]);
+            }
+        } else {
+            pieces = pieces.concat(this.#piecesDictionary[pieceColor][pieceType]);
+        }
+
+        return pieces;
+    }
+
 
     #makeRegularMove(move) {
+        let pieceInDestination = this.#getPieceOnRankFile(move.endRank, move.endFile);
         //if there's a piece in destination
-        if (this.#getPiece(move.endRank, move.endFile) !== null) {
+        if (pieceInDestination !== null) {
             //capture it
             this.removePiece(move.endRank, move.endFile);
         }
+
         //move piece
-        let pieceToMove = this.#getPiece(move.startRank, move.startFile);
+        let pieceToMove = this.#getPieceOnRankFile(move.startRank, move.startFile);
         this.removePiece(move.startRank, move.startFile);
         this.addPiece(pieceToMove, move.endRank, move.endFile);
         pieceToMove.SetPosition(move.endRank, move.endFile);
     }
 
-    //****** choose promotion from captured pieces, assert
+    //****** choose promotion from captured pieces
     #makePromotionMove(move) {
-        //if there's a piece in destination
-        if (this.#getPiece(move.endRank, move.endFile) !== null) {
-            //capture it
-            this.removePiece(move.endRank, move.endFile);
-        }
+        this.#makeRegularMove(move);
         //remove pawn
-        this.removePiece(move.startRank, move.startFile);
+        this.removePiece(move.endRank, move.endFile);
         //create new piece 
         let pieceType = Input.pieceSelectedForPromotion;
         let pieceColor = move.endRank === 8 ? E_PieceColor.White : E_PieceColor.Black;
         let pieceString = pieceColorTypeToString(pieceColor, pieceType);
-
         let newPiece = this.#createPiece(pieceString, move.endRank, move.endFile);
+        //add promoted piece
         this.addPiece(newPiece, move.endRank, move.endFile);
 
     }
 
-    hasCastlingRights(color, castlingSide) {
-        return this.#castlingRigths[color][castlingSide];
+    #makeCastlingMove(move) {
+        //move  king
+        this.#makeRegularMove(move);
+        //move rook
+        let rookMove = new Move(
+            move.startRank,
+            CASTLING_FILES[move.flag][E_PieceType.Rook].startFile,
+            move.startRank,
+            CASTLING_FILES[move.flag][E_PieceType.Rook].endFile,
+            E_MoveFlag.Regular
+        );
+        this.#makeRegularMove(rookMove);
     }
 
-    getLastPawnJump() {
-        return this.#lastPawnJump;
+    #makeEnPassantMove(move) {
+        //move pawn
+        this.#makeRegularMove(move);
+        //remove captured pawn
+        this.removePiece(move.startRank, move.endFile);
     }
 
-    #setCastlingRights(color, castlingSide, bool) {
-        this.#castlingRigths[color][castlingSide] = bool;
+    #recordNewBoardChanges() {
+        this.#boardChanges.push([]);
     }
 
-    #updateLastPawnJump(move) {
-        let pieceInStart = this.#getPiece(move.startRank, move.startFile);
-        if (move.flag === E_MoveFlag.EnPassant) {
-            let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
-            lastChanges.push({ "type": "e", "state": false, "jump": this.#lastPawnJump });
-            this.#lastPawnJump = null;
-        } else if (pieceInStart.GetType() === E_PieceType.Pawn) {
-            let rankDiff = Math.abs(move.startRank - move.endRank);
-            if (rankDiff === 2) {
-                this.#lastPawnJump = move;
-                let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
-                lastChanges.push({ "type": "e", "state": true });
-            } else if (this.#lastPawnJump !== null) {
-                let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
-                lastChanges.push({ "type": "e", "state": false, "jump": this.#lastPawnJump });
-                this.#lastPawnJump = null;
-            }
-        } else if (this.#lastPawnJump !== null) {
-            let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
-            lastChanges.push({ "type": "e", "state": false, "jump": this.#lastPawnJump });
-            this.#lastPawnJump = null;
-        }
+    #pushBoardChange(change) {
+        let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
+        lastChanges.push(change);
+    }
 
+    #popBoardChanges() {
+        return this.#boardChanges.pop();
     }
 
     #updateCastlingRights(move) {//****** simplify
-        let pieceInStart = this.#getPiece(move.startRank, move.startFile);
-        let pieceInDestination = this.#getPiece(move.endRank, move.endFile);
+        let pieceInStart = this.#getPieceOnRankFile(move.startRank, move.startFile);
+        let pieceInDestination = this.#getPieceOnRankFile(move.endRank, move.endFile);
 
         let isCastlingMove = move.flag === E_MoveFlag.KingSideCastling | move.flag === E_MoveFlag.QueenSideCastling;
         if (isCastlingMove) {
@@ -582,11 +607,7 @@ class Board {
 
         if (pieceInStart.GetType() === E_PieceType.Rook) {
             let rook = pieceInStart;
-
-            let isRookInInitialSquare = rook.color === E_PieceColor.White ?
-                (rook.rank === 1 && rook.file === 1) | (rook.rank === 1 && rook.file === 8) :
-                (rook.rank === 8 && rook.file === 1) | (rook.rank === 8 && rook.file === 8);
-            if (isRookInInitialSquare) {
+            if (rook.isOnInitialSquare()) {
                 let castlingSide = rook.file === 1 ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
                 if (this.hasCastlingRights(rook.color, castlingSide)) {
                     this.#setCastlingRights(rook.color, castlingSide, false);
@@ -598,11 +619,7 @@ class Board {
         } else if (pieceInStart.GetType() === E_PieceType.King) {
             let king = pieceInStart;
 
-            let isKingInInitialSquare = king.color === E_PieceColor.White ?
-                (king.rank === 1 && king.file === 5) :
-                (king.rank === 8 && king.file === 5);//****** transfer
-
-            if (isKingInInitialSquare) {
+            if (king.isOnInitialSquare()) {
                 if (this.hasCastlingRights(king.color, E_MoveFlag.KingSideCastling)) {
                     this.#setCastlingRights(king.color, E_MoveFlag.KingSideCastling, false);
                     let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
@@ -618,10 +635,7 @@ class Board {
 
         if (pieceInDestination !== null && pieceInDestination.GetType() === E_PieceType.Rook) {
             let rook = pieceInDestination;
-            let isRookInInitialSquare = pieceInDestination.color === E_PieceColor.White ?
-                (rook.rank === 1 && rook.file === 1) | (rook.rank === 1 && rook.file === 8) :
-                (rook.rank === 8 && rook.file === 1) | (rook.rank === 8 && rook.file === 8);
-            if (isRookInInitialSquare) {
+            if (rook.isOnInitialSquare()) {
                 let castlingSide = rook.file === 1 ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
                 if (this.hasCastlingRights(rook.color, castlingSide)) {
                     this.#setCastlingRights(rook.color, castlingSide, false);
@@ -632,99 +646,32 @@ class Board {
         }
     }
 
-    #makeCastlingMove(move) {//****** simplify
-        let piece = this.#getPiece(move.startRank, move.startFile);
-        //move piece
-        this.#makeRegularMove(move);
-        //if king moved
-        if (piece.GetType() === E_PieceType.King) {
-            //move rook
-            let rookMove = new Move(
-                move.startRank,
-                CASTLING_FILES[move.flag][E_PieceType.Rook][0],
-                move.startRank,
-                CASTLING_FILES[move.flag][E_PieceType.Rook][1],
-                E_MoveFlag.Regular
-            );
-            this.#makeRegularMove(rookMove);
-        } else {
-            //error ******
-        }
+    #setCastlingRights(color, castlingSide, bool) {
+        this.#castlingRigths[color][castlingSide] = bool;
     }
 
-    #makeEnPassantMove(move) {
-        //move pawn
-        this.#makeRegularMove(move);
-        //remove captured pawn
-        this.removePiece(move.startRank, move.endFile);
-    }
-
-    addPiece(piece, rank, file, recordChange = true) {//****** piece already has rank and file???? pubilc ?????? 
-        let rankIndex = 8 - rank;
-        let fileIndex = file - 1;
-        if (this.#getPiece(rank, file) !== null) {
-            throw new Error("Cannot add piece in a occupied square");
-        }
-        this.#piecesDictionary[piece.color][piece.GetType()].push(piece);
-        this.#board.fill(rankIndex, fileIndex, piece);
-
-        if (recordChange) {
+    #updateLastPawnJump(move) {
+        let pieceInStart = this.#getPieceOnRankFile(move.startRank, move.startFile);
+        if (move.flag === E_MoveFlag.EnPassant) {
             let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
-            lastChanges.push({ "type": "a", "rank": rank, "file": file, "piece": piece });
-        }
-    }
-
-    removePiece(rank, file, recordChange = true) {
-        let rankIndex = 8 - rank;
-        let fileIndex = file - 1;
-        let piece = this.#getPiece(rank, file);
-
-        if (piece === null) {
-            throw new Error("No piece to remove in given rank and file")
-        }
-
-        if (recordChange) {
+            lastChanges.push({ "type": "e", "state": false, "jump": this.#lastPawnJump });
+            this.#lastPawnJump = null;
+        } else if (pieceInStart.GetType() === E_PieceType.Pawn) {
+            let rankDiff = Math.abs(move.startRank - move.endRank);
+            if (rankDiff === 2) {
+                this.#lastPawnJump = move;
+                let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
+                lastChanges.push({ "type": "e", "state": true });
+            } else if (this.#lastPawnJump !== null) {
+                let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
+                lastChanges.push({ "type": "e", "state": false, "jump": this.#lastPawnJump });
+                this.#lastPawnJump = null;
+            }
+        } else if (this.#lastPawnJump !== null) {
             let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
-            lastChanges.push({ "type": "r", "rank": rank, "file": file, "piece": piece });
+            lastChanges.push({ "type": "e", "state": false, "jump": this.#lastPawnJump });
+            this.#lastPawnJump = null;
         }
 
-        let pieceIndex = this.#piecesDictionary[piece.color][piece.GetType()].indexOf(piece);
-        if (pieceIndex > -1) {
-            this.#piecesDictionary[piece.color][piece.GetType()].splice(pieceIndex, 1);
-        } else {
-            throw new Error("Piece not found in dictionary");
-        }
-
-        this.#board.clear(rankIndex, fileIndex);
-        return piece;
-    }
-
-    #getPiece(rank, file) {
-        let rankIndex = 8 - rank;
-        let fileIndex = file - 1;
-        return this.#board.read(rankIndex, fileIndex);
-    }
-
-    #getPieces(pieceColor = E_PieceType.Any, pieceType = E_PieceType.Any) {
-        let pieces = [];
-        if (pieceColor === E_PieceColor.Any && pieceType === E_PieceType.Any) {
-            for (let color of Object.values(E_PieceColor)) {
-                for (let type of Object.values(E_PieceType)) {
-                    pieces = pieces.concat(this.#piecesDictionary[color][type]);
-                }
-            }
-        } else if (pieceColor === E_PieceColor.Any && pieceType !== E_PieceType.Any) {
-            for (let color of Object.values(E_PieceColor)) {
-                pieces = pieces.concat(this.#piecesDictionary[color][pieceType]);
-            }
-        } else if (pieceColor !== E_PieceColor.Any && pieceType === E_PieceType.Any) {
-            for (let type of Object.values(E_PieceType)) {
-                pieces = pieces.concat(this.#piecesDictionary[pieceColor][type]);
-            }
-        } else {
-            pieces = pieces.concat(this.#piecesDictionary[pieceColor][pieceType]);
-        }
-
-        return pieces;
     }
 }

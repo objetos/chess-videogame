@@ -1,8 +1,5 @@
 //****** CLASS PROLOG
 class MoveGenerator {
-    #g_LastPawnJump = null;// ******
-
-
     /**
      * @param {Board} board 
      * @param {E_PieceColor} pieceColor
@@ -286,10 +283,8 @@ class MoveGenerator {
 
         let castlingMoves = [];
         for (let rook of rooks) {
-            let isRookInInitialSquare = rook.color === E_PieceColor.White ?
-                (rook.rank === 1 && rook.file === 1) | (rook.rank === 1 && rook.file === 8) :
-                (rook.rank === 8 && rook.file === 1) | (rook.rank === 8 && rook.file === 8); //****** transfer to another place
-            if (!isRookInInitialSquare) continue;
+            //if rook has moved, skip
+            if (!rook.isOnInitialSquare()) continue;
             //is it a queen-side or king-side castling?
             let castlingSide = king.file > rook.file ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
             //This side must have castling rights. That is, rooks cannot have moved or been captured and king cannot have moved.
@@ -309,9 +304,7 @@ class MoveGenerator {
             let isKingPathChecked = (kingPathToCastle & attackedSquares) > 0n;
 
             if (!isCastlingPathObstructed && !isKingPathChecked) {
-                let kingTargetFile = CASTLING_FILES[castlingSide][E_PieceType.King][1];
-                let rookTargetFile = CASTLING_FILES[castlingSide][E_PieceType.Rook][1];
-
+                let kingTargetFile = CASTLING_FILES[castlingSide][E_PieceType.King].endFile;
                 let kingMove = new Move(king.rank, king.file, king.rank, kingTargetFile, castlingSide);
                 castlingMoves.push(kingMove);
             }

@@ -32,4 +32,10 @@ class King extends Piece {
 
         return moves;
     }
+
+    isOnInitialSquare() {
+        return this.color === E_PieceColor.White ?
+            (this.rank === 1 && this.file === 5) :
+            (this.rank === 8 && this.file === 5);
+    }
 }
