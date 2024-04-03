@@ -90,7 +90,7 @@ function perftTestPromotion(promotion, board, depth, debug, playingColor = E_Pie
     let typesToPromote = [E_PieceType.Knight, E_PieceType.Bishop, E_PieceType.Rook, E_PieceType.Queen];
     let numberOfPositions = 0;
     for (let pieceType of typesToPromote) {
-        let promotionString = MoveToString(promotion) + pieceColorTypeToString(playingColor, pieceType);
+        let promotionString = MoveToString(promotion) + colorTypeToString(playingColor, pieceType);
         Input.pieceSelectedForPromotion = pieceType;
         board.makeMove(promotion);
         playingColor = OppositePieceColor(playingColor);

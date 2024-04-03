@@ -1,7 +1,12 @@
 function assert(condition, message) {
     if (!condition) {
         let error = new Error();
-        console.log(error.stack);
+        let stack = error.stack;
+        let firstLineSkipIndex = stack.indexOf("\n");
+        let secondLineSkipIndex = stack.indexOf("\n", firstLineSkipIndex + 2);
+        let thisFunctionCall = stack.substring(firstLineSkipIndex, secondLineSkipIndex);
+        stack = stack.replace(thisFunctionCall, "");
+        console.log(stack);
         throw message || "Assertion failed";
     }
 }
