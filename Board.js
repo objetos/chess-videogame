@@ -1,4 +1,4 @@
-//******  CLASS PROLOG, ASSERT FLOATING INPUTS IN GETTING RANK FILE, ASSERT NEW METHODS,  REMOVE MAGIC NUMBERS, DOCUMENT NEW METHODS, TESTING NEW METHODS
+//******  CLASS PROLOG, ASSERT AND DOCUMENT PRIVATE METHODS
 class Board {
     static #FIRST_FILE = 0x0101010101010101n;
     static #FIRST_RANK = 0xFFn;
@@ -488,7 +488,10 @@ class Board {
 
         return this.#castlingRights[color][castlingSide];
     }
-
+    /**
+     * 
+     * @returns Object with information about en passant capture
+     */
     getEnPassantInfo() {
         return this.#enPassantInfo;
     }
