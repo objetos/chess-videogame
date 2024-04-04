@@ -89,7 +89,7 @@ class Pawn extends Piece {
     }
 
 
-    CanPromote() {
+    isBeforePromotingRank() {
         return this.rank === RANKS_TO_PROMOTE[this.color];
     }
 }

@@ -56,24 +56,21 @@ class MoveGenerator {
                 pieceMovesBitboard = pieceMovesBitboard & moveFilter;
             }
 
-            //check for pawn special moves
-            if (piece.GetType() === E_PieceType.Pawn) {
-                let pawn = piece;
-
-                if (pawn.CanPromote()) {
-                    let promotionsMoves = this.#convertBitboard(pawn, pieceMovesBitboard, E_MoveFlag.Promotion);
-                    legalMoves = legalMoves.concat(promotionsMoves);
-                    continue;
-                } else {
-                    let enPassantMove = this.#generateEnPassantMove(pawn, board);
-                    if (enPassantMove !== null && this.#isEnPassantLegal(pawn.color, enPassantMove, board)) legalMoves = legalMoves.concat(enPassantMove);
-                }
+            //if a pawn is about to promote
+            if (piece.GetType() === E_PieceType.Pawn && piece.isBeforePromotingRank()) {
+                let promotionsMoves = this.#convertBitboard(piece, pieceMovesBitboard, E_MoveFlag.Promotion);
+                legalMoves = legalMoves.concat(promotionsMoves);
+            }// else, add regular piece moves
+            else {
+                let pieceMoves = this.#convertBitboard(piece, pieceMovesBitboard, E_MoveFlag.Regular);
+                legalMoves = legalMoves.concat(pieceMoves);
             }
-
-            let pieceMoves = this.#convertBitboard(piece, pieceMovesBitboard, E_MoveFlag.Regular);
-            legalMoves = legalMoves.concat(pieceMoves);
         }
 
+        //generate enpassant move
+        let pawns = [...piecesDict[pieceColor][E_PieceType.Pawn]];
+        let enPassantMoves = this.#generateEnPassantMoves(pawns, board);
+        legalMoves = legalMoves.concat(enPassantMoves);
         //generate castling moves
         let rooks = piecesDict[pieceColor][E_PieceType.Rook];
         let castlingMoves = this.#generateCastlingMoves(king, rooks, board);
@@ -207,30 +204,35 @@ class MoveGenerator {
 
     /**
      * 
-     * @param {Pawn} pawn 
+     * @param {Pawn[]} pawns 
      * @param {Board} board 
      * @returns 
      */
-    #generateEnPassantMove(pawn, board) {
-        let lastPawnJump = board.getLastPawnJump();
-        //The en passant capture must be performed on the turn immediately after the pawn being captured moves.
-        if (lastPawnJump === null) return null;
-        //The capturing pawn must have advanced exactly three ranks to perform this move.
-        if (pawn.rank === ENPASSANT_CAPTURING_RANKS[pawn.color]) {
+    #generateEnPassantMoves(pawns, board) {
+        let enPassantMoves = [];
+        let enPassantInfo = board.getEnPassantInfo();
+        for (let pawn of pawns) {
+            //The en passant capture must be performed on the turn immediately after the pawn being captured moves.
+            if (enPassantInfo.rightToEnPassant === false) continue;
+
+            //The capturing pawn must have advanced exactly three ranks to perform this move.
+            if (pawn.rank !== ENPASSANT_CAPTURING_RANKS[pawn.color]) continue;
+
             //The captured pawn must be right next to the capturing pawn.
-            let fileDiff = Math.abs(lastPawnJump.endFile - pawn.file);
-            let rankDiff = Math.abs(lastPawnJump.endRank - pawn.rank);
-            if (fileDiff === 1 && rankDiff === 0) {
-                //You move your pawn diagonally to an adjacent square, one rank farther from where it had been, 
-                //on the same file where the enemy's pawn is.
-                let targetRank = pawn.color === E_PieceColor.White ? pawn.rank + 1 : pawn.rank - 1;
-                return new Move(pawn.rank, pawn.file, targetRank, lastPawnJump.endFile, E_MoveFlag.EnPassant);
-            } else {
-                return null;
-            }
-        } else {
-            return null;
+            let rankDiff = Math.abs(enPassantInfo.captureRank - pawn.rank);
+            let fileDiff = Math.abs(enPassantInfo.captureFile - pawn.file);
+            if (fileDiff !== 1 || rankDiff !== 0) continue;
+
+            //You move your pawn diagonally to an adjacent square, one rank farther from where it had been, 
+            //on the same file where the enemy's pawn is.
+            let targetRank = pawn.color === E_PieceColor.White ? pawn.rank + 1 : pawn.rank - 1;
+            let enPassant = new Move(pawn.rank, pawn.file, targetRank, enPassantInfo.captureFile, E_MoveFlag.EnPassant);
+            //en passant move must be legal
+            if (!this.#isEnPassantLegal(pawn.color, enPassant, board)) continue;
+
+            enPassantMoves.push(enPassant);
         }
+        return enPassantMoves;
     }
 
     /**

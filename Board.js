@@ -3,11 +3,20 @@ class Board {
     static #FIRST_FILE = 0x0101010101010101n;
     static #FIRST_RANK = 0xFFn;
 
+    #moveGenerator;
+
     #piecesDictionary = {}; //pieces categorized by color and type.
     #board = new Quadrille(8, 8);//board with piece objects.
-    #moveGenerator;
+
     #boardChanges = [];
-    #castlingRigths = {
+    #E_BoardChangeType = Object.freeze({
+        Addition: Symbol("Addition"),
+        Removal: Symbol("Removal"),
+        CastlingRigthsChange: Symbol("CastlingRigthsChange"),
+        EnPassantUpdate: Symbol("EnPassantUpdate"),
+    })
+
+    #castlingRights = {
         [E_PieceColor.White]: {
             [E_MoveFlag.KingSideCastling]: false,
             [E_MoveFlag.QueenSideCastling]: false
@@ -16,17 +25,12 @@ class Board {
             [E_MoveFlag.QueenSideCastling]: false
         }
     }
-    #lastPawnJump = null;
 
-    #E_BoardChangeType = Object.freeze({
-        Addition: Symbol("Addition"),
-        Removal: Symbol("Removal"),
-        CastlingRigthsChange: Symbol("CastlingRigthsChange"),
-        EnPassantRightChange: Symbol("EnPassantRightChange"),
-    })
-
-
-
+    #enPassantInfo = {
+        rightToEnPassant: false,
+        captureRank: null,
+        captureFile: null
+    }
 
     /**
      * Gives a bitboard with a single file.
@@ -241,7 +245,7 @@ class Board {
             this.#recordNewBoardChanges();
             //update board information
             this.#updateCastlingRights(move);
-            this.#updateLastPawnJump(move);
+            this.#updateEnPassantInfo(move);
             //apply move
             switch (move.flag) {
                 case E_MoveFlag.Regular:
@@ -298,12 +302,16 @@ class Board {
                 case this.#E_BoardChangeType.CastlingRigthsChange:
                     this.#setCastlingRights(change.color, change.castlingSide, true);
                     break;
-                case this.#E_BoardChangeType.EnPassantRightChange:
-                    this.#lastPawnJump = change.state === true ? null : change.jump;
+                case this.#E_BoardChangeType.EnPassantUpdate:
+                    if (change.rightToEnPassant === true) {
+                        this.#disableEnPassant();
+                    } else {
+                        this.#enableEnPassant(change.oldCaptureRank, change.oldCaptureFile);
+                    }
                     break;
+
                 default:
                     throw new Error("Invalid board change");
-
             }
         }
     }
@@ -478,11 +486,11 @@ class Board {
         assert(Object.values(E_PieceColor).includes(color), "Invalid piece color");
         assert(castlingSide === E_MoveFlag.QueenSideCastling || castlingSide === E_MoveFlag.KingSideCastling, "Invalid castling side");
 
-        return this.#castlingRigths[color][castlingSide];
+        return this.#castlingRights[color][castlingSide];
     }
 
-    getLastPawnJump() {
-        return this.#lastPawnJump;
+    getEnPassantInfo() {
+        return this.#enPassantInfo;
     }
 
     /**
@@ -602,8 +610,8 @@ class Board {
 
 
     #makeRegularMove(move) {
-        let pieceInDestination = this.#getPieceOnRankFile(move.endRank, move.endFile);
         //if there's a piece in destination
+        let pieceInDestination = this.#getPieceOnRankFile(move.endRank, move.endFile);
         if (pieceInDestination !== null) {
             //capture it
             this.removePiece(move.endRank, move.endFile);
@@ -616,7 +624,6 @@ class Board {
         pieceToMove.SetPosition(move.endRank, move.endFile);
     }
 
-    //****** choose promotion from captured pieces
     #makePromotionMove(move) {
         //move pawn
         this.#makeRegularMove(move);
@@ -721,12 +728,12 @@ class Board {
     }
 
     #setCastlingRights(color, castlingSide, enabled) {
-        this.#castlingRigths[color][castlingSide] = enabled;
+        this.#castlingRights[color][castlingSide] = enabled;
     }
 
     #disableCastlingRights(color, castlingSide) {
         if (this.hasCastlingRights(color, castlingSide)) {
-            this.#castlingRigths[color][castlingSide] = false;
+            this.#castlingRights[color][castlingSide] = false;
             //record change
             let disableCastlingRights = {
                 type: this.#E_BoardChangeType.CastlingRigthsChange,
@@ -737,28 +744,49 @@ class Board {
         }
     }
 
-    #updateLastPawnJump(move) {
+    #updateEnPassantInfo(move) {
         let pieceInStart = this.#getPieceOnRankFile(move.startRank, move.startFile);
-        if (move.flag === E_MoveFlag.EnPassant) {
-            let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
-            lastChanges.push({ "type": this.#E_BoardChangeType.EnPassantRightChange, "state": false, "jump": this.#lastPawnJump });
-            this.#lastPawnJump = null;
-        } else if (pieceInStart.GetType() === E_PieceType.Pawn) {
-            let rankDiff = Math.abs(move.startRank - move.endRank);
-            if (rankDiff === 2) {
-                this.#lastPawnJump = move;
-                let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
-                lastChanges.push({ "type": this.#E_BoardChangeType.EnPassantRightChange, "state": true });
-            } else if (this.#lastPawnJump !== null) {
-                let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
-                lastChanges.push({ "type": this.#E_BoardChangeType.EnPassantRightChange, "state": false, "jump": this.#lastPawnJump });
-                this.#lastPawnJump = null;
+        let pawnPerfomedJump = pieceInStart.GetType() === E_PieceType.Pawn && Math.abs(move.startRank - move.endRank) === 2;
+        let isEnPassantEnabled = this.#enPassantInfo.rightToEnPassant;
+        //if a pawn performs a jump
+        if (pawnPerfomedJump) {
+            //enable en passant with the square this pawn jumps to
+            this.#enableEnPassant(move.endRank, move.endFile);
+            //record change
+            let enPassantUpdate = {
+                type: this.#E_BoardChangeType.EnPassantUpdate,
+                rightToEnPassant: true
             }
-        } else if (this.#lastPawnJump !== null) {
-            let lastChanges = this.#boardChanges[this.#boardChanges.length - 1];
-            lastChanges.push({ "type": this.#E_BoardChangeType.EnPassantRightChange, "state": false, "jump": this.#lastPawnJump });
-            this.#lastPawnJump = null;
+            this.#pushBoardChange(enPassantUpdate);
+        }
+        //else, if any other move is performed and en passant is enabled
+        else if (isEnPassantEnabled) {
+            //record change
+            let enPassantUpdate = {
+                type: this.#E_BoardChangeType.EnPassantUpdate,
+                rightToEnPassant: false,
+                oldCaptureRank: this.#enPassantInfo.captureRank,
+                oldCaptureFile: this.#enPassantInfo.captureFile
+            }
+            this.#pushBoardChange(enPassantUpdate);
+            //disable en passant
+            this.#disableEnPassant();
         }
 
+
+    }
+
+    #enableEnPassant(captureRank, captureFile) {
+        assertRank(captureRank);
+        assertRank(captureFile);
+        this.#enPassantInfo.rightToEnPassant = true;
+        this.#enPassantInfo.captureRank = captureRank;
+        this.#enPassantInfo.captureFile = captureFile;
+    }
+
+    #disableEnPassant() {
+        this.#enPassantInfo.rightToEnPassant = false;
+        this.#enPassantInfo.captureRank = null;
+        this.#enPassantInfo.captureFile = null;
     }
 }
