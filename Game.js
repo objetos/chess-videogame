@@ -49,12 +49,11 @@ let gameBoard;
 
 Quadrille.cellLength = 40;
 let timer = 0;
-let input;
-let timeToMakeMove = 10;
+let timeToMakeMove = 500;
 let gameFinished = false;
 var playingColor = E_PieceColor.White;
 
-let legalMoves = [];
+
 
 
 function setup() {
@@ -62,8 +61,7 @@ function setup() {
     customBoard = new Board("8/8/8/4k3/3K4/8/8/8");
     standardBoard = new Board(STANDARD_BOARD_FEN);
     gameBoard = standardBoard;
-    legalMoves = gameBoard.generateMoves(playingColor);
-    Input.instance.addEventListener("user:move-input", onMoveInput);
+
 }
 
 function draw() {
@@ -71,35 +69,6 @@ function draw() {
     gameBoard.draw();
     //runGame(gameBoard);
 }
-
-function onMoveInput(event) {
-    let inputMove = event.detail.move;
-    let isSameMove = (move) => {
-        return inputMove.startRank === move.startRank &&
-            inputMove.startFile === move.startFile &&
-            inputMove.endRank === move.endRank &&
-            inputMove.endFile === move.endFile;
-    }
-    let legalMove = legalMoves.find(isSameMove);
-    if (legalMove !== undefined) {
-        gameBoard.makeMove(legalMove);
-
-        SwitchPlayingColor();
-        legalMoves = gameBoard.generateMoves(playingColor);
-        console.log(legalMoves.length)
-        if (legalMoves.length === 0) {
-            gameFinished = true;
-            if (gameBoard.isKingInCheck(playingColor)) console.log("Checkmate! " + OppositePieceColor(playingColor).toString() + " wins.");
-            else console.log("Stalemate!");
-            return;
-        }
-    }
-}
-
-function SwitchPlayingColor() {
-    playingColor = OppositePieceColor(playingColor);
-}
-
 
 function runGame(board) {
     timer += deltaTime;
@@ -121,6 +90,34 @@ function runGame(board) {
             playingColor = E_PieceColor.White;
         }
         timer = 0;
+    }
+}
+
+function testBoardPositions() {
+    console.log("Testing Move Generator with Custom Positions \n");
+    for (let boardPositionName of Object.keys(CUSTOM_POSITIONS)) {
+        let passed = true;
+        let boardPosition = CUSTOM_POSITIONS[boardPositionName];
+        let board = new Board(boardPosition.fen);
+        let whiteMoves = board.generateMoves(E_PieceColor.White);
+        let blackMoves = board.generateMoves(E_PieceColor.Black);
+        console.log("Position Name:" + boardPositionName + "\n");
+        if (boardPosition.numberOfWhiteMoves !== undefined) {
+            if (whiteMoves.length !== boardPosition.numberOfWhiteMoves) {
+                passed = false;
+                console.log("FAILED. Incorrect number of White Moves. Real:" + boardPosition.numberOfWhiteMoves + ". Result:" + whiteMoves.length + ".\n");
+            }
+        }
+
+        if (boardPosition.numberOfBlackMoves !== undefined) {
+            if (blackMoves.length !== boardPosition.numberOfBlackMoves) {
+                passed = false;
+                console.log("FAILED. Incorrect number of Black Moves. Real:" + boardPosition.numberOfBlackMoves + ". Result:" + blackMoves.length + ".\n");
+            }
+        }
+
+        if (passed) console.log("PASSED");
+        console.log("------------------------")
     }
 }
 
