@@ -29,46 +29,91 @@ var CUSTOM_POSITIONS = {
     "ONE_CHECKER": new BoardPosition('7k/5p2/4n3/7r/3B4/8/7b/4q3', undefined, 8),
     "MANY_CHECKERS": new BoardPosition('8/4n3/R3k3/R7/7q/8/1b2Q3/8', undefined, 2),
     "BLOCKING_CHECKMATE": new BoardPosition('rnbqkbnr/pppppppp/8/8/4q3/8/PPPP1PPP/RNBQKBNR', 3),
-    "CASTLING": new BoardPosition('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/R3K2R', 27),
-    "BLOCKED_CASTLING": new BoardPosition('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/R3KB1R', 23),
-    "CASTLING_CHECKED_PATH_RIGHT": new BoardPosition('rnb1kbnr/pppppqpp/8/8/8/8/PPPPP1PP/R3K2R', 22),
+    "CASTLING": new BoardPosition('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/R3K2R', 25),
+    "BLOCKED_CASTLING": new BoardPosition('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/R3KB1R', 22),
+    "CASTLING_CHECKED_PATH_RIGHT": new BoardPosition('rnb1kbnr/pppppqpp/8/8/8/8/PPPPP1PP/R3K2R', 21),
     "CASTLING_CHECKED_PATH_LEFT": new BoardPosition('rnbqkbnr/ppp1pppp/8/8/8/8/PP2P1PP/R3K1NR', 17),
-    "CASTLING_ROOK_PATH_CHECKED": new BoardPosition('rnb1kbnr/pqpppppp/8/8/8/8/P1PPP1PP/R3K2R', 24),
-    "KING_MOVES_NEAR_PAWN": new BoardPosition('8/3p4/8/2K5/8/8/8/8', 7)
+    "CASTLING_ROOK_PATH_CHECKED": new BoardPosition('rnb1kbnr/pqpppppp/8/8/8/8/P1PPP1PP/R3K2R', 22),
+    "KING_MOVES_NEAR_PAWN": new BoardPosition('8/3p4/8/2K5/8/8/8/8', 7),
+    "CASTLING_RIGTHS_TEST": new BoardPosition("r3k2r/8/8/8/8/8/8/R3K2R"),
+    "EN_PASSANT_TEST": new BoardPosition('rnbqkbnr/pppppppp/8/4P3/8/8/PPPP1PPP/RNBQKBNR'),
+    "KIWIPET": new BoardPosition('r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R', 48),
+    "POS3": new BoardPosition('8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8', 14),
+    "POS4": new BoardPosition('r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1', 6),
+    "POS5": new BoardPosition('rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R', 41),
 }
 
-let board;
+let customBoard;
+let standardBoard;
+let gameBoard;
 
 Quadrille.cellLength = 40;
 let timer = 0;
-let timeToMakeMove = 5000;
+let input;
+let timeToMakeMove = 10;
 let gameFinished = false;
 var playingColor = E_PieceColor.White;
+
+let legalMoves = [];
 
 
 function setup() {
     createCanvas(Quadrille.cellLength * 8, Quadrille.cellLength * 8);
-    board = new Board(ONE_CHECKER);
-    //RunPerftTest(board);
+    customBoard = new Board("8/8/8/4k3/3K4/8/8/8");
+    standardBoard = new Board(STANDARD_BOARD_FEN);
+    gameBoard = standardBoard;
+    legalMoves = gameBoard.generateMoves(playingColor);
+    Input.instance.addEventListener("user:move-input", onMoveInput);
 }
 
 function draw() {
     background(255);
-    board.Draw();
-    //RunGame(board);
+    gameBoard.draw();
+    //runGame(gameBoard);
 }
+
+function onMoveInput(event) {
+    let inputMove = event.detail.move;
+    let isSameMove = (move) => {
+        return inputMove.startRank === move.startRank &&
+            inputMove.startFile === move.startFile &&
+            inputMove.endRank === move.endRank &&
+            inputMove.endFile === move.endFile;
+    }
+    let legalMove = legalMoves.find(isSameMove);
+    if (legalMove !== undefined) {
+        gameBoard.makeMove(legalMove);
+
+        SwitchPlayingColor();
+        legalMoves = gameBoard.generateMoves(playingColor);
+        console.log(legalMoves.length)
+        if (legalMoves.length === 0) {
+            gameFinished = true;
+            if (gameBoard.isKingInCheck(playingColor)) console.log("Checkmate! " + OppositePieceColor(playingColor).toString() + " wins.");
+            else console.log("Stalemate!");
+            return;
+        }
+    }
+}
+
+function SwitchPlayingColor() {
+    playingColor = OppositePieceColor(playingColor);
+}
+
 
 function runGame(board) {
     timer += deltaTime;
     if (timeToMakeMove < timer && !gameFinished) {
-        let moves = board.GenerateMoves(playingColor);
+        let moves = board.generateMoves(playingColor);
         if (moves.length === 0) {
             gameFinished = true;
+            if (board.isKingInCheck(playingColor)) console.log("Checkmate! " + OppositePieceColor(playingColor).toString() + " wins.");
+            else console.log("Stalemate!");
             return;
         }
         let randomIndex = Math.floor(random(0, moves.length));
         let randomMove = moves[randomIndex];
-        board.MakeMove(randomMove);
+        board.makeMove(randomMove);
 
         if (playingColor === E_PieceColor.White) {
             playingColor = E_PieceColor.Black;
@@ -76,34 +121,6 @@ function runGame(board) {
             playingColor = E_PieceColor.White;
         }
         timer = 0;
-    }
-}
-
-function testBoardPositions() {
-    console.log("Testing Move Generator with Custom Positions \n");
-    for (let boardPositionName of Object.keys(CUSTOM_POSITIONS)) {
-        let passed = true;
-        let boardPosition = CUSTOM_POSITIONS[boardPositionName];
-        let board = new Board(boardPosition.fen);
-        let whiteMoves = board.generateMoves(E_PieceColor.White);
-        let blackMoves = board.generateMoves(E_PieceColor.Black);
-        console.log("Position Name:" + boardPositionName + "\n");
-        if (boardPosition.numberOfWhiteMoves !== undefined) {
-            if (whiteMoves.length !== boardPosition.numberOfWhiteMoves) {
-                passed = false;
-                console.log("FAILED. Incorrect number of White Moves. Real:" + boardPosition.numberOfWhiteMoves + ". Result:" + whiteMoves.length + ".\n");
-            }
-        }
-
-        if (boardPosition.numberOfBlackMoves !== undefined) {
-            if (blackMoves.length !== boardPosition.numberOfBlackMoves) {
-                passed = false;
-                console.log("FAILED. Incorrect number of Black Moves. Real:" + boardPosition.numberOfBlackMoves + ". Result:" + blackMoves.length + ".\n");
-            }
-        }
-
-        if (passed) console.log("PASSED");
-        console.log("------------------------")
     }
 }
 
