@@ -52,6 +52,8 @@ let timer = 0;
 let timeToMakeMove = 500;
 let gameFinished = false;
 var playingColor = E_PieceColor.White;
+let legalMoves = [];
+let chessBackground;
 
 
 
@@ -61,14 +63,54 @@ function setup() {
     customBoard = new Board("8/8/8/4k3/3K4/8/8/8");
     standardBoard = new Board(STANDARD_BOARD_FEN);
     gameBoard = standardBoard;
+    legalMoves = gameBoard.generateMoves(playingColor);
+    Input.setBoard(new Quadrille(STANDARD_BOARD_FEN));
+    Input.addInputEventListener(Input.E_InputEvents.MoveInput, onMoveInput);
 
 }
 
 function draw() {
-    background(255);
     gameBoard.draw();
+    drawQuadrille(inputUI);
     //runGame(gameBoard);
 }
+
+function onSquareSelected(event) {
+}
+
+function onMoveInput(event) {
+    //get input move
+    let inputMove = event.detail.move;
+
+    //if input move matches with any legal move
+    let isSameMove = (move) => {
+        return inputMove.startRank === move.startRank &&
+            inputMove.startFile === move.startFile &&
+            inputMove.endRank === move.endRank &&
+            inputMove.endFile === move.endFile;
+    }
+    let legalMove = legalMoves.find(isSameMove);
+    if (legalMove !== undefined) {
+        //make move on board
+        gameBoard.makeMove(legalMove);
+        //switch playing color
+        SwitchPlayingColor();
+        //generate new set of legal moves
+        legalMoves = gameBoard.generateMoves(playingColor);
+        //check for end game conditions
+        if (legalMoves.length === 0) {
+            gameFinished = true;
+            if (gameBoard.isKingInCheck(playingColor)) console.log("Checkmate! " + OppositePieceColor(playingColor).toString() + " wins.");
+            else console.log("Stalemate!");
+            return;
+        }
+    }
+}
+
+function SwitchPlayingColor() {
+    playingColor = OppositePieceColor(playingColor);
+}
+
 
 function runGame(board) {
     timer += deltaTime;

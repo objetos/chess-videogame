@@ -20,7 +20,7 @@ class Piece {
             throw new Error("Abstract classes can't be instantiated.");
         }
 
-        console.assert(Object.values(E_PieceColor).includes(color), "Piece color not defined");
+        assert(Object.values(E_PieceColor).includes(color), "Piece color not defined");
         assertRank(rank);
         assertFile(file);
 
