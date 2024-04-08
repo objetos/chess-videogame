@@ -1,28 +1,29 @@
-class Input extends EventTarget {
+class MoveInput extends EventTarget {
     static #board;
     static #inputMoveStart = null;
     static #inputMoveDestination = null;
     static E_InputEvents = {
         MoveInput: "user:move-input",
-        SquareSelected: "user:square-selected"
+        SquareSelected: "user:square-selected",
+        MoveCanceled: "system:move-canceled"
     }
 
     //Singleton pattern
     static #_instance;
     static get #instance() {
-        if (!Input.#_instance) {
-            Input.#_instance = new Input();
+        if (!MoveInput.#_instance) {
+            MoveInput.#_instance = new MoveInput();
         }
-        return Input.#_instance;
+        return MoveInput.#_instance;
     }
 
     constructor() {
         super();
-        if (!Input.#_instance) {
-            Input.#_instance = this;
+        if (!MoveInput.#_instance) {
+            MoveInput.#_instance = this;
         }
         // Initialize object
-        return Input.#_instance
+        return MoveInput.#_instance
     }
 
 
@@ -47,46 +48,70 @@ class Input extends EventTarget {
         }
     }
 
-    static #onClick() {
+    static #onClick() {//****** deny if there's no piece on move start
         if (this.#board === undefined) return;
-        //get row and column
+
+        //get clicked rank and file
         let clickedRank = 8 - this.#board.mouseRow;
         let clickedFile = this.#board.mouseCol + 1;
 
-        //check that click is within board limits
-        if (clickedRank < 1 || 8 < clickedRank || clickedFile < 1 || 8 < clickedFile) return;
+        //if click is not within board limits
+        let isClickWithinBoardLimits = 1 <= clickedRank && clickedRank <= 8 && 1 <= clickedFile && clickedFile <= 8;
+        if (!isClickWithinBoardLimits) {
+            //if move was started
+            if (this.#inputMoveStart !== null) {
+                //cancel it
+                this.#CancelMove();
+            }
+            return;
+        }
 
-        //notify a square was selected
+        //notify that a square was selected
         let onSquareSelected = new CustomEvent(this.E_InputEvents.SquareSelected, { detail: { square: { rank: clickedRank, file: clickedFile } } })
         this.#instance.dispatchEvent(onSquareSelected);
 
-        //if the start of the move is not set
-        if (this.#inputMoveStart === null) {
-            //if the square is not empty, set this square as the move start
+        //notify if a piece was selected
+        let pieceSelected = this.#board.read(this.#board.mouseRow, this.#board.mouseCol) !== undefined;
+
+        //if move start is not set
+        if (this.#inputMoveStart === null && pieceSelected) {
+            //set this square as the move start
             this.#inputMoveStart = {
                 rank: clickedRank,
                 file: clickedFile
             }
-        } else {
-            if ((this.#inputMoveStart.rank === clickedRank && this.#inputMoveStart.file === clickedFile)) return;
+            return;
+        }
+
+        //if move start is set and destination is not
+        if (this.#inputMoveStart !== null && this.#inputMoveDestination === null) {
+            //if start square and destination square are the same
+            if ((this.#inputMoveStart.rank === clickedRank && this.#inputMoveStart.file === clickedFile)) {
+                //cancel move
+                this.#CancelMove();
+                return;
+            }
             //set this square as the move destination
             this.#inputMoveDestination = {
                 rank: clickedRank,
                 file: clickedFile
             }
-        }
-
-        //if move start and destination is set
-        if (this.#inputMoveStart !== null && this.#inputMoveDestination !== null) {
             //--create move
             let inputMove = new Move(this.#inputMoveStart.rank, this.#inputMoveStart.file, this.#inputMoveDestination.rank, this.#inputMoveDestination.file);
             //--notify
-            let onMoveInput = new CustomEvent(this.E_InputEvents.MoveInput, { detail: { move: inputMove } });
-            this.#instance.dispatchEvent(onMoveInput);
+            let moveInput = new CustomEvent(this.E_InputEvents.MoveInput, { detail: { move: inputMove } });
+            this.#instance.dispatchEvent(moveInput);
             //--unset start and destination
             this.#inputMoveStart = null;
             this.#inputMoveDestination = null;
         }
+    }
+
+    static #CancelMove() {
+        this.#inputMoveStart = null;
+        this.#inputMoveDestination = null;
+        let moveCanceled = new CustomEvent(this.E_InputEvents.MoveCanceled);
+        this.#instance.dispatchEvent(moveCanceled);
     }
 
     static #pieceSelectedForPromotion = E_PieceType.Queen;
@@ -106,6 +131,6 @@ class Input extends EventTarget {
 
 
 function mouseClicked(event) {
-    Input.handleInputEvent(event);
+    MoveInput.handleInputEvent(event);
 }
 

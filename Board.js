@@ -633,7 +633,7 @@ class Board {
         //remove pawn
         let pawn = this.removePiece(move.endRank, move.endFile);
         //create new piece
-        let pieceTypeToPromote = Input.pieceSelectedForPromotion;
+        let pieceTypeToPromote = MoveInput.pieceSelectedForPromotion;
         let pieceColor = pawn.color;
         let pieceString = colorTypeToString(pieceColor, pieceTypeToPromote);
         let newPiece = this.#createPiece(pieceString, move.endRank, move.endFile);
