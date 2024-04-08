@@ -52,23 +52,79 @@ let timer = 0;
 let timeToMakeMove = 500;
 let gameFinished = false;
 var playingColor = E_PieceColor.White;
-
+let legalMoves = [];
+let chessBackground;
+let moveInputUI;
+let board;
 
 
 
 function setup() {
     createCanvas(Quadrille.cellLength * 8, Quadrille.cellLength * 8);
+
     customBoard = new Board("8/8/8/4k3/3K4/8/8/8");
     standardBoard = new Board(STANDARD_BOARD_FEN);
     gameBoard = standardBoard;
 
+    board = new Quadrille(STANDARD_BOARD_FEN);
+
+    legalMoves = gameBoard.generateMoves(playingColor);
+
+    moveInputUI = new MoveInputUI(board);//****** Board UI should register events first so it works
+
+    MoveInput.setBoard(board);
+    MoveInput.addInputEventListener(MoveInput.E_InputEvents.MoveInput, onMoveInput);
 }
 
 function draw() {
     background(255);
     gameBoard.draw();
+    moveInputUI.draw();
     //runGame(gameBoard);
 }
+
+function onMoveInput(event) {
+    //get input move
+    let inputMove = event.detail.move;
+
+    //if input move is legal
+    let result = isMoveLegal(inputMove);
+    if (result.isLegal) {
+        //make move on board
+        gameBoard.makeMove(result.move);
+        //switch playing color
+        SwitchPlayingColor();
+        //generate new set of legal moves
+        legalMoves = gameBoard.generateMoves(playingColor);
+        //check for end game conditions
+        if (legalMoves.length === 0) {
+            gameFinished = true;
+            if (gameBoard.isKingInCheck(playingColor)) console.log("Checkmate! " + OppositePieceColor(playingColor).toString() + " wins.");
+            else console.log("Stalemate!");
+            return;
+        }
+    }
+}
+
+function isMoveLegal(inputMove, legalMove) {
+    let isSameMove = (move) => {
+        return inputMove.startRank === move.startRank &&
+            inputMove.startFile === move.startFile &&
+            inputMove.endRank === move.endRank &&
+            inputMove.endFile === move.endFile;
+    };
+    legalMove = legalMoves.find(isSameMove);
+    let isLegal = legalMove !== undefined;
+    return {
+        isLegal: isLegal,
+        move: legalMove
+    }
+}
+
+function SwitchPlayingColor() {
+    playingColor = OppositePieceColor(playingColor);
+}
+
 
 function runGame(board) {
     timer += deltaTime;
