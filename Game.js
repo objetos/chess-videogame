@@ -54,7 +54,7 @@ let gameFinished = false;
 var playingColor = E_PieceColor.White;
 let legalMoves = [];
 let chessBackground;
-let boardInputUI;
+let moveInputUI;
 let board;
 
 
@@ -70,7 +70,7 @@ function setup() {
 
     legalMoves = gameBoard.generateMoves(playingColor);
 
-    boardInputUI = new MoveInputUI(board);//****** Board UI should register events first so it works
+    moveInputUI = new MoveInputUI(board);//****** Board UI should register events first so it works
 
     MoveInput.setBoard(board);
     MoveInput.addInputEventListener(MoveInput.E_InputEvents.MoveInput, onMoveInput);
@@ -79,7 +79,7 @@ function setup() {
 function draw() {
     background(255);
     gameBoard.draw();
-    boardInputUI.draw();
+    moveInputUI.draw();
     //runGame(gameBoard);
 }
 

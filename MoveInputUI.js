@@ -11,9 +11,28 @@ class MoveInputUI {
     constructor(board) {
         this.#UIQuadrille = createQuadrille(board.width, board.height);
         this.#board = board;
-        MoveInput.addInputEventListener(MoveInput.E_InputEvents.SquareSelected, this.#onSquareSelected.bind(this));
+        MoveInput.addInputEventListener(MoveInput.E_InputEvents.MoveStartSet, this.#onMoveStartSet.bind(this));
+        MoveInput.addInputEventListener(MoveInput.E_InputEvents.MoveDestinationSet, this.#onMoveDestinationSet.bind(this));
         MoveInput.addInputEventListener(MoveInput.E_InputEvents.MoveInput, this.#onMoveInput.bind(this));
         MoveInput.addInputEventListener(MoveInput.E_InputEvents.MoveCanceled, this.#onMoveCanceled.bind(this));
+    }
+
+    #onMoveStartSet(event) {
+        if (this.#moveCompleted) {
+            this.#Clear();
+            this.#moveCompleted = false;
+        }
+        this.#fillSquare(event.detail.square);
+    }
+
+    #onMoveDestinationSet(event) {
+        this.#fillSquare(event.detail.square);
+    }
+
+    #fillSquare(square) {
+        let row = 8 - square.rank;
+        let column = square.file - 1;
+        this.#UIQuadrille.fill(row, column, this.#colorForSelectedSquare);
     }
 
     #onMoveInput(event) {
@@ -26,17 +45,6 @@ class MoveInputUI {
 
     #onMoveCanceled(event) {
         this.#Clear();
-    }
-
-    #onSquareSelected(event) {
-        if (this.#moveCompleted) {
-            this.#Clear();
-            this.#moveCompleted = false;
-        }
-        let square = event.detail.square;
-        let row = 8 - square.rank;
-        let column = square.file - 1;
-        this.#UIQuadrille.fill(row, column, this.#colorForSelectedSquare);
     }
 
     #Clear() {
