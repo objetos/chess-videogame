@@ -72,7 +72,7 @@ function setup() {
 
     moveInputUI = new MoveInputUI(board);//****** Board UI should register events first so it works
 
-    MoveInput.setBoard(board);
+    MoveInput.setBoard(board, gameBoard);
     MoveInput.addInputEventListener(MoveInput.E_InputEvents.MoveInput, onMoveInput);
 }
 
@@ -90,8 +90,9 @@ function onMoveInput(event) {
     //if input move is legal
     let result = isMoveLegal(inputMove);
     if (result.isLegal) {
+        let legalMove = result.move;
         //make move on board
-        gameBoard.makeMove(result.move);
+        gameBoard.makeMove(legalMove);
         //switch playing color
         SwitchPlayingColor();
         //generate new set of legal moves

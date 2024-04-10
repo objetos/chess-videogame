@@ -1,4 +1,5 @@
 class MoveInput extends EventTarget {
+    static #boardQuadrille;
     static #board;
     static #moveStart = null;
     static #moveDestination = null;
@@ -31,12 +32,14 @@ class MoveInput extends EventTarget {
 
     /**
      * Set board that receives input events
-     * @param {Quadrille} board 
+     * @param {Quadrille} boardQuadrille 
+     * @param {Board} board 
      */
-    static setBoard(board) {
-        assert(board instanceof Quadrille, "Invalid board");
-        assert(board.height === 8 && board.width === 8, "Invalid board dimensions")
-        this.#board = board
+    static setBoard(boardQuadrille, board) {
+        assert(boardQuadrille instanceof Quadrille, "Invalid board");
+        assert(boardQuadrille.height === 8 && boardQuadrille.width === 8, "Invalid board dimensions")
+        this.#boardQuadrille = boardQuadrille
+        this.#board = board;
     }
 
     static addInputEventListener(event, callback) {
@@ -51,11 +54,11 @@ class MoveInput extends EventTarget {
     }
 
     static #onClick() {//****** deny if there's no piece on move start
-        if (this.#board === undefined) return;
+        if (this.#boardQuadrille === undefined) return;
 
         //get clicked square
-        let clickedRank = 8 - this.#board.mouseRow;
-        let clickedFile = this.#board.mouseCol + 1;
+        let clickedRank = 8 - this.#boardQuadrille.mouseRow;
+        let clickedFile = this.#boardQuadrille.mouseCol + 1;
         let clickedSquare = {
             rank: clickedRank,
             file: clickedFile
@@ -77,7 +80,7 @@ class MoveInput extends EventTarget {
         this.#instance.dispatchEvent(squareSelected);
 
         //if move start is not set and a piece was selected
-        let pieceSelected = this.#board.read(this.#board.mouseRow, this.#board.mouseCol) !== null;
+        let pieceSelected = this.#board.getPieceInRankFile(clickedRank, clickedFile) !== null;
         if (this.#moveStart === null && pieceSelected) {
 
             //set this square as the move start

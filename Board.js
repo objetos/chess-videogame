@@ -392,6 +392,12 @@ class Board {
         return pieceToRemove;
     }
 
+    getPieceInRankFile(rank, file) {
+        let piece = this.#getPieceOnRankFile(rank, file)
+        if (piece === null) return null;
+        else return piece.toString();
+    }
+
 
     /**
      *
@@ -635,7 +641,7 @@ class Board {
         //create new piece
         let pieceTypeToPromote = MoveInput.pieceSelectedForPromotion;
         let pieceColor = pawn.color;
-        let pieceString = colorTypeToString(pieceColor, pieceTypeToPromote);
+        let pieceString = pieceColorTypeToString(pieceColor, pieceTypeToPromote);
         let newPiece = this.#createPiece(pieceString, move.endRank, move.endFile);
         //add promoted piece
         this.addPiece(newPiece, move.endRank, move.endFile);

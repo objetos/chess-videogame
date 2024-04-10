@@ -41,7 +41,7 @@ function OppositePieceColor(color) {
             throw Error("No color specified");
     }
 }
-function colorTypeToString(pieceColor, pieceType) {
+function pieceColorTypeToString(pieceColor, pieceType) {
     let pieceString = '';
     switch (pieceType) {
         case E_PieceType.King:
@@ -71,4 +71,8 @@ function colorTypeToString(pieceColor, pieceType) {
     }
 
     return pieceString;
+}
+
+function FileToLetter(file) {
+    return String.fromCharCode(96 + file);
 }

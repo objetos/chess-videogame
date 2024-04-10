@@ -2,7 +2,6 @@ class MoveInputUI {
     #UIQuadrille;
     #colorForSelectedSquare = color(100, 100);
     #moveCompleted = false;
-    #board;
 
     /**
      * 
@@ -10,7 +9,6 @@ class MoveInputUI {
      */
     constructor(board) {
         this.#UIQuadrille = createQuadrille(board.width, board.height);
-        this.#board = board;
         MoveInput.addInputEventListener(MoveInput.E_InputEvents.MoveStartSet, this.#onMoveStartSet.bind(this));
         MoveInput.addInputEventListener(MoveInput.E_InputEvents.MoveDestinationSet, this.#onMoveDestinationSet.bind(this));
         MoveInput.addInputEventListener(MoveInput.E_InputEvents.MoveInput, this.#onMoveInput.bind(this));
