@@ -56,6 +56,7 @@ let legalMoves = [];
 let chessBackground;
 let moveInputUI;
 let board;
+let moveRecord;
 
 
 
@@ -74,6 +75,8 @@ function setup() {
 
     MoveInput.setBoard(board, gameBoard);
     MoveInput.addInputEventListener(MoveInput.E_InputEvents.MoveInput, onMoveInput);
+
+    moveRecord = new MoveRecord();
 }
 
 function draw() {
@@ -92,6 +95,7 @@ function onMoveInput(event) {
     if (result.isLegal) {
         let legalMove = result.move;
         //make move on board
+        console.log(moveRecord.recordMove(legalMove, gameBoard, playingColor));
         gameBoard.makeMove(legalMove);
         //switch playing color
         SwitchPlayingColor();
