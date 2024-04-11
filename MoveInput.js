@@ -136,9 +136,9 @@ class MoveInput extends EventTarget {
     }
 
     static set pieceSelectedForPromotion(value) {
-        console.assert(Object.values(E_PieceType).includes(value), "Invalid piece type");
-        console.assert(value !== E_PieceType.Pawn, "Promotion to Pawn is forbidden");
-        console.assert(value !== E_PieceType.King, "Promotion to King is forbidden");
+        assertPieceType(value);
+        assert(value !== E_PieceType.Pawn, "Promotion to Pawn is forbidden");
+        assert(value !== E_PieceType.King, "Promotion to King is forbidden");
         this.#pieceSelectedForPromotion = value;
     }
 }

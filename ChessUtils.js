@@ -31,8 +31,14 @@ const ENPASSANT_CAPTURING_RANKS = {
     [E_PieceColor.Black]: 4
 }
 
-function OppositePieceColor(color) {
-    switch (color) {
+/**
+ * 
+ * @param {E_PieceColor} pieceColor 
+ * @returns Opposite color of given piece color
+ */
+function OppositePieceColor(pieceColor) {
+    assertPieceColor(pieceColor);
+    switch (pieceColor) {
         case E_PieceColor.White:
             return E_PieceColor.Black;
         case E_PieceColor.Black:
@@ -41,7 +47,17 @@ function OppositePieceColor(color) {
             throw Error("No color specified");
     }
 }
-function pieceColorTypeToString(pieceColor, pieceType) {
+
+/**
+ * Transforms piece color a type to piece key
+ * @param {E_PieceColor} pieceColor 
+ * @param {E_PieceType} pieceType 
+ * @returns piece key
+ */
+function pieceColorTypeToKey(pieceColor, pieceType) {
+    assertPieceColor(pieceColor);
+    assertPieceType(pieceType);
+
     let pieceString = '';
     switch (pieceType) {
         case E_PieceType.King:
@@ -73,6 +89,61 @@ function pieceColorTypeToString(pieceColor, pieceType) {
     return pieceString;
 }
 
+/**
+ * Transforms a piece key into its color
+ * @param {string} pieceKey 
+ * @returns Piece color
+ */
+function pieceKeyToColor(pieceKey) {
+    assertPieceKey(pieceKey);
+    let color = pieceKey == pieceKey.toUpperCase() ? E_PieceColor.White : E_PieceColor.Black;
+    return color;
+}
+
+/**
+ * Transforms a piece key into its type
+ * @param {string} pieceKey 
+ * @returns Piece type
+ */
+function pieceKeyToType(pieceKey) {
+    assertPieceKey(pieceKey);
+    let type;
+    switch (pieceKey.toUpperCase()) {
+        case 'K':
+            type = E_PieceType.King;
+            break;
+        case 'Q':
+            type = E_PieceType.Queen;
+            break;
+        case 'B':
+            type = E_PieceType.Bishop;
+            break;
+        case 'R':
+            type = E_PieceType.Rook;
+            break;
+        case 'N':
+            type = E_PieceType.Knight;
+            break;
+        case 'P':
+            type = E_PieceType.Pawn;
+            break;
+        default:
+            throw new Error("Incorrect piece type:" + pieceKey);
+    }
+
+    return type;
+}
+
+function assertPieceKey(pieceKey) {
+    assert(Object.values(Quadrille.chessKeys).includes(pieceKey), "Invalid piece key");
+}
+
+/**
+ * Converts a file number into its letter representatio 
+ * @param {number} file 
+ * @returns 
+ */
 function FileToLetter(file) {
+    assertFile(file);
     return String.fromCharCode(96 + file);
 }

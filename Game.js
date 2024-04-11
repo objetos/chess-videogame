@@ -49,7 +49,7 @@ let gameBoard;
 
 Quadrille.cellLength = 40;
 let timer = 0;
-let timeToMakeMove = 500;
+let timeToMakeMove = 50;
 let gameFinished = false;
 var playingColor = E_PieceColor.White;
 let legalMoves = [];
@@ -62,7 +62,7 @@ let board;
 function setup() {
     createCanvas(Quadrille.cellLength * 8, Quadrille.cellLength * 8);
 
-    customBoard = new Board("8/8/8/4k3/3K4/8/8/8");
+    customBoard = new Board(JUST_PAWNS_FEN);
     standardBoard = new Board(STANDARD_BOARD_FEN);
     gameBoard = standardBoard;
 
@@ -79,7 +79,7 @@ function setup() {
 function draw() {
     background(255);
     gameBoard.draw();
-    moveInputUI.draw();
+    //moveInputUI.draw();
     //runGame(gameBoard);
 }
 

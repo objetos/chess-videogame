@@ -1,3 +1,5 @@
+const validPieceKeys = ['r', 'n', 'q', 'k', 'p', 'b', 'R', 'N', 'Q', 'K', 'P', 'B'];
+
 function assert(condition, message) {
     if (!condition) {
         let error = new Error();
@@ -24,4 +26,12 @@ function assertFile(file) {
     assert(typeof file === "number", "File Invalid");
     assert(Number.isInteger(file), "File is not an integer");
     assert(file >= 1 && file <= 8, "File " + file + " is out of bounds.");
+}
+
+function assertPieceColor(pieceColor) {
+    assert(Object.values(E_PieceColor).includes(pieceColor), "Invalid piece color");
+}
+
+function assertPieceType(pieceType) {
+    assert(Object.values(E_PieceType).includes(pieceType), "Invalid piece type");
 }
