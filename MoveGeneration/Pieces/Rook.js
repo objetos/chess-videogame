@@ -5,7 +5,7 @@ class Rook extends SlidingPiece {
     }
 
     getSlidingRays() {
-        return [Board.getFile(this.file), Board.getRank(this.rank)];
+        return [getFile(this.file), getRank(this.rank)];
     }
 
     GetMoves(board) {
