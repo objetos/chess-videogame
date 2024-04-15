@@ -5,10 +5,10 @@ class Queen extends SlidingPiece {
     }
 
     getSlidingRays() {
-        return [Board.getRank(this.rank),
-        Board.getFile(this.file),
-        Board.getDiagonal(this.rank, this.file),
-        Board.getAntiDiagonal(this.rank, this.file)];
+        return [getRank(this.rank),
+        getFile(this.file),
+        getDiagonal(this.rank, this.file),
+        getAntiDiagonal(this.rank, this.file)];
     }
 
     GetMoves(board) {

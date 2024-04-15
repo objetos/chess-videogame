@@ -5,7 +5,7 @@ class Bishop extends SlidingPiece {
     }
 
     getSlidingRays() {
-        return [Board.getDiagonal(this.rank, this.file), Board.getAntiDiagonal(this.rank, this.file)];
+        return [getDiagonal(this.rank, this.file), getAntiDiagonal(this.rank, this.file)];
     }
 
 

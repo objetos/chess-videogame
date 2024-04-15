@@ -1,6 +1,9 @@
+
+//fens
 const STANDARD_BOARD_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
 const JUST_PAWNS_FEN = '8/pppppppp/8/8/8/8/PPPPPPPP/8';
 const JUST_KINGS_FEN = '4k3/8/8/8/8/8/8/4K3';
+const STANDARD_NO_KINGS_FEN = 'rnbq1bnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQ1BNR';
 
 class BoardPosition {
     fen;
@@ -43,47 +46,49 @@ var CUSTOM_POSITIONS = {
     "POS5": new BoardPosition('rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R', 41),
 }
 
-let customBoard;
+//boards
 let standardBoard;
-let gameBoard;
+let customBoard;
+let displayBoard;
 
+//quadrille settings
 Quadrille.cellLength = 40;
+
+//board display settings
+const BOARD_POSITION = { x: 100, y: 100 };
+const BOARD_SQUARE_SIZE = Quadrille.cellLength;
+
+//game settings
 let timer = 0;
-let timeToMakeMove = 500;
+let timeToMakeMove = 25;
 let gameFinished = false;
 var playingColor = E_PieceColor.White;
 let legalMoves = [];
-let chessBackground;
-let moveInputUI;
-let board;
-let moveRecord;
 
+//objects
+let moveInputUI;
 
 
 function setup() {
-    createCanvas(Quadrille.cellLength * 8, Quadrille.cellLength * 8);
+    createCanvas(screen.availWidth, screen.availHeight);
 
-    customBoard = new Board("8/8/8/4k3/3K4/8/8/8");
     standardBoard = new Board(STANDARD_BOARD_FEN);
-    gameBoard = standardBoard;
+    customBoard = new Board(STANDARD_NO_KINGS_FEN);
+    displayBoard = standardBoard;
 
-    board = new Quadrille(STANDARD_BOARD_FEN);
+    legalMoves = displayBoard.generateMoves(playingColor);
 
-    legalMoves = gameBoard.generateMoves(playingColor);
+    moveInputUI = new MoveInputUI();//****** Board UI should register events first so it works
 
-    moveInputUI = new MoveInputUI(board);//****** Board UI should register events first so it works
-
-    MoveInput.setBoard(board, gameBoard);
+    MoveInput.setBoard(displayBoard);
     MoveInput.addInputEventListener(MoveInput.E_InputEvents.MoveInput, onMoveInput);
-
-    moveRecord = new MoveRecord();
 }
 
 function draw() {
     background(255);
-    gameBoard.draw();
+    displayBoard.draw();
     moveInputUI.draw();
-    //runGame(gameBoard);
+    //runGame(displayBoard);
 }
 
 function onMoveInput(event) {
@@ -95,16 +100,15 @@ function onMoveInput(event) {
     if (result.isLegal) {
         let legalMove = result.move;
         //make move on board
-        console.log(moveRecord.recordMove(legalMove, gameBoard, playingColor));
-        gameBoard.makeMove(legalMove);
+        displayBoard.makeMove(legalMove);
         //switch playing color
         SwitchPlayingColor();
         //generate new set of legal moves
-        legalMoves = gameBoard.generateMoves(playingColor);
+        legalMoves = displayBoard.generateMoves(playingColor);
         //check for end game conditions
         if (legalMoves.length === 0) {
             gameFinished = true;
-            if (gameBoard.isKingInCheck(playingColor)) console.log("Checkmate! " + OppositePieceColor(playingColor).toString() + " wins.");
+            if (displayBoard.isKingInCheck(playingColor)) console.log("Checkmate! " + OppositePieceColor(playingColor).toString() + " wins.");
             else console.log("Stalemate!");
             return;
         }

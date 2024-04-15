@@ -1,25 +1,20 @@
 //****** CLASS PROLOG
 class MoveGenerator {
     /**
-     * @param {Board} board 
+     * @param {BoardImplementation} board 
      * @param {E_PieceColor} pieceColor
      * @returns {Move[]} Array of legal moves of pieces of given color
      */
-    generateMoves(board, piecesDict, pieceColor) { //****** simplify. assumptions: board is a standard board of chess
-        assert(board instanceof Board, "Invalid board");
-        assert(Object.values(E_PieceColor).includes(pieceColor), "Invalid piece color");
+    generateMoves(board, pieceColor) { //****** simplify. assumptions: board is a standard board of chess
+        assert(board instanceof BoardImplementation, "Invalid board");
+        assertPieceColor(pieceColor);
 
         let legalMoves = [];
-        let playingPieces = [];
-        let enemyPieces = [];
-
-        for (let pieceType of Object.values(E_PieceType)) {
-            playingPieces = playingPieces.concat(piecesDict[pieceColor][pieceType]);
-            enemyPieces = enemyPieces.concat(piecesDict[OppositePieceColor(pieceColor)][pieceType]);
-        }
+        let playingPieces = board.getPiecesOfType(pieceColor, E_PieceType.Any);
+        let enemyPieces = board.getPiecesOfType(OppositePieceColor(pieceColor), E_PieceType.Any);
 
         //calculate data to ensure king safety
-        let king = piecesDict[pieceColor][E_PieceType.King][0];
+        let king = board.getPiecesOfType(pieceColor, E_PieceType.King)[0];
         let targetSquaresToAvoidCheck = GetBooleanBitboard(true);//squares to block check or capture checkers
         let moveFilterForPinnedPieces = {};//filter for moves of pinned pieces
 
@@ -69,11 +64,11 @@ class MoveGenerator {
         }
 
         //generate enpassant move
-        let pawns = [...piecesDict[pieceColor][E_PieceType.Pawn]];
+        let pawns = board.getPiecesOfType(pieceColor, E_PieceType.Pawn);
         let enPassantMoves = this.#generateEnPassantMoves(pawns, board);
         legalMoves = legalMoves.concat(enPassantMoves);
         //generate castling moves
-        let rooks = piecesDict[pieceColor][E_PieceType.Rook];
+        let rooks = board.getPiecesOfType(pieceColor, E_PieceType.Rook);
         let castlingMoves = this.#generateCastlingMoves(king, rooks, board);
         legalMoves = legalMoves.concat(castlingMoves);
 
@@ -84,7 +79,7 @@ class MoveGenerator {
      * 
      * @param {King} king 
      * @param {Piece[]} enemyPieces 
-     * @param {Board} board 
+     * @param {BoardImplementation} board 
      * @returns Array of pieces that check the king
      */
     #calculateCheckers(king, enemyPieces, board) {
@@ -103,15 +98,15 @@ class MoveGenerator {
      * 
      * @param {King} king 
      * @param {bigint} protectedPieces 
-     * @param {Board} board 
+     * @param {BoardImplementation} board 
      * @returns Array of moves the king can do safely
      */
     #generateKingSafeMoves(king, enemyPieces, board) {
         let dangerousSquaresForKing = 0n;
-        board.removePiece(king.rank, king.file, false);//remove king temporarily to consider squares behind the king
+        board.removePiece(king.rank, king.file);//remove king temporarily to consider squares behind the king
         let squaresAttackedByEnemy = board.getAttackedSquares(OppositePieceColor(king.color));
         let dangerouseCaptures = this.#calculateProtectedPieces(enemyPieces, board);
-        board.addPiece(king, king.rank, king.file, false);
+        board.addPiece(king, king.rank, king.file);
 
         dangerousSquaresForKing = dangerouseCaptures | squaresAttackedByEnemy;
 
@@ -123,7 +118,7 @@ class MoveGenerator {
      * 
      * @param {King} king 
      * @param {Piece[]} enemyPieces 
-     * @param {Board} board 
+     * @param {BoardImplementation} board 
      * @returns Bitboard of enemy pieces that are protected (i.e the enemy can recapture if they are captured)
      */
     #calculateProtectedPieces(enemyPieces, board) { // transfer to piece?
@@ -151,7 +146,7 @@ class MoveGenerator {
                 protectedPieces |= pawnCapturingSquares & board.getOccupied(enemyPiece.color);
 
             } else if (enemyPiece.GetType() === E_PieceType.Knight | enemyPiece.GetType() === E_PieceType.King) {
-                let emptyBoard = new Board('8/8/8/8/8/8/8/8');
+                let emptyBoard = new BoardImplementation('8/8/8/8/8/8/8/8');
                 let enemyMovesInEmptyBoard = enemyPiece.GetMoves(emptyBoard);
                 protectedPieces |= enemyMovesInEmptyBoard & board.getOccupied(enemyPiece.color);
             }
@@ -183,7 +178,7 @@ class MoveGenerator {
      * 
      * @param {King} king 
      * @param {Piece[]} enemyPieces 
-     * @param {Board} board 
+     * @param {BoardImplementation} board 
      * @returns Object with pinned pieces and the filters for their moves
      */
     #calculatePinnedPieces(king, enemyPieces, board) {
@@ -243,7 +238,7 @@ class MoveGenerator {
     /**
      * 
      * @param {Pawn[]} pawns 
-     * @param {Board} board 
+     * @param {BoardImplementation} board 
      * @returns Array of en passant moves
      */
     #generateEnPassantMoves(pawns, board) {
@@ -277,7 +272,7 @@ class MoveGenerator {
      * Checks if an en passant move is legal. Taken from: https://peterellisjones.com/posts/generating-legal-chess-moves-efficiently/
      * @param {E_PieceColor} playingColor 
      * @param {Move} enPassant 
-     * @param {Board} board 
+     * @param {BoardImplementation} board 
      * @returns Whether the en passant move is legal
      */
     #isEnPassantLegal(playingColor, enPassant, board) {
@@ -290,15 +285,15 @@ class MoveGenerator {
         let checkBeforeEnPassant = board.isKingInCheck(playingColor);
 
         //simulate making the en passant capture by removing both pieces
-        let capturedPawn = board.removePiece(capturedPawnRank, capturedPawnFile, false);
-        let capturingPawn = board.removePiece(capturingPawnRank, capturingPawnFile, false);
+        let capturedPawn = board.removePiece(capturedPawnRank, capturedPawnFile);
+        let capturingPawn = board.removePiece(capturingPawnRank, capturingPawnFile);
 
         //check if king is in check after making the en passant capture
         let checkAfterEnPassant = board.isKingInCheck(playingColor);
 
         //add removed pawns
-        board.addPiece(capturedPawn, capturedPawnRank, capturedPawnFile, false);
-        board.addPiece(capturingPawn, capturingPawnRank, capturingPawnFile, false);
+        board.addPiece(capturedPawn, capturedPawnRank, capturedPawnFile);
+        board.addPiece(capturingPawn, capturingPawnRank, capturingPawnFile);
 
         if (!checkBeforeEnPassant & !checkAfterEnPassant) {
             //en passant is legal
@@ -319,7 +314,7 @@ class MoveGenerator {
      * 
      * @param {King} king 
      * @param {Rook[]} rooks 
-     * @param {Board} board 
+     * @param {BoardImplementation} board 
      * @returns Array of castling moves
      */
     #generateCastlingMoves(king, rooks, board) {
@@ -382,8 +377,8 @@ class MoveGenerator {
             let squareAttacked = (movesBitboard & testBit) > 0n;
             if (squareAttacked) {
                 //calculate end rank and file
-                let endRank = Math.floor((index) / 8) + 1;
-                let endFile = 8 - (index % 8);
+                let endRank = Math.floor((index) / NUMBER_OF_FILES) + 1;
+                let endFile = NUMBER_OF_FILES - (index % NUMBER_OF_FILES);
                 //create move
                 let newMove = new Move(piece.rank, piece.file, endRank, endFile, moveFlag);
                 //add move to array

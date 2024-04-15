@@ -37,16 +37,6 @@ class Piece {
         return this.#position;
     }
 
-    SetPosition(rank, file) {
-        //****** assertions, test
-        //move to rank
-        this.#position = 1n << BigInt(8 - file);
-        this.#rank = rank;
-        //move to file
-        this.#position = this.#position << BigInt((rank - 1) * 8);
-        this.#file = file;
-    }
-
     get color() {
         return this.#color;
     }
@@ -65,7 +55,7 @@ class Piece {
 
     /**
      * Returns bitboard that contains legal positions this piece can move to
-     * @param {Board} board 
+     * @param {BoardImplementation} board 
      */
     GetMoves(board) {
         throw new Error("Method 'GetMoves()' must be implemented.");

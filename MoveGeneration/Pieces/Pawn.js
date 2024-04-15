@@ -5,7 +5,7 @@ class Pawn extends Piece {
 
     /**
      * 
-     * @param {Board} board 
+     * @param {BoardImplementation} board 
      * @returns 
      */
     GetMoves(board) {
@@ -46,16 +46,16 @@ class Pawn extends Piece {
         let frontJump = twoSquaresFront &
             GetBooleanBitboard(frontMove > 1) & //a front move is possible
             board.getEmptySpaces() & //target square is empty 
-            Board.getRank(targetRankForJumping); //pawn can only jump from their initial rank
+            getRank(targetRankForJumping); //pawn can only jump from their initial rank
 
         //calculate capture moves
         let rightCapture = rightDiagonalSquare &
             board.getOccupied(OppositePieceColor(this.color)) & //There's an enemy piece in that square
-            ~Board.getFile(1); //remove right capture from 8th file to 1st file
+            ~getFile(1); //remove right capture from 8th file to 1st file
 
         let leftCapture = leftDiagonalSquare &
             board.getOccupied(OppositePieceColor(this.color)) & //There's an enemy piece in that square
-            ~Board.getFile(8); //remove right capture from 1st file to 8th file
+            ~getFile(8); //remove right capture from 1st file to 8th file
 
         return frontJump | frontMove | leftCapture | rightCapture;
     }
@@ -80,10 +80,10 @@ class Pawn extends Piece {
         }
 
         let rightCapture = rightDiagonalSquare &
-            ~Board.getFile(1); //remove right capture from 8th file to 1st file
+            ~getFile(1); //remove right capture from 8th file to 1st file
 
         let leftCapture = leftDiagonalSquare &
-            ~Board.getFile(8); //remove right capture from 1st file to 8th file
+            ~getFile(8); //remove right capture from 1st file to 8th file
 
         return rightCapture | leftCapture;
     }
