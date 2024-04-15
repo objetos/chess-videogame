@@ -1,3 +1,6 @@
+const NUMBER_OF_RANKS = 8;
+const NUMBER_OF_FILES = 8;
+
 const CASTLING_FILES = {//******  method?
     [E_MoveFlag.QueenSideCastling]: {
         [E_PieceType.King]: {

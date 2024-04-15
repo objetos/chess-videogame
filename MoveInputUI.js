@@ -3,12 +3,8 @@ class MoveInputUI {
     #colorForSelectedSquare = color(100, 100);
     #moveCompleted = false;
 
-    /**
-     * 
-     * @param {Quadrille} board 
-     */
-    constructor(board) {
-        this.#UIQuadrille = createQuadrille(board.width, board.height);
+    constructor() {
+        this.#UIQuadrille = createQuadrille(NUMBER_OF_FILES, NUMBER_OF_RANKS);
         MoveInput.addInputEventListener(MoveInput.E_InputEvents.MoveStartSet, this.#onMoveStartSet.bind(this));
         MoveInput.addInputEventListener(MoveInput.E_InputEvents.MoveDestinationSet, this.#onMoveDestinationSet.bind(this));
         MoveInput.addInputEventListener(MoveInput.E_InputEvents.MoveInput, this.#onMoveInput.bind(this));
@@ -50,6 +46,6 @@ class MoveInputUI {
     }
 
     draw() {
-        drawQuadrille(this.#UIQuadrille);
+        drawQuadrille(this.#UIQuadrille, { x: BOARD_POSITION.x, y: BOARD_POSITION.y });
     }
 }

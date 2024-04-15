@@ -1,8 +1,10 @@
 class MoveInput extends EventTarget {
-    static #boardQuadrille;
+    static #inputListener;
     static #board;
+
     static #moveStart = null;
     static #moveDestination = null;
+
     static E_InputEvents = {
         MoveInput: "user:move-input",
         SquareSelected: "user:square-selected",
@@ -29,16 +31,13 @@ class MoveInput extends EventTarget {
         return MoveInput.#_instance
     }
 
-
     /**
-     * Set board that receives input events
-     * @param {Quadrille} boardQuadrille 
+     * Set board that receives input events 
      * @param {Board} board 
      */
-    static setBoard(boardQuadrille, board) {
-        assert(boardQuadrille instanceof Quadrille, "Invalid board");
-        assert(boardQuadrille.height === 8 && boardQuadrille.width === 8, "Invalid board dimensions")
-        this.#boardQuadrille = boardQuadrille
+    static setBoard(board) {
+        assert(board instanceof Board, "Invalid board");
+        this.#inputListener = createQuadrille(NUMBER_OF_FILES, NUMBER_OF_RANKS);
         this.#board = board;
     }
 
@@ -49,23 +48,26 @@ class MoveInput extends EventTarget {
 
     static handleInputEvent(event) {
         if (event instanceof UIEvent && event.type === "click") {
-            this.#onClick();
+            this.#onClick(event);
         }
     }
 
-    static #onClick() {//****** deny if there's no piece on move start
-        if (this.#boardQuadrille === undefined) return;
+    static #onClick(event) {//****** deny if there's no piece on move start
+        if (this.#inputListener === undefined) return;
 
+        //get click coordinates relative to page
+        let xCoordinate = event.pageX;
+        let yCoordinate = event.pageY;
         //get clicked square
-        let clickedRank = 8 - this.#boardQuadrille.mouseRow;
-        let clickedFile = this.#boardQuadrille.mouseCol + 1;
+        let clickedRank = 8 - this.#inputListener.screenRow(yCoordinate, BOARD_POSITION.y, BOARD_SQUARE_SIZE);
+        let clickedFile = this.#inputListener.screenCol(xCoordinate, BOARD_POSITION.x, BOARD_SQUARE_SIZE) + 1;
         let clickedSquare = {
             rank: clickedRank,
             file: clickedFile
         };
 
         //if click is not within board limits
-        let isClickWithinBoardLimits = 1 <= clickedRank && clickedRank <= 8 && 1 <= clickedFile && clickedFile <= 8;
+        let isClickWithinBoardLimits = 1 <= clickedRank && clickedRank <= NUMBER_OF_RANKS && 1 <= clickedFile && clickedFile <= NUMBER_OF_FILES;
         if (!isClickWithinBoardLimits) {
             //if move was started
             if (this.#moveStart !== null) {
@@ -80,7 +82,7 @@ class MoveInput extends EventTarget {
         this.#instance.dispatchEvent(squareSelected);
 
         //if move start is not set and a piece was selected
-        let pieceSelected = this.#board.getPieceInRankFile(clickedRank, clickedFile) !== null;
+        let pieceSelected = this.#board.getPieceOnRankFile(clickedRank, clickedFile) !== null;
         if (this.#moveStart === null && pieceSelected) {
 
             //set this square as the move start

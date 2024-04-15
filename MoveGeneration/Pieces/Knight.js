@@ -11,7 +11,7 @@ class Knight extends Piece {
      */
     GetMoves(board) {
         //calculate current square
-        let currentSquare = (this.rank - 1) * 8 + (9 - this.file);
+        let currentSquare = (this.rank - 1) * NUMBER_OF_FILES + (NUMBER_OF_FILES - this.file + 1);
         let moves = 0n;
 
         //displace attack mask to current square

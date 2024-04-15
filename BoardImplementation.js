@@ -1,6 +1,6 @@
 class BoardImplementation {
     #piecesDictionary = {}; //pieces categorized by color and type.
-    #board = new Quadrille(8, 8);//board with piece objects.
+    #board = new Quadrille(NUMBER_OF_FILES, NUMBER_OF_RANKS);//board with piece objects.
 
     #castlingRights;
     #enPassantInfo;
@@ -25,8 +25,8 @@ class BoardImplementation {
 
         //create pieces
         //for each square
-        for (let rankIndex = 0; rankIndex < 8; rankIndex++) {
-            for (let fileIndex = 0; fileIndex < 8; fileIndex++) {
+        for (let rankIndex = 0; rankIndex < NUMBER_OF_RANKS; rankIndex++) {
+            for (let fileIndex = 0; fileIndex < NUMBER_OF_RANKS; fileIndex++) {
 
                 //if there's a piece
                 let pieceSymbol = inputBoard.read(rankIndex, fileIndex);
@@ -34,7 +34,7 @@ class BoardImplementation {
                     let pieceKey = Quadrille.chessKeys[pieceSymbol];
 
                     //create a piece
-                    let rank = 8 - rankIndex;
+                    let rank = NUMBER_OF_RANKS - rankIndex;
                     let file = fileIndex + 1;
                     let pieceObject = this.#createPiece(pieceKey, rank, file);
                     //add piece
@@ -65,7 +65,7 @@ class BoardImplementation {
 
         this.#piecesDictionary[piece.color][piece.GetType()].push(piece);
 
-        let rankIndex = 8 - rank;
+        let rankIndex = NUMBER_OF_RANKS - rank;
         let fileIndex = file - 1;
         this.#board.fill(rankIndex, fileIndex, piece);
     }
@@ -94,7 +94,7 @@ class BoardImplementation {
             throw new Error("Piece not found in dictionary");
         }
 
-        let rankIndex = 8 - rank;
+        let rankIndex = NUMBER_OF_RANKS - rank;
         let fileIndex = file - 1;
         this.#board.clear(rankIndex, fileIndex);
 
@@ -110,7 +110,7 @@ class BoardImplementation {
     getPieceOnRankFile(rank, file) {
         assertRank(rank);
         assertFile(file);
-        let rankIndex = 8 - rank;
+        let rankIndex = NUMBER_OF_RANKS - rank;
         let fileIndex = file - 1;
         return this.#board.read(rankIndex, fileIndex);
     }
@@ -265,7 +265,7 @@ class BoardImplementation {
                 string += " " + piece.toString();
             }
 
-            if (((col + 1) % 8) === 0) {
+            if (((col + 1) % NUMBER_OF_FILES) === 0) {
                 string += "\n";
             }
         });

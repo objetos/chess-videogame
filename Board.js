@@ -3,7 +3,7 @@ class Board {
     #moveGenerator;
     #boardImplementation;
 
-    #board = new Quadrille(8, 8); //board with pieces in symbol representation
+    #board = new Quadrille(NUMBER_OF_FILES, NUMBER_OF_RANKS); //board with pieces in symbol representation
 
     #boardChanges = [];
     #E_BoardChangeType = Object.freeze({
@@ -57,7 +57,7 @@ class Board {
                 continue;
 
             } else { //else if there's a king
-                let rank = 8 - kingPos.row;
+                let rank = NUMBER_OF_RANKS - kingPos.row;
                 let file = kingPos.col + 1;
                 let isKingOnInitialSquare = color === E_PieceColor.White ?
                     (rank === 1 && file === 5) :
@@ -76,7 +76,7 @@ class Board {
             let rookPositions = this.#board.search(createQuadrille([rookSymbol]), true);
             for (let rookPosition of rookPositions) {
 
-                let rank = 8 - rookPosition.row;
+                let rank = NUMBER_OF_RANKS - rookPosition.row;
                 let file = rookPosition.col + 1;
                 let isRookOnInitialSquare = color === E_PieceColor.White ?
                     (rank === 1 && file === 1) | (rank === 1 && file === 8) :
@@ -196,7 +196,7 @@ class Board {
     getPieceOnRankFile(rank, file) {
         assertRank(rank);
         assertFile(file);
-        let rankIndex = 8 - rank;
+        let rankIndex = NUMBER_OF_RANKS - rank;
         let fileIndex = file - 1;
         return this.#board.read(rankIndex, fileIndex);
     }
@@ -215,7 +215,7 @@ class Board {
      * Draws board
      */
     draw() {
-        drawQuadrille(this.#board);
+        drawQuadrille(this.#board, { x: BOARD_POSITION.x, y: BOARD_POSITION.y });
     }
 
     /**
@@ -234,7 +234,7 @@ class Board {
                 string += " " + Quadrille.chessKeys[pieceSymbol];
             }
 
-            if (((col + 1) % 8) === 0) {
+            if (((col + 1) % NUMBER_OF_FILES) === 0) {
                 string += "\n";
             }
         });
@@ -259,7 +259,7 @@ class Board {
             throw new Error("Cannot add piece in a occupied square");
         }
 
-        let rankIndex = 8 - rank;
+        let rankIndex = NUMBER_OF_RANKS - rank;
         let fileIndex = file - 1;
         this.#board.fill(rankIndex, fileIndex, pieceSymbol);
 
@@ -301,7 +301,7 @@ class Board {
             this.#pushBoardChange(removal);
         }
 
-        let rankIndex = 8 - rank;
+        let rankIndex = NUMBER_OF_RANKS - rank;
         let fileIndex = file - 1;
         this.#board.clear(rankIndex, fileIndex);
 
@@ -313,6 +313,7 @@ class Board {
         //if there's a piece in destination
         let pieceInDestination = this.getPieceOnRankFile(move.endRank, move.endFile);
         if (pieceInDestination !== null) {
+            assert(pieceInDestination.toLowerCase() !== 'k', "King capture is forbidden")
             //capture it
             this.#removePiece(move.endRank, move.endFile);
         }

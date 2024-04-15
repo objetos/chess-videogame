@@ -1,11 +1,12 @@
 const FIRST_FILE = 0x0101010101010101n;
 const FIRST_RANK = 0xFFn;
 
+
 function RankFileToBitboard(rank, file) { //****** assertions, document
-    //move to rank
-    let bitboard = 1n << BigInt(8 - file);
     //move to file
-    bitboard = bitboard << BigInt((rank - 1) * 8);
+    let bitboard = 1n << BigInt(NUMBER_OF_FILES - file);
+    //move to rank
+    bitboard = bitboard << BigInt((rank - 1) * NUMBER_OF_RANKS);
     return bitboard;
 }
 
@@ -114,7 +115,7 @@ function PrintBitboard(bitboard) {
             newString = 0 + " " + newString;
         }
 
-        if (((i + 1) % 8) === 0) {
+        if (((i + 1) % NUMBER_OF_FILES) === 0) {
             newString = "\n" + newString;
         }
     }
@@ -155,7 +156,7 @@ function getRank(rankNumber) {
 
     let rankBitboard = FIRST_RANK;
     //Move first rank n positions
-    rankBitboard = rankBitboard << BigInt((rankNumber - 1) * 8);
+    rankBitboard = rankBitboard << BigInt((rankNumber - 1) * NUMBER_OF_RANKS);
     return rankBitboard;
 }
 
@@ -165,7 +166,7 @@ function getRank(rankNumber) {
  * @param {number} file
  * @returns {BigInt} Bitboard that contains the diagonal.
  */
-function getDiagonal(rank, file) {
+function getDiagonal(rank, file) {//****** change magic number
 
     assertRank(rank);
     assertFile(file);

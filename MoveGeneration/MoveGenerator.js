@@ -377,8 +377,8 @@ class MoveGenerator {
             let squareAttacked = (movesBitboard & testBit) > 0n;
             if (squareAttacked) {
                 //calculate end rank and file
-                let endRank = Math.floor((index) / 8) + 1;
-                let endFile = 8 - (index % 8);
+                let endRank = Math.floor((index) / NUMBER_OF_FILES) + 1;
+                let endFile = NUMBER_OF_FILES - (index % NUMBER_OF_FILES);
                 //create move
                 let newMove = new Move(piece.rank, piece.file, endRank, endFile, moveFlag);
                 //add move to array
