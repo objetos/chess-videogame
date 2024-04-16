@@ -67,13 +67,14 @@ let legalMoves = [];
 
 //objects
 let moveInputUI;
+let moveRecord;
 
 
 function setup() {
     createCanvas(screen.availWidth, screen.availHeight);
 
     standardBoard = new Board(STANDARD_BOARD_FEN);
-    customBoard = new Board(STANDARD_NO_KINGS_FEN);
+    customBoard = new Board('3R3R/8/8/R2Q3Q/8/8/8/R2Q3Q');
     displayBoard = standardBoard;
 
     legalMoves = displayBoard.generateMoves(playingColor);
@@ -82,12 +83,14 @@ function setup() {
 
     MoveInput.setBoard(displayBoard);
     MoveInput.addInputEventListener(MoveInput.E_InputEvents.MoveInput, onMoveInput);
+
+    moveRecord = new MoveRecord();
 }
 
 function draw() {
     background(255);
-    displayBoard.draw();
     moveInputUI.draw();
+    displayBoard.draw();
     //runGame(displayBoard);
 }
 
@@ -99,6 +102,8 @@ function onMoveInput(event) {
     let result = isMoveLegal(inputMove);
     if (result.isLegal) {
         let legalMove = result.move;
+        //record move
+        console.log(moveRecord.recordMove(legalMove, displayBoard, playingColor));
         //make move on board
         displayBoard.makeMove(legalMove);
         //switch playing color

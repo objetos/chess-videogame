@@ -1,8 +1,9 @@
 class MoveRecord {
     /**
-     * 
+     * Records given move. Move must not have been made in the board.
      * @param {Move} move 
-     * @param {Board} board
+     * @param {Board} board Board in which given move is performed
+     * @param {E_PieceColor} playingColor Color that performs given move
      */
     recordMove(move, board, playingColor) {
         //secrets: how it converts info to string internally, how moves are stored
@@ -22,12 +23,12 @@ class MoveRecord {
             return moveString;
         }
 
-        let pieceInStart = board.getPieceInRankFile(move.startRank, move.startFile);
-        let isCapturingMove = board.getPieceInRankFile(move.endRank, move.endFile) !== null || move.flag === E_MoveFlag.EnPassant;
+        let pieceInStart = board.getPieceOnRankFile(move.startRank, move.startFile);
+        let isCapturingMove = board.getPieceOnRankFile(move.endRank, move.endFile) !== null || move.flag === E_MoveFlag.EnPassant;
 
         //add piece abbreviation
         //if piece in start is a pawn
-        let isPawn = pieceInStart === 'P' || pieceInStart === 'p';
+        let isPawn = (pieceInStart === Quadrille.chessSymbols['P']) || (pieceInStart === Quadrille.chessSymbols['p']);
         if (isPawn) {
             //add departure file if it is a capturing move
             if (isCapturingMove) moveString += FileToLetter(move.startFile);
@@ -36,26 +37,44 @@ class MoveRecord {
             moveString += pieceInStart;
         }
 
-        //check if rank or file is ambiguous
+        //check if departure rank or file is ambiguous
         if (!isPawn) {
-            let otherMoves = board.generateMoves(playingColor);
-            for (let otherMove of otherMoves) {
+
+            let piecesInSameRank = false;
+            let piecesInSameFile = false;
+            let ambiguityExists = false;
+
+            //for every legal move  
+            let legalMoves = board.generateMoves(playingColor);
+            for (let otherMove of legalMoves) {
+                //except the current one 
                 if (move.startRank === otherMove.startRank && move.startFile === otherMove.startFile) continue;
-                let piece = board.getPieceInRankFile(otherMove.startRank, otherMove.startFile);
+                //if pieces are the same and they have the same destination square
+                let otherPiece = board.getPieceOnRankFile(otherMove.startRank, otherMove.startFile);
                 let moveHasSameDestination = (otherMove.endRank === move.endRank) && (otherMove.endFile === move.endFile);
-                if (pieceInStart === piece && moveHasSameDestination) {
-                    //both pieces have different files
-                    if (move.startFile !== otherMove.startFile) {
-                        //add departure file
-                        moveString += FileToLetter(move.startFile);
+                if (pieceInStart === otherPiece && moveHasSameDestination) {
+
+                    //There's an ambiguity!
+                    ambiguityExists = true;
+                    //if files are the same 
+                    if (move.startFile === otherMove.startFile) {
+                        //rank is ambiguous
+                        piecesInSameFile = true;
                     }
-                    //else if files are equal but ranks differ
-                    else if (move.startRank !== otherMove.startRank) {
-                        //add destination file
-                        moveString += move.startRank;
+
+                    //if ranks are the same
+                    if (move.startRank === otherMove.startRank) {
+                        //file is ambiguous
+                        piecesInSameRank = true;
                     }
+
                 }
             }
+
+            //add disambiguation
+            if (ambiguityExists && !piecesInSameFile && !piecesInSameRank) moveString += FileToLetter(move.startFile);
+            if (ambiguityExists && piecesInSameRank) moveString += FileToLetter(move.startFile);
+            if (ambiguityExists && piecesInSameFile) moveString += move.startRank;
         }
 
         //if move is a capture
@@ -70,14 +89,13 @@ class MoveRecord {
         let destination = file + rank;
         moveString += destination;
 
-        //check same destination as other moves
         //add special moves marks
         switch (move.flag) {
             case E_MoveFlag.EnPassant:
                 moveString += 'e.p';
                 break;
             case E_MoveFlag.Promotion:
-                moveString += '=' + pieceColorTypeToString(playingColor, MoveInput.pieceSelectedForPromotion);
+                moveString += '=' + pieceColorTypeToKey(playingColor, MoveInput.pieceSelectedForPromotion);
                 break;
         }
 
