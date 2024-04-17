@@ -85,12 +85,14 @@ function setup() {
     MoveInput.addInputEventListener(MoveInput.E_InputEvents.MoveInput, onMoveInput);
 
     moveRecord = new MoveRecord();
+    moveRecordUI = new MoveRecordUI(moveRecord, 500, 100);
 }
 
 function draw() {
     background(255);
     moveInputUI.draw();
     displayBoard.draw();
+    moveRecordUI.draw();
     //runGame(displayBoard);
 }
 
@@ -103,7 +105,7 @@ function onMoveInput(event) {
     if (result.isLegal) {
         let legalMove = result.move;
         //record move
-        console.log(moveRecord.recordMove(legalMove, displayBoard, playingColor));
+        moveRecord.recordMove(legalMove, displayBoard, playingColor);
         //make move on board
         displayBoard.makeMove(legalMove);
         //switch playing color

@@ -1,3 +1,4 @@
+// ****** cleanup code
 class MoveRecord extends EventTarget {
     static events = {
         onMoveRecorded: "system:move-recorded",
@@ -18,9 +19,15 @@ class MoveRecord extends EventTarget {
         //if it is a castling move
         if (move.flag === E_MoveFlag.KingSideCastling) {
             moveString = "0-0";
+            let onMoveRecorded = new CustomEvent(MoveRecord.events.onMoveRecorded, { detail: { move: moveString } });
+            this.dispatchEvent(onMoveRecorded);
+            this.#record.push(moveString);
             return moveString;
         } else if (move.flag === E_MoveFlag.QueenSideCastling) {
             moveString = "0-0-0"
+            let onMoveRecorded = new CustomEvent(MoveRecord.events.onMoveRecorded, { detail: { move: moveString } });
+            this.dispatchEvent(onMoveRecorded);
+            this.#record.push(moveString);
             return moveString;
         }
 
