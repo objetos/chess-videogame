@@ -1,4 +1,10 @@
-class MoveRecord {
+class MoveRecord extends EventTarget {
+    static events = {
+        onMoveRecorded: "system:move-recorded",
+        onMoveUnrecorded: "system:move-recorded"
+    }
+
+    #record = [];
     /**
      * Records given move. Move must not have been made in the board.
      * @param {Move} move 
@@ -6,11 +12,6 @@ class MoveRecord {
      * @param {E_PieceColor} playingColor Color that performs given move
      */
     recordMove(move, board, playingColor) {
-        //secrets: how it converts info to string internally, how moves are stored
-        //preconditions: move has not been made in board
-        //postconditions:updated record
-        //input: move that was made on board and board
-        //output: none
         //test: Basis and data-flow testing with several games
 
         let moveString = "";
@@ -114,6 +115,21 @@ class MoveRecord {
         }
         board.unmakeMove();
 
+        let onMoveRecorded = new CustomEvent(MoveRecord.events.onMoveRecorded, { detail: { move: moveString } });
+        this.dispatchEvent(onMoveRecorded);
+        this.#record.push(moveString);
         return moveString;
+    }
+
+    /**
+     * Delete last move recorded.
+     */
+    unrecordMove() {
+        this.#record.pop();
+        this.dispatchEvent(MoveRecord.events.onMoveUnrecorded);
+    }
+
+    getRecord() {
+        return [...this.#record];
     }
 }
