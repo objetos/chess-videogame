@@ -1,5 +1,5 @@
 
-//fens
+//FENS
 const STANDARD_BOARD_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
 const JUST_PAWNS_FEN = '8/pppppppp/8/8/8/8/PPPPPPPP/8';
 const JUST_KINGS_FEN = '4k3/8/8/8/8/8/8/4K3';
@@ -46,26 +46,60 @@ var CUSTOM_POSITIONS = {
     "POS5": new BoardPosition('rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R', 41),
 }
 
-//boards
+//BOARDS
 let standardBoard;
 let customBoard;
 let displayBoard;
 
-//quadrille settings
+//QUADRILLE SETTINGS
 Quadrille.cellLength = 40;
 
-//board display settings
-const BOARD_POSITION = { x: 100, y: 100 };
+//UI SETTINGS ----------------------------------------------------------------
+//--Board--
+const BOARD_POSITION = { x: 100, y: 200 };
 const BOARD_SQUARE_SIZE = Quadrille.cellLength;
+const BOARD_WIDTH = BOARD_SQUARE_SIZE * NUMBER_OF_FILES;
+const BOARD_HEIGHT = BOARD_SQUARE_SIZE * NUMBER_OF_RANKS;
+//--Pieces Captured UI--
+const PIECES_CAPTURED_UI_SETTINGS = {
+    PIECES_SIZE: 30,
+    SPACE_FROM_BOARD: 10,
+    get WHITE_PIECES_POSITION() {
+        return {
+            x: BOARD_POSITION.x,
+            y: BOARD_POSITION.y - this.PIECES_SIZE - this.SPACE_FROM_BOARD
+        }
+    },
+    get BLACK_PIECES_POSITION() {
+        return {
+            x: BOARD_POSITION.x,
+            y: BOARD_POSITION.y + BOARD_HEIGHT + this.SPACE_FROM_BOARD
+        }
+    }
+}
+//--Move Record UI--
+const MOVE_RECORD_UI_SETTINGS = {
+    SPACE_FROM_BOARD: 20,
+    MAX_ROWS_VISIBLE: 6,
+    get POSITION() {
+        return {
+            x: BOARD_POSITION.x + BOARD_WIDTH + this.SPACE_FROM_BOARD,
+            y: BOARD_POSITION.y
+        }
+    },
+}
 
-//game settings
-let timer = 0;
-let timeToMakeMove = 25;
+//GAME SETTINGS
 let gameFinished = false;
 var playingColor = E_PieceColor.White;
 let legalMoves = [];
 
-//objects
+
+//RANDOM PLAY SETTINGS
+let timer = 0;
+let timeToMakeMove = 25;
+
+//OBJECTS
 let moveInputUI;
 let moveRecord;
 
@@ -85,7 +119,7 @@ function setup() {
     MoveInput.addInputEventListener(MoveInput.E_InputEvents.MoveInput, onMoveInput);
 
     moveRecord = new MoveRecord();
-    moveRecordUI = new MoveRecordUI(moveRecord, 500, 100);
+    moveRecordUI = new MoveRecordUI(moveRecord);
 }
 
 function draw() {
@@ -93,6 +127,7 @@ function draw() {
     moveInputUI.draw();
     displayBoard.draw();
     moveRecordUI.draw();
+    drawPiecesCapturedUI();
     //runGame(displayBoard);
 }
 
@@ -193,6 +228,21 @@ function testBoardPositions() {
     }
 }
 
+function drawPiecesCapturedUI() {
+    textSize(PIECES_CAPTURED_UI_SETTINGS.PIECES_SIZE);
+    fill(color(0));
+    textAlign(LEFT, TOP);
+
+    text(displayBoard.getCapturedPieces(E_PieceColor.White),
+        PIECES_CAPTURED_UI_SETTINGS.WHITE_PIECES_POSITION.x,
+        PIECES_CAPTURED_UI_SETTINGS.WHITE_PIECES_POSITION.y);
+
+    text(displayBoard.getCapturedPieces(E_PieceColor.Black),
+        PIECES_CAPTURED_UI_SETTINGS.BLACK_PIECES_POSITION.x,
+        PIECES_CAPTURED_UI_SETTINGS.BLACK_PIECES_POSITION.y);
+
+    textAlign(LEFT, BOTTOM);
+}
 
 
 

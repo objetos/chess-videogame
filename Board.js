@@ -11,6 +11,7 @@ class Board {
         Removal: Symbol("Removal"),
         CastlingRigthsChange: Symbol("CastlingRigthsChange"),
         EnPassantUpdate: Symbol("EnPassantUpdate"),
+        Capture: Symbol("Capture")
     })
 
     #castlingRights = {
@@ -27,6 +28,11 @@ class Board {
         rightToEnPassant: false,
         captureRank: null,
         captureFile: null
+    }
+
+    #capturedPieces = {
+        [E_PieceColor.White]: "",
+        [E_PieceColor.Black]: ""
     }
 
     /**
@@ -176,7 +182,11 @@ class Board {
                             this.#enableEnPassant(change.oldCaptureRank, change.oldCaptureFile);
                         }
                         break;
-
+                    case this.#E_BoardChangeType.Capture:
+                        this.#capturedPieces[E_PieceColor.White] = this.#capturedPieces[E_PieceColor.White].replace(change.piece, "");
+                        this.#capturedPieces[E_PieceColor.Black] = this.#capturedPieces[E_PieceColor.Black].replace(change.piece, "");
+                        this.#addPiece(change.piece, change.rank, change.file, false);
+                        break;
                     default:
                         throw new Error("Invalid board change");
                 }
@@ -188,17 +198,36 @@ class Board {
         }
 
     }
-
+    /**
+     * 
+     * @returns FEN string of current board state
+     */
     getFen() {
         return this.#board.toFEN();
     }
 
+    /**
+     * 
+     * @param {number} rank 
+     * @param {number} file 
+     * @returns Piece on given rank and file
+     */
     getPieceOnRankFile(rank, file) {
         assertRank(rank);
         assertFile(file);
         let rankIndex = NUMBER_OF_RANKS - rank;
         let fileIndex = file - 1;
         return this.#board.read(rankIndex, fileIndex);
+    }
+
+    /**
+     * 
+     * @param {E_PieceColor} pieceColor 
+     * @returns String with all pieces of given color that have been captured
+     */
+    getCapturedPieces(pieceColor) {
+        assertPieceColor(pieceColor);
+        return this.#capturedPieces[pieceColor];
     }
 
     /**
@@ -315,7 +344,7 @@ class Board {
         if (pieceInDestination !== null) {
             assert(pieceInDestination.toLowerCase() !== 'k', "King capture is forbidden")
             //capture it
-            this.#removePiece(move.endRank, move.endFile);
+            this.#capturePiece(move.endRank, move.endFile);
         }
 
         //move piece
@@ -329,8 +358,8 @@ class Board {
         this.#makeRegularMove(move);
         //remove pawn
         let pawn = this.#removePiece(move.endRank, move.endFile);
-        let pawnKey = Quadrille.chessKeys[pawn];
         //get new piece characteristics
+        let pawnKey = Quadrille.chessKeys[pawn];
         let pieceTypeToPromote = MoveInput.pieceSelectedForPromotion;
         let pieceColor = pieceKeyToColor(pawnKey);
         //create piece symbol
@@ -355,10 +384,22 @@ class Board {
     }
 
     #makeEnPassantMove(move) {
-        //move pawn
+        //move capturing pawn
         this.#makeRegularMove(move);
-        //remove captured pawn
-        this.#removePiece(move.startRank, move.endFile);
+        //capture target pawn
+        this.#capturePiece(move.startRank, move.endFile);
+    }
+
+    #capturePiece(rank, file) {
+        //console.trace();
+        //add piece to captured pieces
+        let pieceSymbol = this.getPieceOnRankFile(rank, file);
+        let pieceColor = pieceKeyToColor(Quadrille.chessKeys[pieceSymbol]);
+        this.#capturedPieces[pieceColor] += pieceSymbol;
+        //remove from board
+        this.#removePiece(rank, file, false);
+        let capture = { type: this.#E_BoardChangeType.Capture, rank: rank, file: file, piece: pieceSymbol }
+        this.#pushBoardChange(capture);
     }
 
     #recordNewBoardChanges() {

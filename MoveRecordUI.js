@@ -1,16 +1,11 @@
 //****** cleanup code
 class MoveRecordUI {
-    #maxRowsVisible = 6;
     #table;
-    #xPos;
-    #yPos;
 
-    constructor(moveRecord, xPos, yPos) {
+    constructor(moveRecord) {
         moveRecord.addEventListener(MoveRecord.events.onMoveRecorded, this.#onMoveRecorded.bind(this));
         moveRecord.addEventListener(MoveRecord.events.onMoveUnrecorded, this.#onMoveUnrecorded.bind(this));
         this.#table = createQuadrille(3, 1);
-        this.#xPos = xPos;
-        this.#yPos = yPos;
     }
 
     #onMoveRecorded(event) {
@@ -25,7 +20,7 @@ class MoveRecordUI {
             this.#table.insert(this.#table.height);
             this.#table.fill(this.#table.height - 1, 0, this.#table.height);
             this.#table.fill(this.#table.height - 1, 1, move);
-            if (this.#table.height > this.#maxRowsVisible) {
+            if (this.#table.height > MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE) {
                 this.#table.delete(0);
             }
         }
@@ -38,10 +33,11 @@ class MoveRecordUI {
     draw() {
         if (this.#table.read(0, 0) === null) return;
         drawQuadrille(this.#table, {
-            x: this.#xPos,
-            y: this.#yPos,
+            x: MOVE_RECORD_UI_SETTINGS.POSITION.x,
+            y: MOVE_RECORD_UI_SETTINGS.POSITION.y,
             textZoom: 1,
             numberDisplay: ({ graphics, value, cellLength = this.#table.cellLength } = {}) => {
+                graphics.fill(color(0));
                 graphics.textAlign(CENTER, CENTER);
                 graphics.textSize(cellLength * Quadrille.textZoom * 0.8);
                 graphics.text(value, cellLength / 2, cellLength / 2);
