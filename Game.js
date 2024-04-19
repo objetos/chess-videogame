@@ -56,10 +56,13 @@ Quadrille.cellLength = 40;
 
 //UI SETTINGS ----------------------------------------------------------------
 //--Board--
-const BOARD_POSITION = { x: 100, y: 200 };
 const BOARD_SQUARE_SIZE = Quadrille.cellLength;
 const BOARD_WIDTH = BOARD_SQUARE_SIZE * NUMBER_OF_FILES;
 const BOARD_HEIGHT = BOARD_SQUARE_SIZE * NUMBER_OF_RANKS;
+const BOARD_POSITION = {
+    get x() { return (window.innerWidth - BOARD_WIDTH) / 2 },
+    get y() { return (window.innerHeight - BOARD_WIDTH) / 2 }
+};
 //--Pieces Captured UI--
 const PIECES_CAPTURED_UI_SETTINGS = {
     PIECES_SIZE: 30,
@@ -74,6 +77,22 @@ const PIECES_CAPTURED_UI_SETTINGS = {
         return {
             x: BOARD_POSITION.x,
             y: BOARD_POSITION.y + BOARD_HEIGHT + this.SPACE_FROM_BOARD
+        }
+    }
+}
+//--Game State UI--
+const GAME_STATE_UI_SETTINGS = {
+    TEXT_SIZE: 20,
+    TEXT_MARGIN: 10,
+    SPACE_FROM_BOARD: 55,
+    WIDTH: BOARD_WIDTH,
+    get HEIGHT() {
+        return this.TEXT_SIZE + 2 * this.TEXT_MARGIN;
+    },
+    get POSITION() {
+        return {
+            x: BOARD_POSITION.x,
+            y: BOARD_POSITION.y - this.TEXT_SIZE - this.TEXT_MARGIN - this.SPACE_FROM_BOARD
         }
     }
 }
@@ -94,6 +113,16 @@ let gameFinished = false;
 var playingColor = E_PieceColor.White;
 let legalMoves = [];
 
+//GAME STATES 
+const E_GAME_STATE = Object.freeze({
+    PLAYING: Symbol("Playing"),
+    CHECKMATE: Symbol("Checkmate"),
+    STALEMATE: Symbol("Stalemate"),
+    DRAW: Symbol("Draw"),
+    RESIGNED: Symbol("Resigned"),
+});
+let gameState = E_GAME_STATE.PLAYING;
+
 
 //RANDOM PLAY SETTINGS
 let timer = 0;
@@ -105,7 +134,7 @@ let moveRecord;
 
 
 function setup() {
-    createCanvas(screen.availWidth, screen.availHeight);
+    createCanvas(windowWidth, windowHeight);
 
     standardBoard = new Board(STANDARD_BOARD_FEN);
     customBoard = new Board('3R3R/8/8/R2Q3Q/8/8/8/R2Q3Q');
@@ -128,7 +157,12 @@ function draw() {
     displayBoard.draw();
     moveRecordUI.draw();
     drawPiecesCapturedUI();
+    drawGameStateUI();
     //runGame(displayBoard);
+}
+
+function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
 }
 
 function onMoveInput(event) {
@@ -150,8 +184,12 @@ function onMoveInput(event) {
         //check for end game conditions
         if (legalMoves.length === 0) {
             gameFinished = true;
-            if (displayBoard.isKingInCheck(playingColor)) console.log("Checkmate! " + OppositePieceColor(playingColor).toString() + " wins.");
-            else console.log("Stalemate!");
+            if (displayBoard.isKingInCheck(playingColor)) {
+                gameState = E_GAME_STATE.CHECKMATE;
+            }
+            else {
+                gameState = E_GAME_STATE.STALEMATE;
+            }
             return;
         }
     }
@@ -183,19 +221,21 @@ function runGame(board) {
         let moves = board.generateMoves(playingColor);
         if (moves.length === 0) {
             gameFinished = true;
-            if (board.isKingInCheck(playingColor)) console.log("Checkmate! " + OppositePieceColor(playingColor).toString() + " wins.");
-            else console.log("Stalemate!");
+            if (board.isKingInCheck(playingColor)) {
+                gameState = E_GAME_STATE.CHECKMATE;
+            }
+            else {
+                gameState = E_GAME_STATE.STALEMATE;
+            }
+
             return;
         }
         let randomIndex = Math.floor(random(0, moves.length));
         let randomMove = moves[randomIndex];
+        moveRecord.recordMove(randomMove, displayBoard, playingColor);
         board.makeMove(randomMove);
 
-        if (playingColor === E_PieceColor.White) {
-            playingColor = E_PieceColor.Black;
-        } else {
-            playingColor = E_PieceColor.White;
-        }
+        SwitchPlayingColor();
         timer = 0;
     }
 }
@@ -242,6 +282,61 @@ function drawPiecesCapturedUI() {
         PIECES_CAPTURED_UI_SETTINGS.BLACK_PIECES_POSITION.y);
 
     textAlign(LEFT, BOTTOM);
+}
+
+function drawGameStateUI() {
+    let rectFillTargetColour;
+    let textColor;
+    let message;
+
+    switch (gameState) {
+        case E_GAME_STATE.PLAYING:
+            rectFillTargetColour = playingColor === E_PieceColor.White ? color(255) : color(0);
+            textColor = playingColor === E_PieceColor.White ? color(0) : color(255);
+            message = playingColor === E_PieceColor.White ? "White Moves" : "Black Moves";
+            break;
+        case E_GAME_STATE.CHECKMATE:
+            rectFillTargetColour = OppositePieceColor(playingColor) === E_PieceColor.White ? color(255) : color(0);
+            textColor = OppositePieceColor(playingColor) === E_PieceColor.White ? color(0) : color(255);
+            message = "Checkmate! " + (OppositePieceColor(playingColor) === E_PieceColor.White ? "White Wins" : "Black Wins");
+            break;
+        case E_GAME_STATE.RESIGNED:
+            rectFillTargetColour = OppositePieceColor(playingColor) === E_PieceColor.White ? color(255) : color(0);
+            textColor = OppositePieceColor(playingColor) === E_PieceColor.White ? color(0) : color(255);
+            message = (OppositePieceColor(playingColor) === E_PieceColor.White ? "White Wins" : "Black Wins");
+            break;
+        case E_GAME_STATE.STALEMATE:
+            rectFillTargetColour = color(175);
+            textColor = color(0);
+            message = "Stalemate!";
+            break;
+        case E_GAME_STATE.DRAW:
+            rectFillTargetColour = color(175);
+            textColor = color(0);
+            message = "Draw!";
+            break;
+    }
+
+    let rectCenter = GAME_STATE_UI_SETTINGS.POSITION.x + BOARD_WIDTH / 2;
+    noStroke();
+    fill(rectFillTargetColour);
+    rect(GAME_STATE_UI_SETTINGS.POSITION.x,
+        GAME_STATE_UI_SETTINGS.POSITION.y,
+        GAME_STATE_UI_SETTINGS.WIDTH,
+        GAME_STATE_UI_SETTINGS.HEIGHT);
+
+    textSize(GAME_STATE_UI_SETTINGS.TEXT_SIZE);
+    fill(textColor)
+    textStyle(BOLD);
+    textAlign(CENTER, TOP);
+
+    text(message,
+        rectCenter,
+        GAME_STATE_UI_SETTINGS.POSITION.y + GAME_STATE_UI_SETTINGS.TEXT_MARGIN);
+
+    textStyle(NORMAL);
+    textAlign(LEFT, BOTTOM);
+
 }
 
 
