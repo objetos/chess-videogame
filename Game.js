@@ -107,6 +107,16 @@ const MOVE_RECORD_UI_SETTINGS = {
         }
     },
 }
+//--Resign Button--
+const RESIGN_BUTTON_SETTINGS = {
+    POSITION: {
+        x: MOVE_RECORD_UI_SETTINGS.POSITION.x,
+        y: MOVE_RECORD_UI_SETTINGS.POSITION.y + MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE * Quadrille.cellLength + 20
+    },
+    WIDTH: 40,
+    HEIGHT: 20
+}
+// ----------------------------------------------------------------
 
 //GAME SETTINGS
 let gameFinished = false;
@@ -149,6 +159,8 @@ function setup() {
 
     moveRecord = new MoveRecord();
     moveRecordUI = new MoveRecordUI(moveRecord);
+
+    createResignButton();
 }
 
 function draw() {
@@ -338,6 +350,16 @@ function drawGameStateUI() {
     textAlign(LEFT, BOTTOM);
 
 }
+
+function createResignButton() {
+    let button = createButton("Resign");
+    button.position(RESIGN_BUTTON_SETTINGS.POSITION.x, RESIGN_BUTTON_SETTINGS.POSITION.y);
+    button.mouseClicked(() => {
+        gameState = E_GAME_STATE.RESIGNED;
+        button.hide();
+    });
+}
+
 
 
 
