@@ -99,7 +99,7 @@ const GAME_STATE_UI_SETTINGS = {
 //--Move Record UI--
 const MOVE_RECORD_UI_SETTINGS = {
     SPACE_FROM_BOARD: 20,
-    MAX_ROWS_VISIBLE: 6,
+    MAX_ROWS_VISIBLE: 8,
     get POSITION() {
         return {
             x: BOARD_POSITION.x + BOARD_WIDTH + this.SPACE_FROM_BOARD,
@@ -136,7 +136,7 @@ let gameState = E_GAME_STATE.PLAYING;
 
 //RANDOM PLAY SETTINGS
 let timer = 0;
-let timeToMakeMove = 25;
+let timeToMakeMove = 250;
 
 //OBJECTS
 let moveInputUI;
@@ -170,7 +170,7 @@ function draw() {
     moveRecordUI.draw();
     drawPiecesCapturedUI();
     drawGameStateUI();
-    //runGame(displayBoard);
+    runGame(displayBoard);
 }
 
 function windowResized() {
@@ -356,6 +356,7 @@ function createResignButton() {
     button.position(RESIGN_BUTTON_SETTINGS.POSITION.x, RESIGN_BUTTON_SETTINGS.POSITION.y);
     button.mouseClicked(() => {
         gameState = E_GAME_STATE.RESIGNED;
+        gameFinished = true;
         button.hide();
     });
 }
