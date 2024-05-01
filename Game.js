@@ -64,7 +64,7 @@ function draw() {
     moveRecordUI.draw();
     drawPiecesCapturedUI();
     drawGameStateUI();
-    runGame(displayBoard);
+    //runGame(displayBoard);
 }
 
 function windowResized() {
@@ -101,14 +101,14 @@ function onMoveInput(event) {
     }
 }
 
-function isMoveLegal(inputMove, legalMove) {
+function isMoveLegal(inputMove) {
     let isSameMove = (move) => {
         return inputMove.startRank === move.startRank &&
             inputMove.startFile === move.startFile &&
             inputMove.endRank === move.endRank &&
             inputMove.endFile === move.endFile;
     };
-    legalMove = legalMoves.find(isSameMove);
+    let legalMove = legalMoves.find(isSameMove);
     let isLegal = legalMove !== undefined;
     return {
         isLegal: isLegal,
