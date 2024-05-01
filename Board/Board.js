@@ -243,8 +243,8 @@ class Board {
     /**
      * Draws board
      */
-    draw() {
-        drawQuadrille(this.#board, { x: BOARD_POSITION.x, y: BOARD_POSITION.y });
+    draw(graphics) {
+        graphics.drawQuadrille(this.#board, { x: BOARD_LOCAL_POSITION.x, y: BOARD_LOCAL_POSITION.y, cellLength: BOARD_SQUARE_SIZE });
     }
 
     /**

@@ -93,7 +93,7 @@ class MoveRecordUI {
         }
     }
 
-    draw() {
+    draw(graphics) {
         //if there's no entries, do not draw
         if (this.#lastRowIndex === 0 && this.#table.isEmpty(0, 1)) return;
 
@@ -106,9 +106,10 @@ class MoveRecordUI {
             }
         }
 
-        drawQuadrille(tableToDraw, {
+        graphics.drawQuadrille(tableToDraw, {
             x: MOVE_RECORD_UI_SETTINGS.POSITION.x,
             y: MOVE_RECORD_UI_SETTINGS.POSITION.y,
+            cellLength: MOVE_RECORD_UI_SETTINGS.CELL_LENGTH,
             textZoom: 1,
             numberDisplay: ({ graphics, value, cellLength = this.#table.cellLength } = {}) => {
                 graphics.fill(color(0));
