@@ -1,6 +1,6 @@
 //UI SETTINGS ----------------------------------------------------------------
 //--Board--
-const BOARD_SQUARE_SIZE = Quadrille.cellLength;
+const BOARD_SQUARE_SIZE = 40;
 const BOARD_WIDTH = BOARD_SQUARE_SIZE * NUMBER_OF_FILES;
 const BOARD_HEIGHT = BOARD_SQUARE_SIZE * NUMBER_OF_RANKS;
 const BOARD_POSITION = {
@@ -50,12 +50,13 @@ const MOVE_RECORD_UI_SETTINGS = {
             y: BOARD_POSITION.y
         }
     },
+    ROW_HEIGHT: BOARD_SQUARE_SIZE
 }
 //--Resign Button--
 const RESIGN_BUTTON_SETTINGS = {
     POSITION: {
         x: MOVE_RECORD_UI_SETTINGS.POSITION.x,
-        y: MOVE_RECORD_UI_SETTINGS.POSITION.y + MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE * Quadrille.cellLength + 20
+        y: MOVE_RECORD_UI_SETTINGS.POSITION.y + MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE * MOVE_RECORD_UI_SETTINGS.ROW_HEIGHT + 20
     },
     WIDTH: 40,
     HEIGHT: 20

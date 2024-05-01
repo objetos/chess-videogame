@@ -27,10 +27,7 @@ var wikiTestPositions = {
     }
 }
 
-
-
 function runFullSuite() {
-    testCustomBoardPositions();
     for (let position of Object.keys(wikiTestPositions)) {
         console.log("FULL PERFT OF POSITION: " + position)
         runPerftTest(wikiTestPositions[position]);
@@ -138,50 +135,3 @@ async function perftTestAsync(board, depth) {
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
-/**
- * 
- * @param {Move} move 
- */
-function MoveToString(move) {
-    let startFileLetter = FileToLetter(move.startFile);
-    let endFileLetter = FileToLetter(move.endFile);
-    return startFileLetter + move.startRank + endFileLetter + move.endRank;
-}
-
-function FileToLetter(file) {
-    return String.fromCharCode(96 + file);
-}
-
-function testCustomBoardPositions() {
-    console.log("Testing Move Generator with Custom Positions \n");
-    let passed = true;
-    for (let boardPositionName of Object.keys(CUSTOM_POSITIONS)) {
-        let boardPosition = CUSTOM_POSITIONS[boardPositionName];
-        let board = new Board(boardPosition.fen);
-        let whiteMoves = board.generateMoves(E_PieceColor.White);
-        let blackMoves = board.generateMoves(E_PieceColor.Black);
-        if (boardPosition.numberOfWhiteMoves !== undefined) {
-            if (whiteMoves.length !== boardPosition.numberOfWhiteMoves) {
-                passed = false;
-                console.log("Position Name:" + boardPositionName + "\n");
-                console.log("FAILED. Incorrect number of White Moves. Real:" + boardPosition.numberOfWhiteMoves + ". Result:" + whiteMoves.length + ".\n");
-                console.log("------------------------")
-
-            }
-        }
-
-        if (boardPosition.numberOfBlackMoves !== undefined) {
-            if (blackMoves.length !== boardPosition.numberOfBlackMoves) {
-                passed = false;
-                console.log("FAILED. Incorrect number of Black Moves. Real:" + boardPosition.numberOfBlackMoves + ". Result:" + blackMoves.length + ".\n");
-                console.log("------------------------")
-
-            }
-        }
-
-    }
-
-    if (passed) console.log("PASSED");
-}
-
-

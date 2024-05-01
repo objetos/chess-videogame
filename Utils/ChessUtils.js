@@ -150,3 +150,15 @@ function FileToLetter(file) {
     assertFile(file);
     return String.fromCharCode(96 + file);
 }
+
+/**
+ * 
+ * @param {Move} move 
+ */
+function MoveToString(move) {
+    let startFileLetter = FileToLetter(move.startFile);
+    let endFileLetter = FileToLetter(move.endFile);
+    return startFileLetter + move.startRank + endFileLetter + move.endRank;
+}
+
+
