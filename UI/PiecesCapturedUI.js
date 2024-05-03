@@ -1,8 +1,8 @@
-//****** assert
 class PiecesCapturedUI {
     #board;
 
     constructor(board) {
+        assert(board instanceof Board, "Invalid board");
         this.#board = board;
     }
 
