@@ -1,237 +1,149 @@
-
-//FENS
-const STANDARD_BOARD_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
-const JUST_PAWNS_FEN = '8/pppppppp/8/8/8/8/PPPPPPPP/8';
-const JUST_KINGS_FEN = '4k3/8/8/8/8/8/8/4K3';
-const STANDARD_NO_KINGS_FEN = 'rnbq1bnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQ1BNR';
-//BOARDS
-let standardBoard;
-let customBoard;
-let displayBoard;
-
-//QUADRILLE SETTINGS
-Quadrille.cellLength = 40;
-
-//GAME SETTINGS
-let gameFinished = false;
-var playingColor = E_PieceColor.White;
-let legalMoves = [];
-
-//GAME STATES 
-const E_GAME_STATE = Object.freeze({
-    PLAYING: Symbol("Playing"),
-    CHECKMATE: Symbol("Checkmate"),
-    STALEMATE: Symbol("Stalemate"),
-    DRAW: Symbol("Draw"),
-    RESIGNED: Symbol("Resigned"),
-});
-let gameState = E_GAME_STATE.PLAYING;
-
-
-//RANDOM PLAY SETTINGS
-let timer = 0;
-let timeToMakeMove = 50;
-
-//OBJECTS
-let moveInputUI;
-let moveRecord;
-
-
-function setup() {
-    createCanvas(windowWidth, windowHeight);
-
-    standardBoard = new Board(STANDARD_BOARD_FEN);
-    customBoard = new Board('3R3R/8/8/R2Q3Q/8/8/8/R2Q3Q');
-    displayBoard = standardBoard;
-
-    legalMoves = displayBoard.generateMoves(playingColor);
-
-    moveInputUI = new MoveInputUI();//****** Board UI should register events first so it works
-
-    MoveInput.setBoard(displayBoard);
-    MoveInput.addInputEventListener(MoveInput.E_InputEvents.MoveInput, onMoveInput);
-
-    moveRecord = new MoveRecord();
-    moveRecordUI = new MoveRecordUI(moveRecord);
-
-    createResignButton();
+//--GAME DIMENSIONS--
+const GAME_DIMENSIONS = {
+    WIDTH: BOARD_WIDTH +
+        MOVE_RECORD_UI_SETTINGS.SPACE_FROM_BOARD +
+        MOVE_RECORD_UI_SETTINGS.WIDTH,
+    HEIGHT: GAME_STATE_UI_SETTINGS.HEIGHT +
+        GAME_STATE_UI_SETTINGS.SPACE_FROM_BOARD +
+        BOARD_WIDTH +
+        PIECES_CAPTURED_UI_SETTINGS.SPACE_FROM_BOARD +
+        PIECES_CAPTURED_UI_SETTINGS.PIECES_SIZE
 }
+//******* cleanup code, assert, document
+class Game {
+    //Game State
+    #playingColor = E_PieceColor.White;
+    get playingColor() {
+        return this.#playingColor;
+    }
+    #gameState = E_GameState.PLAYING;
+    get state() {
+        return this.#gameState;
+    }
 
-function draw() {
-    background(255);
-    moveInputUI.draw();
-    displayBoard.draw();
-    moveRecordUI.draw();
-    drawPiecesCapturedUI();
-    drawGameStateUI();
-    //runGame(displayBoard);
-}
+    //Objects
+    #legalMoves = [];
+    get legalMoves() {
+        return this.#legalMoves;
+    }
+    #moveRecord;
+    #moveInput;
+    #board;
 
-function windowResized() {
-    resizeCanvas(windowWidth, windowHeight);
-}
+    //UI
+    #moveRecordUI;
+    #moveInputUI;
+    #piecesCapturedUI;
+    #gameStateUI;
+    #graphics;
+    #position;
 
-function onMoveInput(event) {
-    //get input move
-    let inputMove = event.detail.move;
+    constructor(xPosition, yPosition, inputFen = STANDARD_BOARD_FEN, playingColor = E_PieceColor.White) {
+        this.#graphics = createGraphics(GAME_DIMENSIONS.WIDTH, GAME_DIMENSIONS.HEIGHT);
+        this.#position = { x: xPosition, y: yPosition }
 
-    //if input move is legal
-    let result = isMoveLegal(inputMove);
-    if (result.isLegal) {
-        let legalMove = result.move;
-        //record move
-        moveRecord.recordMove(legalMove, displayBoard, playingColor);
-        //make move on board
-        displayBoard.makeMove(legalMove);
-        //switch playing color
-        SwitchPlayingColor();
-        //generate new set of legal moves
-        legalMoves = displayBoard.generateMoves(playingColor);
-        //check for end game conditions
-        if (legalMoves.length === 0) {
-            gameFinished = true;
-            if (displayBoard.isKingInCheck(playingColor)) {
-                gameState = E_GAME_STATE.CHECKMATE;
-            }
-            else {
-                gameState = E_GAME_STATE.STALEMATE;
-            }
-            return;
+        this.#board = new Board(inputFen);
+        this.#playingColor = playingColor;
+        this.#legalMoves = this.#board.generateMoves(playingColor);
+
+        this.#moveInput = new MoveInput(this.#board, xPosition + BOARD_LOCAL_POSITION.x, yPosition + BOARD_LOCAL_POSITION.y);
+        this.#moveInputUI = new MoveInputUI(this, this.#moveInput);
+        this.#moveInput.addInputEventListener(MoveInput.E_InputEvents.MoveInput, this.#onMoveInput.bind(this));
+
+        this.#moveRecord = new MoveRecord();
+        this.#moveRecordUI = new MoveRecordUI(this.#moveRecord);
+        this.#piecesCapturedUI = new PiecesCapturedUI(this.#board);
+        this.#gameStateUI = new GameStateUI(this);
+        this.#createResignButton();
+    }
+
+    isGameFinished() {
+        return this.#gameState !== E_GameState.PLAYING;
+    }
+
+    isMoveLegal(inputMove) {
+        let isSameMove = (move) => {
+            return inputMove.startRank === move.startRank &&
+                inputMove.startFile === move.startFile &&
+                inputMove.endRank === move.endRank &&
+                inputMove.endFile === move.endFile;
+        };
+        let legalMove = this.#legalMoves.find(isSameMove);
+        let isLegal = legalMove !== undefined;
+        return {
+            isLegal: isLegal,
+            move: legalMove
         }
     }
-}
 
-function isMoveLegal(inputMove) {
-    let isSameMove = (move) => {
-        return inputMove.startRank === move.startRank &&
-            inputMove.startFile === move.startFile &&
-            inputMove.endRank === move.endRank &&
-            inputMove.endFile === move.endFile;
-    };
-    let legalMove = legalMoves.find(isSameMove);
-    let isLegal = legalMove !== undefined;
-    return {
-        isLegal: isLegal,
-        move: legalMove
+    draw() {
+        this.#graphics.background(255);
+
+        this.#moveRecordUI.draw(this.#graphics);
+        this.#piecesCapturedUI.draw(this.#graphics);
+        this.#gameStateUI.draw(this.#graphics);
+
+        this.#moveInputUI.draw(this.#graphics);
+        this.#board.draw(this.#graphics);
+
+
+
+        image(this.#graphics, this.#position.x, this.#position.y);
     }
-}
-
-function SwitchPlayingColor() {
-    playingColor = OppositePieceColor(playingColor);
-}
 
 
-function runGame(board) {
-    timer += deltaTime;
-    if (timeToMakeMove < timer && !gameFinished) {
-        let moves = board.generateMoves(playingColor);
-        if (moves.length === 0) {
-            gameFinished = true;
-            if (board.isKingInCheck(playingColor)) {
-                gameState = E_GAME_STATE.CHECKMATE;
+    #onMoveInput(event) {
+        if (this.isGameFinished()) return;
+        //get input move
+        let inputMove = event.detail.move;
+
+        //if input move is legal
+        let result = this.isMoveLegal(inputMove);
+        if (result.isLegal) {
+            let legalMove = result.move;
+            //record move
+            this.#moveRecord.recordMove(legalMove, this.#board, this.#playingColor);
+            //make move on board
+            this.#board.makeMove(legalMove);
+            //switch playing color
+            this.#switchPlayingColor();
+            //generate new set of legal moves
+            this.#legalMoves = this.#board.generateMoves(this.#playingColor);
+            //check for end game conditions
+            this.#checkEndGame();
+        }
+    }
+
+    #switchPlayingColor() {
+        this.#playingColor = OppositePieceColor(this.#playingColor);
+    }
+
+    #checkEndGame() {
+        if (this.#legalMoves.length === 0) {
+            if (this.#board.isKingInCheck(this.#playingColor)) {
+                this.#gameState = E_GameState.CHECKMATE;
             }
             else {
-                gameState = E_GAME_STATE.STALEMATE;
+                this.#gameState = E_GameState.STALEMATE;
             }
-
-            return;
+        } else {
+            //this.#checkDraw();
         }
-        let randomIndex = Math.floor(random(0, moves.length));
-        let randomMove = moves[randomIndex];
-        moveRecord.recordMove(randomMove, displayBoard, playingColor);
-        board.makeMove(randomMove);
-
-        SwitchPlayingColor();
-        timer = 0;
-    }
-}
-
-
-function drawPiecesCapturedUI() {
-    textSize(PIECES_CAPTURED_UI_SETTINGS.PIECES_SIZE);
-    fill(color(0));
-    textAlign(LEFT, TOP);
-
-    text(displayBoard.getCapturedPieces(E_PieceColor.White),
-        PIECES_CAPTURED_UI_SETTINGS.WHITE_PIECES_POSITION.x,
-        PIECES_CAPTURED_UI_SETTINGS.WHITE_PIECES_POSITION.y);
-
-    text(displayBoard.getCapturedPieces(E_PieceColor.Black),
-        PIECES_CAPTURED_UI_SETTINGS.BLACK_PIECES_POSITION.x,
-        PIECES_CAPTURED_UI_SETTINGS.BLACK_PIECES_POSITION.y);
-
-    textAlign(LEFT, BOTTOM);
-}
-
-function drawGameStateUI() {
-    let rectFillTargetColour;
-    let textColor;
-    let message;
-
-    switch (gameState) {
-        case E_GAME_STATE.PLAYING:
-            rectFillTargetColour = playingColor === E_PieceColor.White ? color(255) : color(0);
-            textColor = playingColor === E_PieceColor.White ? color(0) : color(255);
-            message = playingColor === E_PieceColor.White ? "White Moves" : "Black Moves";
-            break;
-        case E_GAME_STATE.CHECKMATE:
-            rectFillTargetColour = OppositePieceColor(playingColor) === E_PieceColor.White ? color(255) : color(0);
-            textColor = OppositePieceColor(playingColor) === E_PieceColor.White ? color(0) : color(255);
-            message = "Checkmate! " + (OppositePieceColor(playingColor) === E_PieceColor.White ? "White Wins" : "Black Wins");
-            break;
-        case E_GAME_STATE.RESIGNED:
-            rectFillTargetColour = OppositePieceColor(playingColor) === E_PieceColor.White ? color(255) : color(0);
-            textColor = OppositePieceColor(playingColor) === E_PieceColor.White ? color(0) : color(255);
-            message = (OppositePieceColor(playingColor) === E_PieceColor.White ? "White Wins" : "Black Wins");
-            break;
-        case E_GAME_STATE.STALEMATE:
-            rectFillTargetColour = color(175);
-            textColor = color(0);
-            message = "Stalemate!";
-            break;
-        case E_GAME_STATE.DRAW:
-            rectFillTargetColour = color(175);
-            textColor = color(0);
-            message = "Draw!";
-            break;
     }
 
-    let rectCenter = GAME_STATE_UI_SETTINGS.POSITION.x + BOARD_WIDTH / 2;
-    noStroke();
-    fill(rectFillTargetColour);
-    rect(GAME_STATE_UI_SETTINGS.POSITION.x,
-        GAME_STATE_UI_SETTINGS.POSITION.y,
-        GAME_STATE_UI_SETTINGS.WIDTH,
-        GAME_STATE_UI_SETTINGS.HEIGHT);
+    #checkDraw() {
+        if (false) {
+            this.#gameState = E_GameState.DRAW;
+        }
+    }
 
-    textSize(GAME_STATE_UI_SETTINGS.TEXT_SIZE);
-    fill(textColor)
-    textStyle(BOLD);
-    textAlign(CENTER, TOP);
+    #createResignButton() {
+        let button = createButton("Resign");//****** text in UIsettings
+        button.position(this.#position.x + RESIGN_BUTTON_SETTINGS.POSITION.x, this.#position.y + RESIGN_BUTTON_SETTINGS.POSITION.y);
+        button.mouseClicked(() => {
+            this.#gameState = E_GameState.RESIGNED;
+            button.hide();
+        });
+    }
 
-    text(message,
-        rectCenter,
-        GAME_STATE_UI_SETTINGS.POSITION.y + GAME_STATE_UI_SETTINGS.TEXT_MARGIN);
-
-    textStyle(NORMAL);
-    textAlign(LEFT, BOTTOM);
-
-}
-
-function createResignButton() {
-    let button = createButton("Resign");
-    button.position(RESIGN_BUTTON_SETTINGS.POSITION.x, RESIGN_BUTTON_SETTINGS.POSITION.y);
-    button.mouseClicked(() => {
-        gameState = E_GAME_STATE.RESIGNED;
-        gameFinished = true;
-        button.hide();
-    });
-}
-
-
-
-
-
-
-
-
+} 

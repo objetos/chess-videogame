@@ -1,9 +1,10 @@
+//****** cleanup code
 class MoveInput extends EventTarget {
-    static #inputListener;
-    static #board;
+    #inputListener;
+    #board;
 
-    static #moveStart = null;
-    static #moveDestination = null;
+    #moveStart = null;
+    #moveDestination = null;
 
     static E_InputEvents = {
         MoveInput: "user:move-input",
@@ -13,54 +14,30 @@ class MoveInput extends EventTarget {
         MoveDestinationSet: "user:move-destination-set"
     }
 
-    //Singleton pattern
-    static #_instance;
-    static get #instance() {
-        if (!MoveInput.#_instance) {
-            MoveInput.#_instance = new MoveInput();
-        }
-        return MoveInput.#_instance;
-    }
-
-    constructor() {
-        super();
-        if (!MoveInput.#_instance) {
-            MoveInput.#_instance = this;
-        }
-        // Initialize object
-        return MoveInput.#_instance
-    }
-
-    /**
-     * Set board that receives input events 
-     * @param {Board} board 
-     */
-    static setBoard(board) {
+    constructor(board, globalBoardPositionX, globalBoardPositionY) {
         assert(board instanceof Board, "Invalid board");
+        super();
         this.#inputListener = createQuadrille(NUMBER_OF_FILES, NUMBER_OF_RANKS);
         this.#board = board;
+        select('canvas').mouseClicked(() => {
+            this.#handleClick(mouseX, mouseY, globalBoardPositionX, globalBoardPositionY);
+        });
     }
 
-    static addInputEventListener(event, callback) {
-        assert(Object.values(this.E_InputEvents).includes(event), "Invalid event");
-        this.#instance.addEventListener(event, callback);
+    addInputEventListener(event, callback) {
+        assert(Object.values(MoveInput.E_InputEvents).includes(event), "Invalid event");
+        this.addEventListener(event, callback);
     }
 
-    static handleInputEvent(event) {
-        if (event instanceof UIEvent && event.type === "click") {
-            this.#onClick(event);
-        }
-    }
-
-    static #onClick(event) {//****** deny if there's no piece on move start
+    #handleClick(clickX, clickY, boardPositionX, boardPositionY) {
         if (this.#inputListener === undefined) return;
 
         //get click coordinates relative to page
-        let xCoordinate = event.pageX;
-        let yCoordinate = event.pageY;
+        let xCoordinate = clickX;
+        let yCoordinate = clickY;
         //get clicked square
-        let clickedRank = 8 - this.#inputListener.screenRow(yCoordinate, BOARD_POSITION.y, BOARD_SQUARE_SIZE);
-        let clickedFile = this.#inputListener.screenCol(xCoordinate, BOARD_POSITION.x, BOARD_SQUARE_SIZE) + 1;
+        let clickedRank = 8 - this.#inputListener.screenRow(yCoordinate, boardPositionY, BOARD_SQUARE_SIZE);
+        let clickedFile = this.#inputListener.screenCol(xCoordinate, boardPositionX, BOARD_SQUARE_SIZE) + 1;
         let clickedSquare = {
             rank: clickedRank,
             file: clickedFile
@@ -78,8 +55,8 @@ class MoveInput extends EventTarget {
         }
 
         //notify that a square was selected
-        let squareSelected = new CustomEvent(this.E_InputEvents.SquareSelected, { detail: { square: clickedSquare } })
-        this.#instance.dispatchEvent(squareSelected);
+        let squareSelected = new CustomEvent(MoveInput.E_InputEvents.SquareSelected, { detail: { square: clickedSquare } })
+        this.dispatchEvent(squareSelected);
 
         //if move start is not set and a piece was selected
         let pieceSelected = this.#board.getPieceOnRankFile(clickedRank, clickedFile) !== null;
@@ -90,8 +67,8 @@ class MoveInput extends EventTarget {
                 rank: clickedRank,
                 file: clickedFile
             }
-            let moveStartSet = new CustomEvent(this.E_InputEvents.MoveStartSet, { detail: { square: clickedSquare } })
-            this.#instance.dispatchEvent(moveStartSet);
+            let moveStartSet = new CustomEvent(MoveInput.E_InputEvents.MoveStartSet, { detail: { square: clickedSquare } })
+            this.dispatchEvent(moveStartSet);
 
             return;
         }
@@ -110,25 +87,25 @@ class MoveInput extends EventTarget {
                 rank: clickedRank,
                 file: clickedFile
             }
-            let moveDestinationSet = new CustomEvent(this.E_InputEvents.MoveDestinationSet, { detail: { square: clickedSquare } })
-            this.#instance.dispatchEvent(moveDestinationSet);
+            let moveDestinationSet = new CustomEvent(MoveInput.E_InputEvents.MoveDestinationSet, { detail: { square: clickedSquare } })
+            this.dispatchEvent(moveDestinationSet);
 
             //--create move
             let inputMove = new Move(this.#moveStart.rank, this.#moveStart.file, this.#moveDestination.rank, this.#moveDestination.file);
             //--notify
-            let moveInput = new CustomEvent(this.E_InputEvents.MoveInput, { detail: { move: inputMove } });
-            this.#instance.dispatchEvent(moveInput);
+            let moveInput = new CustomEvent(MoveInput.E_InputEvents.MoveInput, { detail: { move: inputMove } });
+            this.dispatchEvent(moveInput);
             //--unset start and destination
             this.#moveStart = null;
             this.#moveDestination = null;
         }
     }
 
-    static #CancelMove() {
+    #CancelMove() {
         this.#moveStart = null;
         this.#moveDestination = null;
-        let moveCanceled = new CustomEvent(this.E_InputEvents.MoveCanceled);
-        this.#instance.dispatchEvent(moveCanceled);
+        let moveCanceled = new CustomEvent(MoveInput.E_InputEvents.MoveCanceled);
+        this.dispatchEvent(moveCanceled);
     }
 
     static #pieceSelectedForPromotion = E_PieceType.Queen;
@@ -146,8 +123,4 @@ class MoveInput extends EventTarget {
 }
 
 
-
-function mouseClicked(event) {
-    MoveInput.handleInputEvent(event);
-}
 

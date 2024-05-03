@@ -3,9 +3,9 @@
 const BOARD_SQUARE_SIZE = 40;
 const BOARD_WIDTH = BOARD_SQUARE_SIZE * NUMBER_OF_FILES;
 const BOARD_HEIGHT = BOARD_SQUARE_SIZE * NUMBER_OF_RANKS;
-const BOARD_POSITION = {
-    get x() { return (window.innerWidth - BOARD_WIDTH) / 2 },
-    get y() { return (window.innerHeight - BOARD_WIDTH) / 2 }
+const BOARD_LOCAL_POSITION = {
+    get x() { return 0 },
+    get y() { return GAME_STATE_UI_SETTINGS.HEIGHT + GAME_STATE_UI_SETTINGS.SPACE_FROM_BOARD }
 };
 //--Pieces Captured UI--
 const PIECES_CAPTURED_UI_SETTINGS = {
@@ -13,14 +13,14 @@ const PIECES_CAPTURED_UI_SETTINGS = {
     SPACE_FROM_BOARD: 10,
     get WHITE_PIECES_POSITION() {
         return {
-            x: BOARD_POSITION.x,
-            y: BOARD_POSITION.y - this.PIECES_SIZE - this.SPACE_FROM_BOARD
+            x: BOARD_LOCAL_POSITION.x,
+            y: BOARD_LOCAL_POSITION.y - this.PIECES_SIZE - this.SPACE_FROM_BOARD
         }
     },
     get BLACK_PIECES_POSITION() {
         return {
-            x: BOARD_POSITION.x,
-            y: BOARD_POSITION.y + BOARD_HEIGHT + this.SPACE_FROM_BOARD
+            x: BOARD_LOCAL_POSITION.x,
+            y: BOARD_LOCAL_POSITION.y + BOARD_HEIGHT + this.SPACE_FROM_BOARD
         }
     }
 }
@@ -35,22 +35,24 @@ const GAME_STATE_UI_SETTINGS = {
     },
     get POSITION() {
         return {
-            x: BOARD_POSITION.x,
-            y: BOARD_POSITION.y - this.TEXT_SIZE - this.TEXT_MARGIN - this.SPACE_FROM_BOARD
+            x: BOARD_LOCAL_POSITION.x,
+            y: BOARD_LOCAL_POSITION.y - this.TEXT_SIZE - this.TEXT_MARGIN - this.SPACE_FROM_BOARD
         }
     }
 }
 //--Move Record UI--
 const MOVE_RECORD_UI_SETTINGS = {
+    CELL_LENGTH: 40,
     SPACE_FROM_BOARD: 20,
     MAX_ROWS_VISIBLE: 8,
     get POSITION() {
         return {
-            x: BOARD_POSITION.x + BOARD_WIDTH + this.SPACE_FROM_BOARD,
-            y: BOARD_POSITION.y
+            x: BOARD_LOCAL_POSITION.x + BOARD_WIDTH + this.SPACE_FROM_BOARD,
+            y: BOARD_LOCAL_POSITION.y
         }
     },
-    ROW_HEIGHT: BOARD_SQUARE_SIZE
+    ROW_HEIGHT: BOARD_SQUARE_SIZE,
+    WIDTH: BOARD_SQUARE_SIZE * 3
 }
 //--Resign Button--
 const RESIGN_BUTTON_SETTINGS = {
