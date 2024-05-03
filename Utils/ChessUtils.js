@@ -1,7 +1,10 @@
 const NUMBER_OF_RANKS = 8;
 const NUMBER_OF_FILES = 8;
 
-const CASTLING_FILES = {//******  method?
+/**
+ * Files involved in castling. Provide castling side and piece which is moving (rook or king)
+ */
+const CASTLING_FILES = {
     [E_MoveFlag.QueenSideCastling]: {
         [E_PieceType.King]: {
             startFile: 5,
@@ -24,11 +27,17 @@ const CASTLING_FILES = {//******  method?
     }
 }
 
+/**
+ * Ranks where pawns can promote. Provide color
+ */
 const RANKS_TO_PROMOTE = {
     [E_PieceColor.White]: 7,
     [E_PieceColor.Black]: 2
 }
 
+/**
+ * Ranks where pawns can perform an en-passant capture. Provide color
+ */
 const ENPASSANT_CAPTURING_RANKS = {
     [E_PieceColor.White]: 5,
     [E_PieceColor.Black]: 4
@@ -52,7 +61,31 @@ function OppositePieceColor(pieceColor) {
 }
 
 /**
- * Transforms piece color a type to piece key
+ * Provide type to return lowercase piece key
+ */
+const PIECE_KEYS_BY_TYPE = {
+    [E_PieceType.King]: 'k',
+    [E_PieceType.Bishop]: 'b',
+    [E_PieceType.Knight]: 'n',
+    [E_PieceType.Queen]: 'q',
+    [E_PieceType.Pawn]: 'p',
+    [E_PieceType.Rook]: 'r'
+}
+
+/**
+ * Provide piece key in lowercase to return piece type
+ */
+const PIECE_TYPE_BY_KEY = {
+    'k': E_PieceType.King,
+    'b': E_PieceType.Bishop,
+    'n': E_PieceType.Knight,
+    'q': E_PieceType.Queen,
+    'p': E_PieceType.Pawn,
+    'r': E_PieceType.Rook
+}
+
+/**
+ * Transforms piece color and type to piece key
  * @param {E_PieceColor} pieceColor 
  * @param {E_PieceType} pieceType 
  * @returns piece key
@@ -61,29 +94,10 @@ function pieceColorTypeToKey(pieceColor, pieceType) {
     assertPieceColor(pieceColor);
     assertPieceType(pieceType);
 
-    let pieceString = '';
-    switch (pieceType) {
-        case E_PieceType.King:
-            pieceString = 'k';
-            break;
-        case E_PieceType.Bishop:
-            pieceString = 'b';
-            break;
-        case E_PieceType.Knight:
-            pieceString = 'n';
-            break;
-        case E_PieceType.Queen:
-            pieceString = 'q';
-            break;
-        case E_PieceType.Pawn:
-            pieceString = 'p';
-            break;
-        case E_PieceType.Rook:
-            pieceString = 'r';
-            break;
-        default:
-            throw new Error("Incorrect piece type:" + piece);
-    }
+    assert(pieceColor !== E_PieceColor.Any, "No piece color provided");
+    assert(pieceType !== E_PieceType.Any, "No piece type provided");
+
+    let pieceString = PIECE_KEYS_BY_TYPE[pieceType];
 
     if (pieceColor === E_PieceColor.White) {
         pieceString = pieceString.toUpperCase();
@@ -110,39 +124,11 @@ function pieceKeyToColor(pieceKey) {
  */
 function pieceKeyToType(pieceKey) {
     assertPieceKey(pieceKey);
-    let type;
-    switch (pieceKey.toUpperCase()) {
-        case 'K':
-            type = E_PieceType.King;
-            break;
-        case 'Q':
-            type = E_PieceType.Queen;
-            break;
-        case 'B':
-            type = E_PieceType.Bishop;
-            break;
-        case 'R':
-            type = E_PieceType.Rook;
-            break;
-        case 'N':
-            type = E_PieceType.Knight;
-            break;
-        case 'P':
-            type = E_PieceType.Pawn;
-            break;
-        default:
-            throw new Error("Incorrect piece type:" + pieceKey);
-    }
-
-    return type;
-}
-
-function assertPieceKey(pieceKey) {
-    assert(Object.values(Quadrille.chessKeys).includes(pieceKey), "Invalid piece key");
+    return PIECE_TYPE_BY_KEY[pieceKey.toLowerCase()];
 }
 
 /**
- * Converts a file number into its letter representatio 
+ * Converts a file number into its letter representation
  * @param {number} file 
  * @returns 
  */
@@ -154,8 +140,10 @@ function FileToLetter(file) {
 /**
  * 
  * @param {Move} move 
+ * @returns move in algebraic notation
  */
 function MoveToString(move) {
+    assert(move instanceof Move, "Invalid move")
     let startFileLetter = FileToLetter(move.startFile);
     let endFileLetter = FileToLetter(move.endFile);
     return startFileLetter + move.startRank + endFileLetter + move.endRank;

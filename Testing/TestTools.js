@@ -30,8 +30,14 @@ function assertFile(file) {
 
 function assertPieceColor(pieceColor) {
     assert(Object.values(E_PieceColor).includes(pieceColor), "Invalid piece color");
+    assert(pieceColor !== E_PieceColor.None, "No piece color provided");
 }
 
 function assertPieceType(pieceType) {
     assert(Object.values(E_PieceType).includes(pieceType), "Invalid piece type");
+    assert(pieceType !== E_PieceType.None, "No piece type provided");
+}
+
+function assertPieceKey(pieceKey) {
+    assert(Object.values(Quadrille.chessKeys).includes(pieceKey), "Invalid piece key");
 }
