@@ -1,4 +1,4 @@
-//****** cleanup code
+//****** cleanup code, assert
 class MoveRecordUI {
     #table;
 

@@ -1,3 +1,4 @@
+//****** cleanup code
 class MoveInput extends EventTarget {
     #inputListener;
     #board;

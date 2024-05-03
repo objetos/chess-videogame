@@ -1,8 +1,8 @@
-//****** document class, test
+//****** document class, test, assert
 class MoveInputUI {
     #game;
     #UIQuadrille;
-    #colorForSelectedSquare = color(100, 100);
+    #colorForSelectedSquare = color(100, 100);//****** transfer to UISettings
     #colorForAvailableMoves = color(179, 255, 179);
     #moveCompleted = false;
 

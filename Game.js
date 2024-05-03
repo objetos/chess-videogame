@@ -9,11 +9,9 @@ const GAME_DIMENSIONS = {
         PIECES_CAPTURED_UI_SETTINGS.SPACE_FROM_BOARD +
         PIECES_CAPTURED_UI_SETTINGS.PIECES_SIZE
 }
-
+//******* cleanup code, assert, document
 class Game {
-
     //Game State
-    #gameFinished = false;
     #playingColor = E_PieceColor.White;
     get playingColor() {
         return this.#playingColor;
@@ -56,7 +54,7 @@ class Game {
         this.#moveRecordUI = new MoveRecordUI(this.#moveRecord);
         this.#piecesCapturedUI = new PiecesCapturedUI(this.#board);
         this.#gameStateUI = new GameStateUI(this);
-        //createResignButton(); ******
+        this.#createResignButton();
     }
 
     isGameFinished() {
@@ -88,6 +86,8 @@ class Game {
         this.#moveInputUI.draw(this.#graphics);
         this.#board.draw(this.#graphics);
 
+
+
         image(this.#graphics, this.#position.x, this.#position.y);
     }
 
@@ -106,19 +106,19 @@ class Game {
             //make move on board
             this.#board.makeMove(legalMove);
             //switch playing color
-            this.#SwitchPlayingColor();
+            this.#switchPlayingColor();
             //generate new set of legal moves
             this.#legalMoves = this.#board.generateMoves(this.#playingColor);
             //check for end game conditions
-            this.#CheckEndGame();
+            this.#checkEndGame();
         }
     }
 
-    #SwitchPlayingColor() {
+    #switchPlayingColor() {
         this.#playingColor = OppositePieceColor(this.#playingColor);
     }
 
-    #CheckEndGame() {
+    #checkEndGame() {
         if (this.#legalMoves.length === 0) {
             if (this.#board.isKingInCheck(this.#playingColor)) {
                 this.#gameState = E_GameState.CHECKMATE;
@@ -127,13 +127,23 @@ class Game {
                 this.#gameState = E_GameState.STALEMATE;
             }
         } else {
-            //this.#CheckDraw();
+            //this.#checkDraw();
         }
     }
 
-    #CheckDraw() {
+    #checkDraw() {
         if (false) {
             this.#gameState = E_GameState.DRAW;
         }
     }
+
+    #createResignButton() {
+        let button = createButton("Resign");//****** text in UIsettings
+        button.position(this.#position.x + RESIGN_BUTTON_SETTINGS.POSITION.x, this.#position.y + RESIGN_BUTTON_SETTINGS.POSITION.y);
+        button.mouseClicked(() => {
+            this.#gameState = E_GameState.RESIGNED;
+            button.hide();
+        });
+    }
+
 } 
