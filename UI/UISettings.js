@@ -4,7 +4,7 @@ const BOARD_SQUARE_SIZE = 40;
 const BOARD_WIDTH = BOARD_SQUARE_SIZE * NUMBER_OF_FILES;
 const BOARD_HEIGHT = BOARD_SQUARE_SIZE * NUMBER_OF_RANKS;
 const BOARD_LOCAL_POSITION = {
-    get x() { return 0 },
+    get x() { return BOARD_SQUARE_SIZE },
     get y() { return GAME_STATE_UI_SETTINGS.HEIGHT + GAME_STATE_UI_SETTINGS.SPACE_FROM_BOARD }
 };
 //--Pieces Captured UI--
@@ -55,11 +55,19 @@ const MOVE_RECORD_UI_SETTINGS = {
     WIDTH: BOARD_SQUARE_SIZE * 3
 }
 //--Resign Button--
-const RESIGN_BUTTON_SETTINGS = {
+const RESIGN_BUTTON_UI_SETTINGS = {
     POSITION: {
         x: MOVE_RECORD_UI_SETTINGS.POSITION.x,
         y: MOVE_RECORD_UI_SETTINGS.POSITION.y + MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE * MOVE_RECORD_UI_SETTINGS.ROW_HEIGHT + 20
     },
     WIDTH: 40,
     HEIGHT: 20
+}
+//--Rank Files UI--
+const RANKS_FILES_UI_SETTING = {
+    CELL_LENGTH: BOARD_SQUARE_SIZE,
+    TEXT_ZOOM: 0.5,
+    TEXT_COLOR: 0,
+    RANKS: new Quadrille(1, ['8', '7', '6', '5', '4', '3', '2', '1']),
+    FILES: new Quadrille(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'])
 }
