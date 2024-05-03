@@ -1,8 +1,15 @@
-const FIRST_FILE = 0x0101010101010101n;
-const FIRST_RANK = 0xFFn;
+const FIRST_FILE_BITBOARD = 0x0101010101010101n;
+const FIRST_RANK_BITBOARD = 0xFFn;
 
-
-function RankFileToBitboard(rank, file) { //****** assertions, document
+/**
+ * 
+ * @param {Number} rank 
+ * @param {Number} file 
+ * @returns Bitboard that holds the square given by rank and file
+ */
+function squareToBitboard(rank, file) {
+    assertRank(rank);
+    assertFile(file);
     //move to file
     let bitboard = 1n << BigInt(NUMBER_OF_FILES - file);
     //move to rank
@@ -10,27 +17,48 @@ function RankFileToBitboard(rank, file) { //****** assertions, document
     return bitboard;
 }
 
-function GetRay(startRank, startFile, endRank, endFile, includeStart = true, includeEnd = true) {
-    let start = RankFileToBitboard(startRank, startFile);
-    let end = RankFileToBitboard(endRank, endFile);
+/**
+ * 
+ * @param {Number} startRank 
+ * @param {Number} startFile 
+ * @param {Number} destinationRank 
+ * @param {Number} destinationFile 
+ * @param {boolean} includeStart Should the ray contain the start square?
+ * @param {boolean} includeDestination Should the ray contain the destination square?
+ * @returns Bitboard that holds a ray from given start and end square  
+ */
+function getRay(startRank, startFile, destinationRank, destinationFile, includeStart = true, includeDestination = true) {
+    assertRank(startRank);
+    assertRank(destinationRank);
+    assertRank(startFile);
+    assertFile(destinationFile);
+    assert(typeof includeStart === 'boolean', "includeStart is not boolean");
+    assert(typeof includeStart === 'boolean', "includeDestination is not boolean");
 
-    if (startRank === endRank && startFile === endFile) {
-        if (includeStart || includeEnd) return start;
-        else return 0n;
+    let start = squareToBitboard(startRank, startFile);
+    let destination = squareToBitboard(destinationRank, destinationFile);
+
+    //if start and destination are the same
+    if (startRank === destinationRank && startFile === destinationFile) {
+        if (includeStart || includeDestination) return start;//return start or destination if included 
+        else return 0n; //else return empty ray
     }
 
-    let rankDiff = endRank - startRank;
-    let fileDiff = endFile - startFile;
+    let rankDiff = destinationRank - startRank;
+    let fileDiff = destinationFile - startFile;
     let isPositiveRay = false;
     let mask = 0n;
 
-    if (startRank === endRank) {
+    if (startRank === destinationRank) {
+        //horizontal ray
         mask = getRank(startRank);
-        isPositiveRay = endFile < startFile;
-    } else if (startFile === endFile) {
+        isPositiveRay = destinationFile < startFile;
+    } else if (startFile === destinationFile) {
+        //vertical ray
         mask = getFile(startFile);
-        isPositiveRay = startRank < endRank;
+        isPositiveRay = startRank < destinationRank;
     } else if (Math.abs(rankDiff) === Math.abs(fileDiff)) {
+        //diagonal ray
         let isDiagonal = Math.sign(rankDiff) === Math.sign(fileDiff);
         if (isDiagonal) {
             mask = getDiagonal(startRank, startFile);
@@ -40,51 +68,72 @@ function GetRay(startRank, startFile, endRank, endFile, includeStart = true, inc
             isPositiveRay = 0 < rankDiff && fileDiff < 0;
         }
     } else {
+        //no ray is possible
         return 0n;
     }
 
-    let rays = HyperbolaQuintessenceAlgorithm(end, start, mask);
-    let ray = isPositiveRay ? rays[0] : rays[1];
+    let rays = hyperbolaQuintessenceAlgorithm(destination, start, mask);
+    let ray = isPositiveRay ? rays.positiveRay : rays.negativeRay;
 
     if (includeStart) ray = ray | start;
-    if (!includeEnd) ray = ray & ~end;
+    if (!includeDestination) ray = ray & ~destination;
 
     return ray;
 }
 
-function GetNumberOfBits(bitboard) {
-    let numberOfBits = 0;
-    while (bitboard > 0n) {
-        bitboard = (bitboard - 1) & bitboard;
-        numberOfBits++;
-    }
-    return numberOfBits;
-}
+/**
+ * Calculates a sliding ray from given position to any square blocked by occupied in the direction of mask.
+ * Calculates usign o^(o-2r) trick. 
+ * Taken from https://www.youtube.com/watch?v=bCH4YK6oq8M&list=PLQV5mozTHmacMeRzJCW_8K3qw2miYqd0c&index=9&ab_channel=LogicCrazyChess.
+ * @param {*} occupied Bitboard with occupied squares
+ * @param {*} position Bitboard with position of piece
+ * @param {*} mask Bitboard with sliding direction
+ * @returns Bitboard with sliding ray
+ */
+function hyperbolaQuintessenceAlgorithm(occupied, position, mask) {
+    assert(typeof occupied === 'bigint', "Argument is not a BigInt");
+    assert(typeof position === 'bigint', "Argument is not a BigInt");
+    assert(typeof mask === 'bigint', "Argument is not a BigInt");
 
-//****** change return value from array
-//Moves calculated using o^(o-2r) trick. 
-//Taken from https://www.youtube.com/watch?v=bCH4YK6oq8M&list=PLQV5mozTHmacMeRzJCW_8K3qw2miYqd0c&index=9&ab_channel=LogicCrazyChess.
-function HyperbolaQuintessenceAlgorithm(occupied, position, mask) {
     let blockers = occupied & mask;
     let positiveRay = ((blockers - 2n * position) ^ occupied) & mask;
-    let negativeRay = (Reverse((Reverse(blockers) - 2n * Reverse(position))) ^ occupied) & mask;
-    return [positiveRay, negativeRay];
+    let negativeRay = (reverseBitboard((reverseBitboard(blockers) - 2n * reverseBitboard(position))) ^ occupied) & mask;
+    return {
+        wholeRay: positiveRay | negativeRay,
+        positiveRay: positiveRay,
+        negativeRay: negativeRay
+    };
 }
 
-function Reverse(bitboard) {
-    let bitboardString = BitboardToString(bitboard);
+/**
+ * 
+ * @param {bigint} bitboard 
+ * @returns Bitboard reversed
+ */
+function reverseBitboard(bitboard) {
+    assert(typeof bitboard === 'bigint', "Invalid bitboard");
+    let bitboardString = bitboardToString(bitboard);
 
+    //complete to 64 bits
     let numberOfBits = bitboardString.length;
     if (bitboardString.length < 64) {
-        let bitsLeft = 64 - numberOfBits;
-        bitboardString = "0".repeat(bitsLeft) + bitboardString;
+        let bitsLeftToAdd = 64 - numberOfBits;
+        bitboardString = "0".repeat(bitsLeftToAdd) + bitboardString;
     }
+
+    //reverse bitboard
     let reversedBitboardString = bitboardString.split('').reverse().join('');
     let reversedBitboard = BigInt("0b" + reversedBitboardString);
     return reversedBitboard;
 }
 
-function BitboardToString(bitboard) {
+/**
+ * 
+ * @param {bigint} bitboard 
+ * @returns Bitboard as a string
+ */
+function bitboardToString(bitboard) {
+    assert(typeof bitboard === 'bigint', "Invalid bitboard");
     let bitboardString;
 
     if (0 <= bitboard) {
@@ -96,15 +145,23 @@ function BitboardToString(bitboard) {
     return bitboardString;
 }
 
-// (REF) https://stackoverflow.com/questions/70710579/javascript-bigint-print-unsigned-binary-represenation#:~:text=Since%20negative%20BigInts%20are%20represented,based%20on%20the%20current%20length. 
-// take two's complement of a binary string
-function TwosComplement(binaryString) {
+/**
+ * Returns two's complement of a binary string. Taken from:https : https://stackoverflow.com/questions/70710579/javascript-bigint-print-unsigned-binary-represenation
+ * @param {string} binaryString 
+ */
+function twosComplement(binaryString) {
     let complement = BigInt('0b' + binaryString.split('').map(e => e === "0" ? "1" : "0").join(''));
     return complement + BigInt(1);
 }
 
-function PrintBitboard(bitboard) {
-    let bitboardString = BitboardToString(bitboard);
+/**
+ * Prints bitboard to console
+ * @param {bigint} bitboard 
+ */
+function printBitboard(bitboard) {
+    assert(typeof bitboard === 'bigint', "Invalid bitboard");
+
+    let bitboardString = bitboardToString(bitboard);
 
     let newString = "";
 
@@ -122,7 +179,13 @@ function PrintBitboard(bitboard) {
     console.log(newString);
 }
 
-function GetBooleanBitboard(bool) {
+/**
+ * 
+ * @param {boolean} bool 
+ * @returns If true, a bitboard full of 1's. Otherwise, returns 0.
+ */
+function getBooleanBitboard(bool) {
+    assert(typeof bool === 'boolean', "Invalid argument");
     if (bool) {
         return 0xFFFFFFFFFFFFFFFFn;
     } else {
@@ -136,10 +199,8 @@ function GetBooleanBitboard(bool) {
  * @returns {BigInt} Bitboard that contains the specified file.
  */
 function getFile(fileNumber) {
-
     assertFile(fileNumber);
-
-    let fileBitboard = FIRST_FILE;
+    let fileBitboard = FIRST_FILE_BITBOARD;
     //Move first file n positions
     fileBitboard = fileBitboard << BigInt(8 - fileNumber);
     return fileBitboard;
@@ -154,7 +215,7 @@ function getRank(rankNumber) {
 
     assertRank(rankNumber);
 
-    let rankBitboard = FIRST_RANK;
+    let rankBitboard = FIRST_RANK_BITBOARD;
     //Move first rank n positions
     rankBitboard = rankBitboard << BigInt((rankNumber - 1) * NUMBER_OF_RANKS);
     return rankBitboard;
@@ -166,7 +227,7 @@ function getRank(rankNumber) {
  * @param {number} file
  * @returns {BigInt} Bitboard that contains the diagonal.
  */
-function getDiagonal(rank, file) {//****** change magic number
+function getDiagonal(rank, file) {
 
     assertRank(rank);
     assertFile(file);

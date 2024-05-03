@@ -15,7 +15,7 @@ class MoveGenerator {
 
         //calculate data to ensure king safety
         let king = board.getPiecesOfType(pieceColor, E_PieceType.King)[0];
-        let targetSquaresToAvoidCheck = GetBooleanBitboard(true);//squares to block check or capture checkers
+        let targetSquaresToAvoidCheck = getBooleanBitboard(true);//squares to block check or capture checkers
         let moveFilterForPinnedPieces = {};//filter for moves of pinned pieces
 
         if (king !== undefined) {
@@ -121,7 +121,7 @@ class MoveGenerator {
      * @param {BoardImplementation} board 
      * @returns Bitboard of enemy pieces that are protected (i.e the enemy can recapture if they are captured)
      */
-    #calculateProtectedPieces(enemyPieces, board) { // transfer to piece?
+    #calculateProtectedPieces(enemyPieces, board) { // ****** repeated code, transfer to piece?
         let protectedPieces = 0n;
         //for every enemy piece
         for (let enemyPiece of enemyPieces) {
@@ -133,8 +133,8 @@ class MoveGenerator {
                 let slidingMoves = 0n;
 
                 rays.forEach(ray => {
-                    let moveRays = HyperbolaQuintessenceAlgorithm(occupied, position, ray);
-                    slidingMoves = slidingMoves | moveRays[0] | moveRays[1];
+                    let movesInRay = hyperbolaQuintessenceAlgorithm(occupied, position, ray);
+                    slidingMoves = slidingMoves | movesInRay.wholeRay;
                 });
 
 
@@ -166,7 +166,7 @@ class MoveGenerator {
         //if checker is a slider
         if (checker.IsSlider()) {
             //We can block the check by moving to any square between the slider and the king or capturing the slider
-            return GetRay(checker.rank, checker.file, king.rank, king.file, true, false);
+            return getRay(checker.rank, checker.file, king.rank, king.file, true, false);
         } //if piece is not a slider
         else {
             //We can avoid the check only by capturing the checker
@@ -190,7 +190,7 @@ class MoveGenerator {
 
             let slider = enemyPiece;
             let sliderRays = slider.getSlidingRays();
-            let rayFromSliderToKing = GetRay(slider.rank, slider.file, king.rank, king.file, false, true);
+            let rayFromSliderToKing = getRay(slider.rank, slider.file, king.rank, king.file, false, true);
 
             //if there's no possible ray between slider and king, king is not within slider's attack range, continue.
             if (rayFromSliderToKing === 0n) continue;
@@ -207,10 +207,10 @@ class MoveGenerator {
 
             //check for pinned pieces
             //Taken from https://www.chessprogramming.org/Checks_and_Pinned_Pieces_(Bitboards)
-            let attacksFromSliderToKing = HyperbolaQuintessenceAlgorithm(board.getOccupied(), slider.position, rayFromSliderToKing);
-            let attacksFromKingToSlider = HyperbolaQuintessenceAlgorithm(board.getOccupied(), king.position, rayFromSliderToKing);
+            let attacksFromSliderToKing = hyperbolaQuintessenceAlgorithm(board.getOccupied(), slider.position, rayFromSliderToKing);
+            let attacksFromKingToSlider = hyperbolaQuintessenceAlgorithm(board.getOccupied(), king.position, rayFromSliderToKing);
             let emptySpaceBetweenKingAndSlider = rayFromSliderToKing & ~king.position;
-            let intersection = (attacksFromKingToSlider[0] | attacksFromKingToSlider[1]) & (attacksFromSliderToKing[0] | attacksFromSliderToKing[1]);
+            let intersection = attacksFromKingToSlider.wholeRay & attacksFromSliderToKing.wholeRay;
 
             //if there's no intersection
             if (intersection === 0n) {

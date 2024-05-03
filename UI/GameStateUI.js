@@ -16,7 +16,6 @@ class GameStateUI {
         let message;
 
         let gameState = this.#game.state;
-        console.log(gameState);
         let playingColor = this.#game.playingColor;
 
         switch (gameState) {

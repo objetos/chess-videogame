@@ -44,7 +44,7 @@ class Pawn extends Piece {
 
         //calculate front jump
         let frontJump = twoSquaresFront &
-            GetBooleanBitboard(frontMove > 1) & //a front move is possible
+            getBooleanBitboard(frontMove > 1) & //a front move is possible
             board.getEmptySpaces() & //target square is empty 
             getRank(targetRankForJumping); //pawn can only jump from their initial rank
 

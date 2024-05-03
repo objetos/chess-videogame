@@ -28,7 +28,7 @@ class Piece {
         this.#rank = rank;
         this.#file = file;
 
-        this.#position = RankFileToBitboard(rank, file);
+        this.#position = squareToBitboard(rank, file);
         this.#rank = rank;
         this.#file = file;
     }

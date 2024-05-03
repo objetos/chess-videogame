@@ -23,8 +23,8 @@ class SlidingPiece extends Piece {
         let slidingMoves = 0n;
 
         rays.forEach(ray => {
-            let moveRays = HyperbolaQuintessenceAlgorithm(occupied, position, ray);
-            slidingMoves = slidingMoves | moveRays[0] | moveRays[1];
+            let movesInRay = hyperbolaQuintessenceAlgorithm(occupied, position, ray);
+            slidingMoves = slidingMoves | movesInRay.wholeRay;
         });
         return slidingMoves & ~board.getOccupied(this.color);
     }
