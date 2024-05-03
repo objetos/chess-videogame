@@ -1,4 +1,3 @@
-//****** cleanup code, assert
 class MoveRecordUI {
     #table;
 
@@ -9,6 +8,9 @@ class MoveRecordUI {
     }
     get #lastVisibleRow() {
         return this.#firstVisibleRow + MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE - 1;
+    }
+    get #lastRowNumber() {
+        return this.#table.height;
     }
 
     #upButton;
@@ -61,8 +63,7 @@ class MoveRecordUI {
             //add new row
             this.#addNewRow();
             //fill first column
-            let newRowNumber = this.#lastRowIndex + 1;
-            this.#table.fill(this.#lastRowIndex, 0, newRowNumber);
+            this.#table.fill(this.#lastRowIndex, 0, this.#lastRowNumber);
             this.#currentColumnIndex = 1;
         }
 
@@ -80,7 +81,7 @@ class MoveRecordUI {
 
     #addNewRow() {
         this.#table.insert(this.#table.height);
-        if (MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE < rowNumber) {
+        if (MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE < this.#lastRowNumber) {
             this.#firstVisibleRow = rowNumber - MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE + 1;
         }
     }
