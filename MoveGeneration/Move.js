@@ -1,4 +1,4 @@
-//class prolog, assertions in constructor
+//class prolog
 class Move {
     #startRank;
     #startFile;
@@ -6,14 +6,22 @@ class Move {
     #endFile;
     #flag;
 
-    constructor(startRank, startFile, endRank, endFile, flag = E_MoveFlag.None) {
+    /**
+     * Creates a new move
+     * @param {Number} startRank 
+     * @param {Number} startFile 
+     * @param {Number} destinationRank 
+     * @param {Number} destinationFile 
+     * @param {Number} flag 
+     */
+    constructor(startRank, startFile, destinationRank, destinationFile, flag = E_MoveFlag.None) {
 
-        this.#assertMove(startRank, startFile, endRank, endFile, flag);
+        this.#assertMove(startRank, startFile, destinationRank, destinationFile, flag);
 
         this.#startRank = startRank;
         this.#startFile = startFile;
-        this.#endRank = endRank;
-        this.#endFile = endFile;
+        this.#endRank = destinationRank;
+        this.#endFile = destinationFile;
         this.#flag = flag;
     }
 

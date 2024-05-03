@@ -11,14 +11,16 @@ const GAME_DIMENSIONS = {
         PIECES_CAPTURED_UI_SETTINGS.SPACE_FROM_BOARD +
         PIECES_CAPTURED_UI_SETTINGS.PIECES_SIZE
 }
+
 //******* cleanup code, assert, document
 class Game {
     //Game State
     #playingColor = E_PieceColor.White;
+    #gameState = E_GameState.PLAYING;
+
     get playingColor() {
         return this.#playingColor;
     }
-    #gameState = E_GameState.PLAYING;
     get state() {
         return this.#gameState;
     }
@@ -40,6 +42,13 @@ class Game {
     #graphics;
     #position;
 
+    /**
+     * Creates a new chess game
+     * @param {*} xPosition x position of game in canvas
+     * @param {*} yPosition y position of game in canvas
+     * @param {*} inputFen FEN of board
+     * @param {*} playingColor Color that starts playing
+     */
     constructor(xPosition, yPosition, inputFen = STANDARD_BOARD_FEN, playingColor = E_PieceColor.White) {
         this.#graphics = createGraphics(GAME_DIMENSIONS.WIDTH, GAME_DIMENSIONS.HEIGHT);
         this.#position = { x: xPosition, y: yPosition }

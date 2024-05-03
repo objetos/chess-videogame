@@ -13,7 +13,12 @@ class MoveInput extends EventTarget {
         onMoveDestinationSet: "user:move-destination-set"
     }
 
-    constructor(board, globalBoardPositionY, globalBoardPositionY) {
+    /**
+     * @param {Board} board Board that Input should listen to
+     * @param {Number} globalBoardPositionX x position of board in canvas in pixels
+     * @param {Number} globalBoardPositionY y position of board in canvas in pixels
+     */
+    constructor(board, globalBoardPositionX, globalBoardPositionY) {
         assert(board instanceof Board, "Invalid board");
         assert(typeof globalBoardPositionX === 'number', "Invalid board x position");
         assert(typeof globalBoardPositionY === 'number', "Invalid board y position");
@@ -25,7 +30,7 @@ class MoveInput extends EventTarget {
 
         //listen to click events on main canvas
         select('canvas').mouseClicked(() => {
-            this.#handleClick(mouseX, mouseY, globalBoardPositionY, globalBoardPositionY);
+            this.#handleClick(mouseX, mouseY, globalBoardPositionX, globalBoardPositionY);
         });
     }
 
