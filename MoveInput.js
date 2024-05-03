@@ -5,12 +5,12 @@ class MoveInput extends EventTarget {
     #inputMoveStart = null;
     #inputMoveDestination = null;
 
-    static E_InputEvents = {
-        MoveInput: "user:move-input",
-        SquareSelected: "user:square-selected",
-        MoveCanceled: "system:move-canceled",
-        MoveStartSet: "user:move-start-set",
-        MoveDestinationSet: "user:move-destination-set"
+    static inputEvents = {
+        onMoveInput: "user:move-input",
+        onSquareSelected: "user:square-selected",
+        onMoveCanceled: "system:move-canceled",
+        onMoveStartSet: "user:move-start-set",
+        onMoveDestinationSet: "user:move-destination-set"
     }
 
     constructor(board, globalBoardPositionY, globalBoardPositionY) {
@@ -30,7 +30,7 @@ class MoveInput extends EventTarget {
     }
 
     addInputEventListener(event, callback) {
-        assert(Object.values(MoveInput.E_InputEvents).includes(event), "Invalid event");
+        assert(Object.values(MoveInput.inputEvents).includes(event), "Invalid event");
         this.addEventListener(event, callback);
     }
 
@@ -59,7 +59,7 @@ class MoveInput extends EventTarget {
         }
 
         //notify that a square was selected
-        let squareSelectedEvent = new CustomEvent(MoveInput.E_InputEvents.SquareSelected, { detail: { square: clickedSquare } })
+        let squareSelectedEvent = new CustomEvent(MoveInput.inputEvents.onSquareSelected, { detail: { square: clickedSquare } })
         this.dispatchEvent(squareSelectedEvent);
 
         //if move start is not set and there's a piece in selected square
@@ -73,7 +73,7 @@ class MoveInput extends EventTarget {
             }
 
             //notify
-            let moveStartSetEvent = new CustomEvent(MoveInput.E_InputEvents.MoveStartSet, { detail: { square: clickedSquare } })
+            let moveStartSetEvent = new CustomEvent(MoveInput.inputEvents.onMoveStartSet, { detail: { square: clickedSquare } })
             this.dispatchEvent(moveStartSetEvent);
         }
         //else if move start is set and destination is not
@@ -91,13 +91,13 @@ class MoveInput extends EventTarget {
                 file: clickedFile
             }
             //notify
-            let moveDestinationSet = new CustomEvent(MoveInput.E_InputEvents.MoveDestinationSet, { detail: { square: clickedSquare } })
+            let moveDestinationSet = new CustomEvent(MoveInput.inputEvents.onMoveDestinationSet, { detail: { square: clickedSquare } })
             this.dispatchEvent(moveDestinationSet);
 
             //create move
             let inputMove = new Move(this.#inputMoveStart.rank, this.#inputMoveStart.file, this.#inputMoveDestination.rank, this.#inputMoveDestination.file);
             //notify
-            let moveInput = new CustomEvent(MoveInput.E_InputEvents.MoveInput, { detail: { move: inputMove } });
+            let moveInput = new CustomEvent(MoveInput.inputEvents.onMoveInput, { detail: { move: inputMove } });
             this.dispatchEvent(moveInput);
             //unset start and destination
             this.#inputMoveStart = null;
@@ -108,7 +108,7 @@ class MoveInput extends EventTarget {
     #CancelMove() {
         this.#inputMoveStart = null;
         this.#inputMoveDestination = null;
-        let moveCanceled = new CustomEvent(MoveInput.E_InputEvents.MoveCanceled);
+        let moveCanceled = new CustomEvent(MoveInput.inputEvents.onMoveCanceled);
         this.dispatchEvent(moveCanceled);
     }
 

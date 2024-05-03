@@ -50,7 +50,7 @@ class Game {
 
         this.#moveInput = new MoveInput(this.#board, xPosition + BOARD_LOCAL_POSITION.x, yPosition + BOARD_LOCAL_POSITION.y);
         this.#moveInputUI = new MoveInputUI(this, this.#moveInput);
-        this.#moveInput.addInputEventListener(MoveInput.E_InputEvents.MoveInput, this.#onMoveInput.bind(this));
+        this.#moveInput.addInputEventListener(MoveInput.inputEvents.onMoveInput, this.#onMoveInput.bind(this));
 
         this.#moveRecord = new MoveRecord();
         this.#moveRecordUI = new MoveRecordUI(this.#moveRecord);
