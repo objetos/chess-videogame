@@ -1,4 +1,3 @@
-// ****** cleanup code
 class MoveRecord extends EventTarget {
     static events = {
         onMoveRecorded: "system:move-recorded",

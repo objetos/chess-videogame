@@ -1,4 +1,3 @@
-//****** test
 class MoveInputUI {
     #game;
     #UIQuadrille;
