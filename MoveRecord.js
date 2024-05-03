@@ -17,17 +17,15 @@ class MoveRecord extends EventTarget {
 
         let moveString = "";
         //if it is a castling move
-        if (move.flag === E_MoveFlag.KingSideCastling) {
-            moveString = "0-0";
+        if (move.flag === E_MoveFlag.KingSideCastling || move.flag === E_MoveFlag.QueenSideCastling) {
+            //add castling mark
+            moveString = move.flag === E_MoveFlag.KingSideCastling ? "0-0" : "0-0-0";
+            //notify
             let onMoveRecorded = new CustomEvent(MoveRecord.events.onMoveRecorded, { detail: { move: moveString } });
             this.dispatchEvent(onMoveRecorded);
+            //add move to record
             this.#record.push(moveString);
-            return moveString;
-        } else if (move.flag === E_MoveFlag.QueenSideCastling) {
-            moveString = "0-0-0"
-            let onMoveRecorded = new CustomEvent(MoveRecord.events.onMoveRecorded, { detail: { move: moveString } });
-            this.dispatchEvent(onMoveRecorded);
-            this.#record.push(moveString);
+            //no other marks are needed, return
             return moveString;
         }
 
@@ -45,44 +43,10 @@ class MoveRecord extends EventTarget {
             moveString += pieceInStart;
         }
 
-        //check if departure rank or file is ambiguous
+        //if piece is not a pawn
         if (!isPawn) {
-
-            let piecesInSameRank = false;
-            let piecesInSameFile = false;
-            let ambiguityExists = false;
-
-            //for every legal move  
-            let legalMoves = board.generateMoves(playingColor);
-            for (let otherMove of legalMoves) {
-                //except the current one 
-                if (move.startRank === otherMove.startRank && move.startFile === otherMove.startFile) continue;
-                //if pieces are the same and they have the same destination square
-                let otherPiece = board.getPieceOnRankFile(otherMove.startRank, otherMove.startFile);
-                let moveHasSameDestination = (otherMove.endRank === move.endRank) && (otherMove.endFile === move.endFile);
-                if (pieceInStart === otherPiece && moveHasSameDestination) {
-
-                    //There's an ambiguity!
-                    ambiguityExists = true;
-                    //if files are the same 
-                    if (move.startFile === otherMove.startFile) {
-                        //rank is ambiguous
-                        piecesInSameFile = true;
-                    }
-
-                    //if ranks are the same
-                    if (move.startRank === otherMove.startRank) {
-                        //file is ambiguous
-                        piecesInSameRank = true;
-                    }
-
-                }
-            }
-
-            //add disambiguation
-            if (ambiguityExists && !piecesInSameFile && !piecesInSameRank) moveString += FileToLetter(move.startFile);
-            if (ambiguityExists && piecesInSameRank) moveString += FileToLetter(move.startFile);
-            if (ambiguityExists && piecesInSameFile) moveString += move.startRank;
+            //check if departure rank or file is ambiguous and disambiguate 
+            moveString += this.#calculateMoveDisambiguation(board, playingColor, move, pieceInStart, moveString);
         }
 
         //if move is a capture
@@ -91,7 +55,7 @@ class MoveRecord extends EventTarget {
             moveString += 'x';
         }
 
-        //add destination
+        //add destination square
         let rank = move.endRank.toString();
         let file = FileToLetter(move.endFile);
         let destination = file + rank;
@@ -107,11 +71,12 @@ class MoveRecord extends EventTarget {
                 break;
         }
 
-        //if it is a checkmate
+        //add check or checkmate marks
         board.makeMove(move);
         let enemyColor = OppositePieceColor(playingColor);
         let enemyLegalMoves = board.generateMoves(enemyColor);
         let isEnemyKingInCheck = board.isKingInCheck(enemyColor);
+        //if it is a checkmate
         if (enemyLegalMoves.length === 0 && isEnemyKingInCheck) {
             //add checkmate mark
             moveString += '#';
@@ -122,10 +87,59 @@ class MoveRecord extends EventTarget {
         }
         board.unmakeMove();
 
+        //notify
         let onMoveRecorded = new CustomEvent(MoveRecord.events.onMoveRecorded, { detail: { move: moveString } });
         this.dispatchEvent(onMoveRecorded);
+        //add move to record
         this.#record.push(moveString);
         return moveString;
+    }
+
+    #calculateMoveDisambiguation(board, playingColor, moveToRecord, pieceToMove) {
+        let disambiguation = '';
+        let piecesInSameRank = false;
+        let piecesInSameFile = false;
+        let ambiguityExists = false;
+
+        //for every legal move  
+        let legalMoves = board.generateMoves(playingColor);
+        for (let otherMove of legalMoves) {
+            //except the current one 
+            if (moveToRecord.startRank === otherMove.startRank && moveToRecord.startFile === otherMove.startFile) continue;
+
+            let otherPiece = board.getPieceOnRankFile(otherMove.startRank, otherMove.startFile);
+            //if pieces are the same and they have the same destination square
+            let isSamePiece = pieceToMove === otherPiece;
+            let otherMoveHasSameDestination = (otherMove.endRank === moveToRecord.endRank) && (otherMove.endFile === moveToRecord.endFile);
+            if (isSamePiece && otherMoveHasSameDestination) {
+                //There's an ambiguity!
+                ambiguityExists = true;
+                //if files are the same 
+                if (moveToRecord.startFile === otherMove.startFile) {
+                    //rank is ambiguous
+                    piecesInSameFile = true;
+                }
+
+                //if ranks are the same
+                if (moveToRecord.startRank === otherMove.startRank) {
+                    //file is ambiguous
+                    piecesInSameRank = true;
+                }
+
+            }
+        }
+
+        //add disambiguation
+        //if there's an ambiguity but pieces are in different rank and file, resolve by adding the file
+        if (ambiguityExists && !piecesInSameFile && !piecesInSameRank) disambiguation += FileToLetter(moveToRecord.startFile);
+        else {
+            //if there's an ambiguity and there are pieces in the same rank, resolve by adding the file
+            if (ambiguityExists && piecesInSameRank) disambiguation += FileToLetter(moveToRecord.startFile);
+            //if there's an ambiguity and there are pieces in the same file, resolve by adding the rank
+            if (ambiguityExists && piecesInSameFile) disambiguation += moveToRecord.startRank;
+        }
+
+        return disambiguation;
     }
 
     /**
@@ -133,9 +147,13 @@ class MoveRecord extends EventTarget {
      */
     unrecordMove() {
         this.#record.pop();
-        this.dispatchEvent(MoveRecord.events.onMoveUnrecorded);
+        let onMoveUnrecorded = new CustomEvent(MoveRecord.events.onMoveRecorded);
+        this.dispatchEvent(onMoveUnrecorded);
     }
-
+    /**
+     * 
+     * @returns Record of moves
+     */
     getRecord() {
         return [...this.#record];
     }
