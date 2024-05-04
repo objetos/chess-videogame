@@ -5,7 +5,7 @@ class MoveGenerator {
      * @param {E_PieceColor} pieceColor
      * @returns {Move[]} Array of legal moves of pieces of given color
      */
-    generateMoves(board, pieceColor) { //****** simplify. assumptions: board is a standard board of chess
+    generateMoves(board, pieceColor) {
         assert(board instanceof BoardImplementation, "Invalid board");
         assertPieceColor(pieceColor);
 

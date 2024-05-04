@@ -12,7 +12,7 @@ const GAME_DIMENSIONS = {
         PIECES_CAPTURED_UI_SETTINGS.PIECES_SIZE
 }
 
-//******* cleanup code, assert, document
+//assert, document
 class Game {
     //Game State
     #playingColor = E_PieceColor.White;
@@ -44,10 +44,10 @@ class Game {
 
     /**
      * Creates a new chess game
-     * @param {*} xPosition x position of game in canvas
-     * @param {*} yPosition y position of game in canvas
-     * @param {*} inputFen FEN of board
-     * @param {*} playingColor Color that starts playing
+     * @param {number} xPosition x position of game in canvas
+     * @param {number} yPosition y position of game in canvas
+     * @param {string} inputFen FEN of board
+     * @param {E_PieceColor} playingColor Color that starts playing
      */
     constructor(xPosition, yPosition, inputFen = STANDARD_BOARD_FEN, playingColor = E_PieceColor.White) {
         this.#graphics = createGraphics(GAME_DIMENSIONS.WIDTH, GAME_DIMENSIONS.HEIGHT);
@@ -73,14 +73,18 @@ class Game {
     }
 
     isMoveLegal(inputMove) {
+
         let isSameMove = (move) => {
             return inputMove.startRank === move.startRank &&
                 inputMove.startFile === move.startFile &&
                 inputMove.endRank === move.endRank &&
                 inputMove.endFile === move.endFile;
         };
+
+        //input move is legal if it is found in set of legal moves 
         let legalMove = this.#legalMoves.find(isSameMove);
         let isLegal = legalMove !== undefined;
+
         return {
             isLegal: isLegal,
             move: legalMove
@@ -99,12 +103,12 @@ class Game {
 
         this.#drawRanksAndFiles(this.#graphics);
 
-
         image(this.#graphics, this.#position.x, this.#position.y);
     }
 
 
     #onMoveInput(event) {
+        //if game is finished, disable input
         if (this.isGameFinished()) return;
         //get input move
         let inputMove = event.detail.move;
@@ -131,11 +135,15 @@ class Game {
     }
 
     #checkEndGame() {
+        //if there are no moves left
         if (this.#legalMoves.length === 0) {
+            //and king is in check
             if (this.#board.isKingInCheck(this.#playingColor)) {
+                //game finished by checkmate
                 this.#gameState = E_GameState.CHECKMATE;
             }
             else {
+                //game finished by stalemate
                 this.#gameState = E_GameState.STALEMATE;
             }
         } else {
@@ -150,7 +158,7 @@ class Game {
     }
 
     #createResignButton() {
-        let button = createButton("Resign");//****** text in UIsettings
+        let button = createButton(RESIGN_BUTTON_UI_SETTINGS.TEXT);
         button.position(this.#position.x + RESIGN_BUTTON_UI_SETTINGS.POSITION.x, this.#position.y + RESIGN_BUTTON_UI_SETTINGS.POSITION.y);
         button.mouseClicked(() => {
             this.#gameState = E_GameState.RESIGNED;

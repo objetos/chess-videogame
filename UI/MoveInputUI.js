@@ -1,8 +1,8 @@
 class MoveInputUI {
     #game;
     #UIQuadrille;
-    #colorForSelectedSquare = color(100, 100);//****** transfer to UISettings
-    #colorForAvailableMoves = color(179, 255, 179);
+    #colorForSelectedSquare;
+    #colorForAvailableMoves;
     #moveCompleted = false;
 
     /**
@@ -20,6 +20,9 @@ class MoveInputUI {
         moveInput.addInputEventListener(MoveInput.inputEvents.onMoveDestinationSet, this.#onMoveDestinationSet.bind(this));
         moveInput.addInputEventListener(MoveInput.inputEvents.onMoveInput, this.#onMoveInput.bind(this));
         moveInput.addInputEventListener(MoveInput.inputEvents.onMoveCanceled, this.#onMoveCanceled.bind(this));
+
+        this.#colorForSelectedSquare = color(MOVE_INPUT_UI_SETTINGS.COLOR_FOR_SELECTED_SQUARES);
+        this.#colorForAvailableMoves = color(MOVE_INPUT_UI_SETTINGS.COLOR_FOR_AVAILABLE_MOVES);
     }
 
     #onMoveStartSet(event) {

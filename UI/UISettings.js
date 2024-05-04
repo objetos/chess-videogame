@@ -61,7 +61,8 @@ const RESIGN_BUTTON_UI_SETTINGS = {
         y: MOVE_RECORD_UI_SETTINGS.POSITION.y + MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE * MOVE_RECORD_UI_SETTINGS.ROW_HEIGHT + 20
     },
     WIDTH: 40,
-    HEIGHT: 20
+    HEIGHT: 20,
+    TEXT: "Resign"
 }
 //--Rank Files UI--
 const RANKS_FILES_UI_SETTING = {
@@ -70,4 +71,9 @@ const RANKS_FILES_UI_SETTING = {
     TEXT_COLOR: 0,
     RANKS: new Quadrille(1, ['8', '7', '6', '5', '4', '3', '2', '1']),
     FILES: new Quadrille(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'])
+}
+
+const MOVE_INPUT_UI_SETTINGS = {
+    COLOR_FOR_SELECTED_SQUARES: 'rgba(100,100,100,0.3)',
+    COLOR_FOR_AVAILABLE_MOVES: '#b3ffb3'
 }
