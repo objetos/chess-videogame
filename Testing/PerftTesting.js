@@ -53,7 +53,7 @@ async function runPerftTestAsync(board) {
 /**
  *
  * @param {Board} board
- * @param {Number} depth
+ * @param {number} depth
  */
 function perftTest(board, depth, debug = false, playingColor = E_PieceColor.White) {
     if (depth == 0) {
@@ -108,7 +108,7 @@ function perftTestPromotion(promotion, board, depth, debug, playingColor = E_Pie
 /**
  *
  * @param {Board} board
- * @param {Number} depth
+ * @param {number} depth
  */
 async function perftTestAsync(board, depth) {
     if (depth == 0) {

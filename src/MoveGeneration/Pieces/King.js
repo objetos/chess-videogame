@@ -1,6 +1,7 @@
 import Piece from "./Piece.js";
 import { E_PieceType } from "../../Enums/E_PieceType.js";
 import { E_PieceColor } from "../../Enums/E_PieceColor.js";
+import { getFile } from "../../Utils/BitboardUtils.js";
 export default class King extends Piece {
     #attackMask = 0x70507n;
 

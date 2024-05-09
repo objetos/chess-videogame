@@ -16,7 +16,14 @@ var myBuild = (function (exports) {
         RESIGNED: Symbol("Resigned"),
     });
 
-    const E_MoveFlag$1 = Object.freeze({
+    //GAME STATES 
+    const E_GameMode = Object.freeze({
+        STANDARD: Symbol("Standard"),
+        AUTOMATIC: Symbol("Automatic"),
+        FREE: Symbol("Free"),
+    });
+
+    const E_MoveFlag = Object.freeze({
         Promotion: Symbol("Promotion"),
         QueenSideCastling: Symbol("QueenSideCastling"),
         KingSideCastling: Symbol("KingSideCastling"),
@@ -84,8 +91,8 @@ var myBuild = (function (exports) {
     /**
      * Files involved in castling. Provide castling side and piece which is moving (rook or king)
      */
-    const CASTLING_FILES$1 = {
-        [E_MoveFlag$1.QueenSideCastling]: {
+    const CASTLING_FILES = {
+        [E_MoveFlag.QueenSideCastling]: {
             [E_PieceType.King]: {
                 startFile: 5,
                 endFile: 3
@@ -95,7 +102,7 @@ var myBuild = (function (exports) {
                 endFile: 4
             },
         },
-        [E_MoveFlag$1.KingSideCastling]: {
+        [E_MoveFlag.KingSideCastling]: {
             [E_PieceType.King]: {
                 startFile: 5,
                 endFile: 7
@@ -128,7 +135,7 @@ var myBuild = (function (exports) {
      * @param {E_PieceColor} pieceColor 
      * @returns Opposite color of given piece color
      */
-    function OppositePieceColor$1(pieceColor) {
+    function OppositePieceColor(pieceColor) {
         assertPieceColor(pieceColor);
         switch (pieceColor) {
             case E_PieceColor.White:
@@ -170,7 +177,7 @@ var myBuild = (function (exports) {
      * @param {E_PieceType} pieceType 
      * @returns piece key
      */
-    function pieceColorTypeToKey$1(pieceColor, pieceType) {
+    function pieceColorTypeToKey(pieceColor, pieceType) {
         assertPieceColor(pieceColor);
         assertPieceType(pieceType);
 
@@ -292,8 +299,8 @@ var myBuild = (function (exports) {
 
     /**
      * 
-     * @param {Number} rank 
-     * @param {Number} file 
+     * @param {number} rank 
+     * @param {number} file 
      * @returns Bitboard that holds the square given by rank and file
      */
     function squareToBitboard(rank, file) {
@@ -308,10 +315,10 @@ var myBuild = (function (exports) {
 
     /**
      * 
-     * @param {Number} startRank 
-     * @param {Number} startFile 
-     * @param {Number} destinationRank 
-     * @param {Number} destinationFile 
+     * @param {number} startRank 
+     * @param {number} startFile 
+     * @param {number} destinationRank 
+     * @param {number} destinationFile 
      * @param {boolean} includeStart Should the ray contain the start square?
      * @param {boolean} includeDestination Should the ray contain the destination square?
      * @returns Bitboard that holds a ray from given start and end square  
@@ -374,9 +381,9 @@ var myBuild = (function (exports) {
      * Calculates a sliding ray from given position to any square blocked by occupied in the direction of mask.
      * Calculates usign o^(o-2r) trick. 
      * Taken from https://www.youtube.com/watch?v=bCH4YK6oq8M&list=PLQV5mozTHmacMeRzJCW_8K3qw2miYqd0c&index=9&ab_channel=LogicCrazyChess.
-     * @param {*} occupied Bitboard with occupied squares
-     * @param {*} position Bitboard with position of piece
-     * @param {*} mask Bitboard with sliding direction
+     * @param {bigint} occupied Bitboard with occupied squares
+     * @param {bigint} position Bitboard with position of piece
+     * @param {bigint} mask Bitboard with sliding direction
      * @returns Bitboard with sliding ray
      */
     function hyperbolaQuintessenceAlgorithm(occupied, position, mask) {
@@ -451,7 +458,7 @@ var myBuild = (function (exports) {
     /**
      * Gives a bitboard with a single file.
      * @param {number} fileNumber Number of the file, going from 1 to 8, where 1 is the leftmost column of the board.
-     * @returns {BigInt} Bitboard that contains the specified file.
+     * @returns {bigint} Bitboard that contains the specified file.
      */
     function getFile(fileNumber) {
         assertFile(fileNumber);
@@ -464,7 +471,7 @@ var myBuild = (function (exports) {
     /**
      * Gives a bitboard with a single file.
      * @param {number} rankNumber Number of the rank, going from 1 to 8, where 1 is the bottom row of the board.
-     * @returns {BigInt} Bitboard that contains the specified rank.
+     * @returns {bigint} Bitboard that contains the specified rank.
      */
     function getRank(rankNumber) {
 
@@ -480,7 +487,7 @@ var myBuild = (function (exports) {
      * Gives a bitboard with a single diagonal that contains the square given by rank and file.
      * @param {number} rank
      * @param {number} file
-     * @returns {BigInt} Bitboard that contains the diagonal.
+     * @returns {bigint} Bitboard that contains the diagonal.
      */
     function getDiagonal(rank, file) {
 
@@ -512,7 +519,7 @@ var myBuild = (function (exports) {
      * Gives a bitboard with a single antidiagonal that contains the square given by rank and file.
      * @param {number} rank
      * @param {number} file
-     * @returns {BigInt} Bitboard that contains the antidiagonal.
+     * @returns {bigint} Bitboard that contains the antidiagonal.
      */
     function getAntiDiagonal(rank, file) {
 
@@ -529,8 +536,8 @@ var myBuild = (function (exports) {
     /**
      * Flips a bitboard along the 8th diagonal (middle diagonal).
      * Taken from: https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating
-     * @param {BigInt} bitboard
-     * @returns {BigInt} Flipped bitboard
+     * @param {bigint} bitboard
+     * @returns {bigint} Flipped bitboard
      */
     function flipDiagonally(bitboard) {
         assert(typeof bitboard === "bigint", "Invalid bitboard");
@@ -553,8 +560,8 @@ var myBuild = (function (exports) {
     /**
      * Mirrors a bitboard along a vertical line.
      * Taken from: https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating
-     * @param {BigInt} bitboard
-     * @returns {BigInt} Mirrored bitboard
+     * @param {bigint} bitboard
+     * @returns {bigint} Mirrored bitboard
      */
     function mirrorHorizontally(bitboard) {
         assert(typeof bitboard === "bigint", "Invalid bitboard");
@@ -621,6 +628,9 @@ var myBuild = (function (exports) {
             return this.#file;
         }
 
+        /**
+         * @returns {E_PieceType} Type of piece
+         */
         GetType() {
             throw new Error("Method 'GetType()' must be implemented.");
         }
@@ -634,7 +644,7 @@ var myBuild = (function (exports) {
         }
 
         IsSlider() {
-            return this instanceof SlidingPiece;
+            return false;
         }
 
         toString() {
@@ -656,7 +666,7 @@ var myBuild = (function (exports) {
         }
     }
 
-    let SlidingPiece$1 = class SlidingPiece extends Piece {
+    class SlidingPiece extends Piece {
 
         GetType() {
             throw new Error("Method 'GetType()' must be implemented.");
@@ -665,6 +675,11 @@ var myBuild = (function (exports) {
         getSlidingRays() {
             throw new Error("Method 'GetType()' must be implemented.");
         }
+
+        IsSlider() {
+            return true;
+        }
+
         /**
          * 
          * @param {BoardImplementation} board 
@@ -686,9 +701,9 @@ var myBuild = (function (exports) {
             });
             return slidingMoves & ~board.getOccupied(this.color);
         }
-    };
+    }
 
-    class Rook extends SlidingPiece$1 {
+    class Rook extends SlidingPiece {
 
         GetType() {
             return E_PieceType.Rook;
@@ -709,7 +724,7 @@ var myBuild = (function (exports) {
         }
     }
 
-    class Bishop extends SlidingPiece$1 {
+    class Bishop extends SlidingPiece {
 
 
         GetType() {
@@ -818,11 +833,11 @@ var myBuild = (function (exports) {
 
             //calculate capture moves
             let rightCapture = rightDiagonalSquare &
-                board.getOccupied(OppositePieceColor$1(this.color)) & //There's an enemy piece in that square
+                board.getOccupied(OppositePieceColor(this.color)) & //There's an enemy piece in that square
                 ~getFile(1); //remove right capture from 8th file to 1st file
 
             let leftCapture = leftDiagonalSquare &
-                board.getOccupied(OppositePieceColor$1(this.color)) & //There's an enemy piece in that square
+                board.getOccupied(OppositePieceColor(this.color)) & //There's an enemy piece in that square
                 ~getFile(8); //remove right capture from 1st file to 8th file
 
             return frontJump | frontMove | leftCapture | rightCapture;
@@ -862,7 +877,7 @@ var myBuild = (function (exports) {
         }
     }
 
-    class Queen extends SlidingPiece$1 {
+    class Queen extends SlidingPiece {
 
         GetType() {
             return E_PieceType.Queen;
@@ -877,6 +892,48 @@ var myBuild = (function (exports) {
 
         GetMoves(board) {
             return super.GetMoves(board);
+        }
+    }
+
+    class King extends Piece {
+        #attackMask = 0x70507n;
+
+        GetType() {
+            return E_PieceType.King;
+        }
+        /**
+         * 
+         * @param {BoardImplementation} board 
+         * @returns 
+         */
+        GetMoves(board) {
+            //calculate current square
+            let currentSquare = (this.rank - 1) * 8 + (9 - this.file);
+            let moves = 0n;
+
+            //displace attack mask to current square
+            if (10 <= currentSquare) {
+                moves = this.#attackMask << BigInt(currentSquare - 10);
+            } else {
+                moves = this.#attackMask >> BigInt(10 - currentSquare);
+            }
+
+            //remove bits that "wrapped around" the sides
+            if (this.file < 3) {
+                moves = moves & ~getFile(7) & ~getFile(8);
+            } else if (6 < this.file) {
+                moves = moves & ~getFile(1) & ~getFile(2);
+            }
+            //remove pieces of same color
+            moves = moves & ~board.getOccupied(this.color);
+
+            return moves;
+        }
+
+        isOnInitialSquare() {
+            return this.color === E_PieceColor.White ?
+                (this.rank === 1 && this.file === 5) :
+                (this.rank === 8 && this.file === 5);
         }
     }
 
@@ -932,9 +989,8 @@ var myBuild = (function (exports) {
         /**
          * Adds a piece object to given rank and file
          * @param {Piece} piece 
-         * @param {Number} rank 
-         * @param {Number} file 
-         * @param {boolean} recordChange record addition so it can be undone?
+         * @param {number} rank 
+         * @param {number} file 
          */
         addPiece(piece, rank, file) {
             assert(piece instanceof Piece, "Invalid piece");
@@ -954,9 +1010,8 @@ var myBuild = (function (exports) {
 
         /**
          * Removes a piece in given rank and file and returns it
-         * @param {Number} rank 
-         * @param {Number} file 
-         * @param {boolean} recordChange record removal so it can be undone?
+         * @param {number} rank 
+         * @param {number} file 
          * @returns 
          */
         removePiece(rank, file) {
@@ -986,7 +1041,7 @@ var myBuild = (function (exports) {
         /**
          * 
          * @param {number} rank 
-         * @param {File} file 
+         * @param {number} file 
          * @returns Piece on given rank and file
          */
         getPieceOnRankFile(rank, file) {
@@ -1005,6 +1060,7 @@ var myBuild = (function (exports) {
          */
         getPiecesOfType(pieceColor = E_PieceType.Any, pieceType = E_PieceType.Any) {
             let pieces = [];
+
             if (pieceColor === E_PieceColor.Any && pieceType === E_PieceType.Any) {
                 for (let color of Object.values(E_PieceColor)) {
                     for (let type of Object.values(E_PieceType)) {
@@ -1030,7 +1086,7 @@ var myBuild = (function (exports) {
          *
          * @param {E_PieceColor} pieceColor
          * @param {E_PieceType} pieceType
-         * @returns {BigInt} Bitboard that contains pieces of given characteristics.
+         * @returns {bigint} Bitboard that contains pieces of given characteristics.
          */
         getOccupied(pieceColor = E_PieceColor.Any, pieceType = E_PieceType.Any) {
             assertPieceType(pieceType);
@@ -1165,7 +1221,7 @@ var myBuild = (function (exports) {
             let pieceObject = null;
             switch (pieceKey) {
                 case 'K':
-                    pieceObject = new Pawn(E_PieceColor.White, rank, file);
+                    pieceObject = new King(E_PieceColor.White, rank, file);
                     break;
                 case 'Q':
                     pieceObject = new Queen(E_PieceColor.White, rank, file);
@@ -1183,7 +1239,7 @@ var myBuild = (function (exports) {
                     pieceObject = new Pawn(E_PieceColor.White, rank, file);
                     break;
                 case 'k':
-                    pieceObject = new Pawn(E_PieceColor.Black, rank, file);
+                    pieceObject = new King(E_PieceColor.Black, rank, file);
                     break;
                 case 'q':
                     pieceObject = new Queen(E_PieceColor.Black, rank, file);
@@ -1220,13 +1276,13 @@ var myBuild = (function (exports) {
 
         /**
          * Creates a new move
-         * @param {Number} startRank 
-         * @param {Number} startFile 
-         * @param {Number} destinationRank 
-         * @param {Number} destinationFile 
-         * @param {Number} flag 
+         * @param {number} startRank 
+         * @param {number} startFile 
+         * @param {number} destinationRank 
+         * @param {number} destinationFile 
+         * @param {E_MoveFlag} flag 
          */
-        constructor(startRank, startFile, destinationRank, destinationFile, flag = E_MoveFlag$1.None) {
+        constructor(startRank, startFile, destinationRank, destinationFile, flag = E_MoveFlag.None) {
 
             this.#assertMove(startRank, startFile, destinationRank, destinationFile, flag);
 
@@ -1279,7 +1335,7 @@ var myBuild = (function (exports) {
 
             let legalMoves = [];
             let playingPieces = board.getPiecesOfType(pieceColor, E_PieceType.Any);
-            let enemyPieces = board.getPiecesOfType(OppositePieceColor$1(pieceColor), E_PieceType.Any);
+            let enemyPieces = board.getPiecesOfType(OppositePieceColor(pieceColor), E_PieceType.Any);
 
             //calculate data to ensure king safety
             let king = board.getPiecesOfType(pieceColor, E_PieceType.King)[0];
@@ -1322,11 +1378,11 @@ var myBuild = (function (exports) {
                 //if a pawn is about to promote
                 if (piece.GetType() === E_PieceType.Pawn && piece.isBeforePromotingRank()) {
                     //add promotion moves
-                    let promotionsMoves = this.#bitboardToMoves(piece, pieceMovesBitboard, E_MoveFlag$1.Promotion);
+                    let promotionsMoves = this.#bitboardToMoves(piece, pieceMovesBitboard, E_MoveFlag.Promotion);
                     legalMoves = legalMoves.concat(promotionsMoves);
                 }// else, add regular piece moves
                 else {
-                    let pieceMoves = this.#bitboardToMoves(piece, pieceMovesBitboard, E_MoveFlag$1.Regular);
+                    let pieceMoves = this.#bitboardToMoves(piece, pieceMovesBitboard, E_MoveFlag.Regular);
                     legalMoves = legalMoves.concat(pieceMoves);
                 }
             }
@@ -1372,14 +1428,14 @@ var myBuild = (function (exports) {
         #generateKingSafeMoves(king, enemyPieces, board) {
             let dangerousSquaresForKing = 0n;
             board.removePiece(king.rank, king.file);//remove king temporarily to consider squares behind the king
-            let squaresAttackedByEnemy = board.getAttackedSquares(OppositePieceColor$1(king.color));
+            let squaresAttackedByEnemy = board.getAttackedSquares(OppositePieceColor(king.color));
             let dangerouseCaptures = this.#calculateProtectedPieces(enemyPieces, board);
             board.addPiece(king, king.rank, king.file);
 
             dangerousSquaresForKing = dangerouseCaptures | squaresAttackedByEnemy;
 
             let kingMovesBitboard = king.GetMoves(board) & ~dangerousSquaresForKing;
-            return this.#bitboardToMoves(king, kingMovesBitboard, E_MoveFlag$1.Regular);
+            return this.#bitboardToMoves(king, kingMovesBitboard, E_MoveFlag.Regular);
         }
 
         /**
@@ -1520,7 +1576,7 @@ var myBuild = (function (exports) {
                 //You move your pawn diagonally to an adjacent square, one rank farther from where it had been, 
                 //on the same file where the enemy's pawn is.
                 let targetRank = pawn.color === E_PieceColor.White ? pawn.rank + 1 : pawn.rank - 1;
-                let enPassant = new Move(pawn.rank, pawn.file, targetRank, enPassantInfo.captureFile, E_MoveFlag$1.EnPassant);
+                let enPassant = new Move(pawn.rank, pawn.file, targetRank, enPassantInfo.captureFile, E_MoveFlag.EnPassant);
                 //en passant move must be legal
                 if (!this.#isEnPassantLegal(pawn.color, enPassant, board)) continue;
 
@@ -1592,26 +1648,26 @@ var myBuild = (function (exports) {
                 if (!rook.isOnInitialSquare()) continue;
 
                 //This side must have castling rights. That is, rooks cannot have moved or been captured and king cannot have moved.
-                let castlingSide = king.file > rook.file ? E_MoveFlag$1.QueenSideCastling : E_MoveFlag$1.KingSideCastling;
+                let castlingSide = king.file > rook.file ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
                 if (!board.hasCastlingRights(rook.color, castlingSide)) continue;
 
                 //There cannot be any piece between the rook and the king
-                let castlingPath = castlingSide === E_MoveFlag$1.QueenSideCastling ?
+                let castlingPath = castlingSide === E_MoveFlag.QueenSideCastling ?
                     king.position << 1n | king.position << 2n | king.position << 3n :
                     king.position >> 1n | king.position >> 2n;
 
                 let isCastlingPathObstructed = (board.getEmptySpaces() & castlingPath) !== castlingPath;
 
                 //Your king can not pass through check
-                let attackedSquares = board.getAttackedSquares(OppositePieceColor$1(king.color));
-                let kingPathToCastle = castlingSide === E_MoveFlag$1.QueenSideCastling ?
+                let attackedSquares = board.getAttackedSquares(OppositePieceColor(king.color));
+                let kingPathToCastle = castlingSide === E_MoveFlag.QueenSideCastling ?
                     king.position << 1n | king.position << 2n :
                     king.position >> 1n | king.position >> 2n;
 
                 let isKingPathChecked = (kingPathToCastle & attackedSquares) > 0n;
 
                 if (!isCastlingPathObstructed && !isKingPathChecked) {
-                    let kingTargetFile = CASTLING_FILES$1[castlingSide][E_PieceType.King].endFile;
+                    let kingTargetFile = CASTLING_FILES[castlingSide][E_PieceType.King].endFile;
                     let kingMove = new Move(king.rank, king.file, king.rank, kingTargetFile, castlingSide);
                     castlingMoves.push(kingMove);
                 }
@@ -1654,6 +1710,149 @@ var myBuild = (function (exports) {
         }
     }
 
+    class MoveInput extends EventTarget {
+        #inputListener;
+        #board;
+
+        #inputMoveStart = null;
+        #inputMoveDestination = null;
+
+        static inputEvents = {
+            onMoveInput: "user:move-input",
+            onSquareSelected: "user:square-selected",
+            onMoveCanceled: "system:move-canceled",
+            onMoveStartSet: "user:move-start-set",
+            onMoveDestinationSet: "user:move-destination-set"
+        }
+
+        #enabled = true;
+        get enabled() {
+            return this.#enabled;
+        }
+        set enabled(enabled) {
+            assert(typeof enabled === 'boolean', "enabled is not boolean");
+            this.#enabled = enabled;
+        }
+
+        /**
+         * @param {Board} board Board that Input should listen to
+         * @param {number} globalBoardPositionX x position of board in canvas in pixels
+         * @param {number} globalBoardPositionY y position of board in canvas in pixels
+         */
+        constructor(board, globalBoardPositionX, globalBoardPositionY) {
+            assert(board instanceof Board, "Invalid board");
+            assert(typeof globalBoardPositionX === 'number', "Invalid board x position");
+            assert(typeof globalBoardPositionY === 'number', "Invalid board y position");
+
+            super();
+
+            this.#inputListener = createQuadrille(NUMBER_OF_FILES, NUMBER_OF_RANKS);
+            this.#board = board;
+
+            //listen to click events on main canvas
+            select('canvas').mouseClicked(() => {
+                this.#handleClick(mouseX, mouseY, globalBoardPositionX, globalBoardPositionY);
+            });
+        }
+
+        addInputEventListener(event, callback) {
+            assert(Object.values(MoveInput.inputEvents).includes(event), "Invalid event");
+            this.addEventListener(event, callback);
+        }
+
+        #handleClick(clickX, clickY, boardPositionX, boardPositionY) {
+            if (!this.#enabled) return;
+            //get click coordinates relative to page
+            let xCoordinate = clickX;
+            let yCoordinate = clickY;
+            //get clicked square
+
+            let clickedRank = 8 - this.#inputListener.screenRow(yCoordinate, boardPositionY, BOARD_SQUARE_SIZE);
+            let clickedFile = this.#inputListener.screenCol(xCoordinate, boardPositionX, BOARD_SQUARE_SIZE) + 1;
+            let clickedSquare = {
+                rank: clickedRank,
+                file: clickedFile
+            };
+
+            //if click is not within board limits
+            let isClickWithinBoardLimits = 1 <= clickedRank && clickedRank <= NUMBER_OF_RANKS && 1 <= clickedFile && clickedFile <= NUMBER_OF_FILES;
+            if (!isClickWithinBoardLimits) {
+                //if move was started
+                if (this.#inputMoveStart !== null) {
+                    //cancel it
+                    this.#CancelMove();
+                }
+                return;
+            }
+
+            //notify that a square was selected
+            let squareSelectedEvent = new CustomEvent(MoveInput.inputEvents.onSquareSelected, { detail: { square: clickedSquare } });
+            this.dispatchEvent(squareSelectedEvent);
+
+            //if move start is not set and there's a piece in selected square
+            let pieceInClickedSquare = this.#board.getPieceOnRankFile(clickedRank, clickedFile) !== null;
+            if (this.#inputMoveStart === null && pieceInClickedSquare) {
+
+                //set this square as the move start
+                this.#inputMoveStart = {
+                    rank: clickedRank,
+                    file: clickedFile
+                };
+
+                //notify
+                let moveStartSetEvent = new CustomEvent(MoveInput.inputEvents.onMoveStartSet, { detail: { square: clickedSquare } });
+                this.dispatchEvent(moveStartSetEvent);
+            }
+            //else if move start is set and destination is not
+            else if (this.#inputMoveStart !== null && this.#inputMoveDestination === null) {
+                //if start square and destination square are the same
+                if ((this.#inputMoveStart.rank === clickedRank && this.#inputMoveStart.file === clickedFile)) {
+                    //cancel move
+                    this.#CancelMove();
+                    return;
+                }
+
+                //set this square as the move destination
+                this.#inputMoveDestination = {
+                    rank: clickedRank,
+                    file: clickedFile
+                };
+                //notify
+                let moveDestinationSet = new CustomEvent(MoveInput.inputEvents.onMoveDestinationSet, { detail: { square: clickedSquare } });
+                this.dispatchEvent(moveDestinationSet);
+
+                //create move
+                let inputMove = new Move(this.#inputMoveStart.rank, this.#inputMoveStart.file, this.#inputMoveDestination.rank, this.#inputMoveDestination.file);
+                //notify
+                let moveInput = new CustomEvent(MoveInput.inputEvents.onMoveInput, { detail: { move: inputMove } });
+                this.dispatchEvent(moveInput);
+                //unset start and destination
+                this.#inputMoveStart = null;
+                this.#inputMoveDestination = null;
+            }
+        }
+
+        #CancelMove() {
+            this.#inputMoveStart = null;
+            this.#inputMoveDestination = null;
+            let moveCanceled = new CustomEvent(MoveInput.inputEvents.onMoveCanceled);
+            this.dispatchEvent(moveCanceled);
+        }
+
+        static #pieceSelectedForPromotion = E_PieceType.Queen;
+
+        static get pieceSelectedForPromotion() {
+            return this.#pieceSelectedForPromotion;
+        }
+
+        static set pieceSelectedForPromotion(value) {
+            assertPieceType(value);
+            assert(value !== E_PieceType.Pawn, "Promotion to Pawn is forbidden");
+            assert(value !== E_PieceType.King, "Promotion to King is forbidden");
+            this.#pieceSelectedForPromotion = value;
+        }
+    }
+
     //******  CLASS PROLOG, ASSERT AND DOCUMENT PRIVATE METHODS
     class Board {
         #moveGenerator;
@@ -1672,11 +1871,11 @@ var myBuild = (function (exports) {
 
         #castlingRights = {
             [E_PieceColor.White]: {
-                [E_MoveFlag$1.KingSideCastling]: false,
-                [E_MoveFlag$1.QueenSideCastling]: false
+                [E_MoveFlag.KingSideCastling]: false,
+                [E_MoveFlag.QueenSideCastling]: false
             }, [E_PieceColor.Black]: {
-                [E_MoveFlag$1.KingSideCastling]: false,
-                [E_MoveFlag$1.QueenSideCastling]: false
+                [E_MoveFlag.KingSideCastling]: false,
+                [E_MoveFlag.QueenSideCastling]: false
             }
         }
 
@@ -1708,14 +1907,14 @@ var myBuild = (function (exports) {
             for (let color of Object.values(E_PieceColor)) {
                 if (color === E_PieceColor.None || color === E_PieceColor.Any) continue;
 
-                let kingKey = pieceColorTypeToKey$1(color, E_PieceType.King);
+                let kingKey = pieceColorTypeToKey(color, E_PieceType.King);
                 let kingSymbol = Quadrille.chessSymbols[kingKey];
                 let kingPos = this.#board.search(createQuadrille([kingSymbol]), true)[0];
                 //if board has no king or king has moved from initial square
                 if (kingPos === undefined) {
                     //no castling is possible
-                    this.#setCastlingRights(color, E_MoveFlag$1.KingSideCastling, false);
-                    this.#setCastlingRights(color, E_MoveFlag$1.QueenSideCastling, false);
+                    this.#setCastlingRights(color, E_MoveFlag.KingSideCastling, false);
+                    this.#setCastlingRights(color, E_MoveFlag.QueenSideCastling, false);
                     continue;
 
                 } else { //else if there's a king
@@ -1727,13 +1926,13 @@ var myBuild = (function (exports) {
                     //if king is not in its initial square
                     if (!isKingOnInitialSquare) {
                         //no castling is possible
-                        this.#setCastlingRights(color, E_MoveFlag$1.KingSideCastling, false);
-                        this.#setCastlingRights(color, E_MoveFlag$1.QueenSideCastling, false);
+                        this.#setCastlingRights(color, E_MoveFlag.KingSideCastling, false);
+                        this.#setCastlingRights(color, E_MoveFlag.QueenSideCastling, false);
                         continue;
                     }
                 }
 
-                let rookKey = pieceColorTypeToKey$1(color, E_PieceType.Rook);
+                let rookKey = pieceColorTypeToKey(color, E_PieceType.Rook);
                 let rookSymbol = Quadrille.chessSymbols[rookKey];
                 let rookPositions = this.#board.search(createQuadrille([rookSymbol]), true);
                 for (let rookPosition of rookPositions) {
@@ -1741,11 +1940,11 @@ var myBuild = (function (exports) {
                     let rank = NUMBER_OF_RANKS - rookPosition.row;
                     let file = rookPosition.col + 1;
                     let isRookOnInitialSquare = color === E_PieceColor.White ?
-                        (rank === 1 && file === 1) | (rank === 1 && file === 8) :
-                        (rank === 8 && file === 1) | (rank === 8 && file === 8);
+                        (rank === 1 && file === 1) || (rank === 1 && file === 8) :
+                        (rank === 8 && file === 1) || (rank === 8 && file === 8);
 
                     if (isRookOnInitialSquare) {
-                        let castlingSide = file === 1 ? E_MoveFlag$1.QueenSideCastling : E_MoveFlag$1.KingSideCastling;
+                        let castlingSide = file === 1 ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
                         this.#setCastlingRights(color, castlingSide, true);
                     }
                 }
@@ -1757,7 +1956,7 @@ var myBuild = (function (exports) {
 
 
         /**
-         * @param {E_PieceColor} color
+         * @param {E_PieceColor} pieceColor
          * @return {Move[]} Array of legal moves of pieces of given color
          */
         generateMoves(pieceColor) {
@@ -1779,19 +1978,19 @@ var myBuild = (function (exports) {
                 this.#updateEnPassantInfo(move);
                 //apply move
                 switch (move.flag) {
-                    case E_MoveFlag$1.Regular:
+                    case E_MoveFlag.Regular:
                         this.#makeRegularMove(move);
                         break;
-                    case E_MoveFlag$1.Promotion:
+                    case E_MoveFlag.Promotion:
                         this.#makePromotionMove(move);
                         break;
-                    case E_MoveFlag$1.KingSideCastling:
+                    case E_MoveFlag.KingSideCastling:
                         this.#makeCastlingMove(move);
                         break;
-                    case E_MoveFlag$1.QueenSideCastling:
+                    case E_MoveFlag.QueenSideCastling:
                         this.#makeCastlingMove(move);
                         break;
-                    case E_MoveFlag$1.EnPassant:
+                    case E_MoveFlag.EnPassant:
                         this.#makeEnPassantMove(move);
                         break;
                     default:
@@ -1932,8 +2131,8 @@ var myBuild = (function (exports) {
         /**
          * Adds a piece to given rank and file
          * @param {string} pieceSymbol 
-         * @param {Number} rank 
-         * @param {Number} file 
+         * @param {number} rank 
+         * @param {number} file 
          */
         #addPiece(pieceSymbol, rank, file, recordChange = true) {
             assert(Object.values(Quadrille.chessSymbols).includes(pieceSymbol));
@@ -1961,8 +2160,8 @@ var myBuild = (function (exports) {
 
         /**
          * Removes a piece in given rank and file and returns it
-         * @param {Number} rank 
-         * @param {Number} file 
+         * @param {number} rank 
+         * @param {number} file 
          * @param {boolean} recordChange record removal so it can be undone?
          * @returns 
          */
@@ -2019,7 +2218,7 @@ var myBuild = (function (exports) {
             let pieceTypeToPromote = MoveInput.pieceSelectedForPromotion;
             let pieceColor = pieceKeyToColor(pawnKey);
             //create piece symbol
-            let pieceKey = pieceColorTypeToKey$1(pieceColor, pieceTypeToPromote);
+            let pieceKey = pieceColorTypeToKey(pieceColor, pieceTypeToPromote);
             let pieceSymbol = Quadrille.chessSymbols[pieceKey];
             //add promoted piece
             this.#addPiece(pieceSymbol, move.endRank, move.endFile);
@@ -2034,7 +2233,7 @@ var myBuild = (function (exports) {
                 CASTLING_FILES[move.flag][E_PieceType.Rook].startFile,
                 move.startRank,
                 CASTLING_FILES[move.flag][E_PieceType.Rook].endFile,
-                E_MoveFlag$1.Regular
+                E_MoveFlag.Regular
             );
             this.#makeRegularMove(rookMove);
         }
@@ -2047,7 +2246,6 @@ var myBuild = (function (exports) {
         }
 
         #capturePiece(rank, file) {
-            //console.trace();
             //add piece to captured pieces
             let pieceSymbol = this.getPieceOnRankFile(rank, file);
             let pieceColor = pieceKeyToColor(Quadrille.chessKeys[pieceSymbol]);
@@ -2081,13 +2279,13 @@ var myBuild = (function (exports) {
             let pieceInDestination = this.#boardImplementation.getPieceOnRankFile(move.endRank, move.endFile);
 
             //if it is a castling move
-            let isCastlingMove = move.flag === E_MoveFlag$1.KingSideCastling | move.flag === E_MoveFlag$1.QueenSideCastling;
+            let isCastlingMove = move.flag === E_MoveFlag.KingSideCastling | move.flag === E_MoveFlag.QueenSideCastling;
             if (isCastlingMove) {
 
                 //remove castling rights from both sides
                 let king = pieceInStart;
                 let castlingSide = move.flag;
-                let oppositeCastlingSide = move.flag === E_MoveFlag$1.KingSideCastling ? E_MoveFlag$1.QueenSideCastling : E_MoveFlag$1.KingSideCastling;
+                let oppositeCastlingSide = move.flag === E_MoveFlag.KingSideCastling ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
                 this.#disableCastlingRights(king.color, castlingSide);
                 this.#disableCastlingRights(king.color, oppositeCastlingSide);
 
@@ -2096,7 +2294,7 @@ var myBuild = (function (exports) {
                 //if a rook is moving
                 if (pieceInStart.GetType() === E_PieceType.Rook) {
                     let rook = pieceInStart;
-                    let rookCastlingSide = rook.file === 1 ? E_MoveFlag$1.QueenSideCastling : E_MoveFlag$1.KingSideCastling;
+                    let rookCastlingSide = rook.file === 1 ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
 
                     //if the rook that's moving is on its initial corner and hasn't moved
                     if (rook.isOnInitialSquare() && this.#hasCastlingRights(rook.color, rookCastlingSide)) {
@@ -2108,19 +2306,19 @@ var myBuild = (function (exports) {
                     let king = pieceInStart;
                     //if the king has not moved before
                     let hasKingMoved = !(king.isOnInitialSquare() &&
-                        this.#hasCastlingRights(king.color, E_MoveFlag$1.KingSideCastling) &&
-                        this.#hasCastlingRights(king.color, E_MoveFlag$1.QueenSideCastling));
+                        this.#hasCastlingRights(king.color, E_MoveFlag.KingSideCastling) &&
+                        this.#hasCastlingRights(king.color, E_MoveFlag.QueenSideCastling));
                     if (!hasKingMoved) {
                         //remove castling rights from both sides
-                        this.#disableCastlingRights(king.color, E_MoveFlag$1.KingSideCastling);
-                        this.#disableCastlingRights(king.color, E_MoveFlag$1.QueenSideCastling);
+                        this.#disableCastlingRights(king.color, E_MoveFlag.KingSideCastling);
+                        this.#disableCastlingRights(king.color, E_MoveFlag.QueenSideCastling);
                     }
                 }
 
                 //if a rook is captured
                 if (pieceInDestination !== null && pieceInDestination.GetType() === E_PieceType.Rook) {
                     let rook = pieceInDestination;
-                    let rookCastlingSide = rook.file === 1 ? E_MoveFlag$1.QueenSideCastling : E_MoveFlag$1.KingSideCastling;
+                    let rookCastlingSide = rook.file === 1 ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
 
                     //if the rook that's being captured is on its initial corner  and hasn't moved
                     if (rook.isOnInitialSquare() && this.#hasCastlingRights(rook.color, rookCastlingSide)) {
@@ -2139,7 +2337,7 @@ var myBuild = (function (exports) {
          */
         #hasCastlingRights(color, castlingSide) {
             assertPieceColor(color);
-            assert(castlingSide === E_MoveFlag$1.QueenSideCastling || castlingSide === E_MoveFlag$1.KingSideCastling, "Invalid castling side");
+            assert(castlingSide === E_MoveFlag.QueenSideCastling || castlingSide === E_MoveFlag.KingSideCastling, "Invalid castling side");
 
             return this.#castlingRights[color][castlingSide];
         }
@@ -2225,9 +2423,9 @@ var myBuild = (function (exports) {
 
             let moveString = "";
             //if it is a castling move
-            if (move.flag === E_MoveFlag$1.KingSideCastling || move.flag === E_MoveFlag$1.QueenSideCastling) {
+            if (move.flag === E_MoveFlag.KingSideCastling || move.flag === E_MoveFlag.QueenSideCastling) {
                 //add castling mark
-                moveString = move.flag === E_MoveFlag$1.KingSideCastling ? "0-0" : "0-0-0";
+                moveString = move.flag === E_MoveFlag.KingSideCastling ? "0-0" : "0-0-0";
                 //notify
                 let onMoveRecorded = new CustomEvent(MoveRecord.events.onMoveRecorded, { detail: { move: moveString } });
                 this.dispatchEvent(onMoveRecorded);
@@ -2238,7 +2436,7 @@ var myBuild = (function (exports) {
             }
 
             let pieceInStart = board.getPieceOnRankFile(move.startRank, move.startFile);
-            let isCapturingMove = board.getPieceOnRankFile(move.endRank, move.endFile) !== null || move.flag === E_MoveFlag$1.EnPassant;
+            let isCapturingMove = board.getPieceOnRankFile(move.endRank, move.endFile) !== null || move.flag === E_MoveFlag.EnPassant;
 
             //add piece abbreviation
             //if piece in start is a pawn
@@ -2271,17 +2469,17 @@ var myBuild = (function (exports) {
 
             //add special moves marks
             switch (move.flag) {
-                case E_MoveFlag$1.EnPassant:
+                case E_MoveFlag.EnPassant:
                     moveString += 'e.p';
                     break;
-                case E_MoveFlag$1.Promotion:
+                case E_MoveFlag.Promotion:
                     moveString += '=' + pieceColorTypeToKey(playingColor, MoveInput.pieceSelectedForPromotion);
                     break;
             }
 
             //add check or checkmate marks
             board.makeMove(move);
-            let enemyColor = OppositePieceColor$1(playingColor);
+            let enemyColor = OppositePieceColor(playingColor);
             let enemyLegalMoves = board.generateMoves(enemyColor);
             let isEnemyKingInCheck = board.isKingInCheck(enemyColor);
             //if it is a checkmate
@@ -2367,139 +2565,6 @@ var myBuild = (function (exports) {
         }
     }
 
-    let MoveInput$1 = class MoveInput extends EventTarget {
-        #inputListener;
-        #board;
-
-        #inputMoveStart = null;
-        #inputMoveDestination = null;
-
-        static inputEvents = {
-            onMoveInput: "user:move-input",
-            onSquareSelected: "user:square-selected",
-            onMoveCanceled: "system:move-canceled",
-            onMoveStartSet: "user:move-start-set",
-            onMoveDestinationSet: "user:move-destination-set"
-        }
-
-        /**
-         * @param {Board} board Board that Input should listen to
-         * @param {Number} globalBoardPositionX x position of board in canvas in pixels
-         * @param {Number} globalBoardPositionY y position of board in canvas in pixels
-         */
-        constructor(board, globalBoardPositionX, globalBoardPositionY) {
-            assert(board instanceof Board, "Invalid board");
-            assert(typeof globalBoardPositionX === 'number', "Invalid board x position");
-            assert(typeof globalBoardPositionY === 'number', "Invalid board y position");
-
-            super();
-
-            this.#inputListener = createQuadrille(NUMBER_OF_FILES, NUMBER_OF_RANKS);
-            this.#board = board;
-
-            //listen to click events on main canvas
-            select('canvas').mouseClicked(() => {
-                this.#handleClick(mouseX, mouseY, globalBoardPositionX, globalBoardPositionY);
-            });
-        }
-
-        addInputEventListener(event, callback) {
-            assert(Object.values(MoveInput.inputEvents).includes(event), "Invalid event");
-            this.addEventListener(event, callback);
-        }
-
-        #handleClick(clickX, clickY, boardPositionX, boardPositionY) {
-            //get click coordinates relative to page
-            let xCoordinate = clickX;
-            let yCoordinate = clickY;
-            //get clicked square
-
-            let clickedRank = 8 - this.#inputListener.screenRow(yCoordinate, boardPositionY, BOARD_SQUARE_SIZE);
-            let clickedFile = this.#inputListener.screenCol(xCoordinate, boardPositionX, BOARD_SQUARE_SIZE) + 1;
-            let clickedSquare = {
-                rank: clickedRank,
-                file: clickedFile
-            };
-
-            //if click is not within board limits
-            let isClickWithinBoardLimits = 1 <= clickedRank && clickedRank <= NUMBER_OF_RANKS && 1 <= clickedFile && clickedFile <= NUMBER_OF_FILES;
-            if (!isClickWithinBoardLimits) {
-                //if move was started
-                if (this.#inputMoveStart !== null) {
-                    //cancel it
-                    this.#CancelMove();
-                }
-                return;
-            }
-
-            //notify that a square was selected
-            let squareSelectedEvent = new CustomEvent(MoveInput.inputEvents.onSquareSelected, { detail: { square: clickedSquare } });
-            this.dispatchEvent(squareSelectedEvent);
-
-            //if move start is not set and there's a piece in selected square
-            let pieceInClickedSquare = this.#board.getPieceOnRankFile(clickedRank, clickedFile) !== null;
-            if (this.#inputMoveStart === null && pieceInClickedSquare) {
-
-                //set this square as the move start
-                this.#inputMoveStart = {
-                    rank: clickedRank,
-                    file: clickedFile
-                };
-
-                //notify
-                let moveStartSetEvent = new CustomEvent(MoveInput.inputEvents.onMoveStartSet, { detail: { square: clickedSquare } });
-                this.dispatchEvent(moveStartSetEvent);
-            }
-            //else if move start is set and destination is not
-            else if (this.#inputMoveStart !== null && this.#inputMoveDestination === null) {
-                //if start square and destination square are the same
-                if ((this.#inputMoveStart.rank === clickedRank && this.#inputMoveStart.file === clickedFile)) {
-                    //cancel move
-                    this.#CancelMove();
-                    return;
-                }
-
-                //set this square as the move destination
-                this.#inputMoveDestination = {
-                    rank: clickedRank,
-                    file: clickedFile
-                };
-                //notify
-                let moveDestinationSet = new CustomEvent(MoveInput.inputEvents.onMoveDestinationSet, { detail: { square: clickedSquare } });
-                this.dispatchEvent(moveDestinationSet);
-
-                //create move
-                let inputMove = new Move(this.#inputMoveStart.rank, this.#inputMoveStart.file, this.#inputMoveDestination.rank, this.#inputMoveDestination.file);
-                //notify
-                let moveInput = new CustomEvent(MoveInput.inputEvents.onMoveInput, { detail: { move: inputMove } });
-                this.dispatchEvent(moveInput);
-                //unset start and destination
-                this.#inputMoveStart = null;
-                this.#inputMoveDestination = null;
-            }
-        }
-
-        #CancelMove() {
-            this.#inputMoveStart = null;
-            this.#inputMoveDestination = null;
-            let moveCanceled = new CustomEvent(MoveInput.inputEvents.onMoveCanceled);
-            this.dispatchEvent(moveCanceled);
-        }
-
-        static #pieceSelectedForPromotion = E_PieceType.Queen;
-
-        static get pieceSelectedForPromotion() {
-            return this.#pieceSelectedForPromotion;
-        }
-
-        static set pieceSelectedForPromotion(value) {
-            assertPieceType(value);
-            assert(value !== E_PieceType.Pawn, "Promotion to Pawn is forbidden");
-            assert(value !== E_PieceType.King, "Promotion to King is forbidden");
-            this.#pieceSelectedForPromotion = value;
-        }
-    };
-
     class MoveInputUI {
         #game;
         #UIQuadrille;
@@ -2514,14 +2579,14 @@ var myBuild = (function (exports) {
          */
         constructor(game, moveInput) {
             assert(game instanceof Game, "Invalid Game");
-            assert(moveInput instanceof MoveInput$1, "Invalid Move Input");
+            assert(moveInput instanceof MoveInput, "Invalid Move Input");
 
             this.#game = game;
             this.#UIQuadrille = createQuadrille(NUMBER_OF_FILES, NUMBER_OF_RANKS);
-            moveInput.addInputEventListener(MoveInput$1.inputEvents.onMoveStartSet, this.#onMoveStartSet.bind(this));
-            moveInput.addInputEventListener(MoveInput$1.inputEvents.onMoveDestinationSet, this.#onMoveDestinationSet.bind(this));
-            moveInput.addInputEventListener(MoveInput$1.inputEvents.onMoveInput, this.#onMoveInput.bind(this));
-            moveInput.addInputEventListener(MoveInput$1.inputEvents.onMoveCanceled, this.#onMoveCanceled.bind(this));
+            moveInput.addInputEventListener(MoveInput.inputEvents.onMoveStartSet, this.#onMoveStartSet.bind(this));
+            moveInput.addInputEventListener(MoveInput.inputEvents.onMoveDestinationSet, this.#onMoveDestinationSet.bind(this));
+            moveInput.addInputEventListener(MoveInput.inputEvents.onMoveInput, this.#onMoveInput.bind(this));
+            moveInput.addInputEventListener(MoveInput.inputEvents.onMoveCanceled, this.#onMoveCanceled.bind(this));
 
             this.#colorForSelectedSquare = color(MOVE_INPUT_UI_SETTINGS.COLOR_FOR_SELECTED_SQUARES);
             this.#colorForAvailableMoves = color(MOVE_INPUT_UI_SETTINGS.COLOR_FOR_AVAILABLE_MOVES);
@@ -2666,7 +2731,7 @@ var myBuild = (function (exports) {
         #addNewRow() {
             this.#table.insert(this.#table.height);
             if (MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE < this.#lastRowNumber) {
-                this.#firstVisibleRow = rowNumber - MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE + 1;
+                this.#firstVisibleRow = this.#lastRowNumber - MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE;
             }
         }
 
@@ -2771,14 +2836,14 @@ var myBuild = (function (exports) {
                     message = playingColor === E_PieceColor.White ? "White Moves" : "Black Moves";
                     break;
                 case E_GameState.CHECKMATE:
-                    rectFillTargetColour = OppositePieceColor$1(playingColor) === E_PieceColor.White ? color(255) : color(0);
-                    textColor = OppositePieceColor$1(playingColor) === E_PieceColor.White ? color(0) : color(255);
-                    message = "Checkmate! " + (OppositePieceColor$1(playingColor) === E_PieceColor.White ? "White Wins" : "Black Wins");
+                    rectFillTargetColour = OppositePieceColor(playingColor) === E_PieceColor.White ? color(255) : color(0);
+                    textColor = OppositePieceColor(playingColor) === E_PieceColor.White ? color(0) : color(255);
+                    message = "Checkmate! " + (OppositePieceColor(playingColor) === E_PieceColor.White ? "White Wins" : "Black Wins");
                     break;
                 case E_GameState.RESIGNED:
-                    rectFillTargetColour = OppositePieceColor$1(playingColor) === E_PieceColor.White ? color(255) : color(0);
-                    textColor = OppositePieceColor$1(playingColor) === E_PieceColor.White ? color(0) : color(255);
-                    message = (OppositePieceColor$1(playingColor) === E_PieceColor.White ? "White Wins" : "Black Wins");
+                    rectFillTargetColour = OppositePieceColor(playingColor) === E_PieceColor.White ? color(255) : color(0);
+                    textColor = OppositePieceColor(playingColor) === E_PieceColor.White ? color(0) : color(255);
+                    message = (OppositePieceColor(playingColor) === E_PieceColor.White ? "White Wins" : "Black Wins");
                     break;
                 case E_GameState.STALEMATE:
                     rectFillTargetColour = color(175);
@@ -2815,6 +2880,7 @@ var myBuild = (function (exports) {
         }
     }
 
+    /*globals color, createGraphics,deltaTime,random,image,createButton */
     //FENS
     const STANDARD_BOARD_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
 
@@ -2839,13 +2905,15 @@ var myBuild = (function (exports) {
         //Game State
         #playingColor = E_PieceColor.White;
         #gameState = E_GameState.PLAYING;
-
+        #gameMode = E_GameMode.STANDARD;
         get playingColor() {
             return this.#playingColor;
         }
         get state() {
             return this.#gameState;
         }
+        #timerToMove = 0;
+        #timeToMakeMove = 50;
 
         //Objects
         #legalMoves = [];
@@ -2861,6 +2929,7 @@ var myBuild = (function (exports) {
         #moveInputUI;
         #piecesCapturedUI;
         #gameStateUI;
+        #resignButton;
         #graphics;
         #position;
 
@@ -2879,9 +2948,10 @@ var myBuild = (function (exports) {
             this.#playingColor = playingColor;
             this.#legalMoves = this.#board.generateMoves(playingColor);
 
-            this.#moveInput = new MoveInput$1(this.#board, xPosition + BOARD_LOCAL_POSITION.x, yPosition + BOARD_LOCAL_POSITION.y);
+            this.#moveInput = new MoveInput(this.#board, xPosition + BOARD_LOCAL_POSITION.x, yPosition + BOARD_LOCAL_POSITION.y);
+            this.#moveInput.enabled = true;
             this.#moveInputUI = new MoveInputUI(this, this.#moveInput);
-            this.#moveInput.addInputEventListener(MoveInput$1.inputEvents.onMoveInput, this.#onMoveInput.bind(this));
+            this.#moveInput.addInputEventListener(MoveInput.inputEvents.onMoveInput, this.#onMoveInput.bind(this));
 
             this.#moveRecord = new MoveRecord();
             this.#moveRecordUI = new MoveRecordUI(this.#moveRecord);
@@ -2913,25 +2983,84 @@ var myBuild = (function (exports) {
             }
         }
 
-        draw() {
+        /**
+         * Updates game state and view.
+         */
+        update() {
+            if (this.#gameMode === E_GameMode.AUTOMATIC) {
+                this.#runGameAutomatically();
+            }
+            this.#updateInput();
+            this.#draw();
+
+
+        }
+
+        /**
+         * Sets mode in which the game is playing.
+         * STANDARD: Standard chess with all moves. Player makes moves on board.
+         * AUTOMATIC: The machine will make random moves automatically until the game is finished. No draw offers.
+         * FREE: Any color can move. Board might have a legal configuration or not. No end game. No option for resigning nor draw offers. Player makes moves on board.
+         * @param {E_GameMode} gameMode 
+         */
+        setGameMode(gameMode) {
+            assert(Object.values(E_GameMode).includes(gameMode), "Invalid game mode");
+            this.#gameMode = gameMode;
+            this.#generateLegalMoves();
+            this.update();
+        }
+
+        #updateInput() {
+            switch (this.#gameMode) {
+                case E_GameMode.STANDARD:
+                    this.#moveInput.enabled = !this.isGameFinished();
+                    break;
+                case E_GameMode.AUTOMATIC:
+                    this.#moveInput.enabled = false;
+                    break;
+                case E_GameMode.FREE:
+                    this.#moveInput.enabled = true;
+                    break;
+            }
+        }
+
+        #runGameAutomatically() {
+            if (this.isGameFinished()) return;
+            this.#timerToMove += deltaTime;
+            if (this.#timeToMakeMove < this.#timerToMove) {
+                let randomIndex = Math.floor(random(0, this.#legalMoves.length));
+                let randomMove = this.#legalMoves[randomIndex];
+                this.#moveRecord.recordMove(randomMove, this.#board, this.playingColor);
+                this.#board.makeMove(randomMove);
+                this.#switchPlayingColor();
+                this.#legalMoves = this.#board.generateMoves(this.playingColor);
+                this.#checkEndGame(this.#playingColor);
+                this.#timerToMove = 0;
+            }
+        }
+
+        #draw() {
             this.#graphics.background(255);
 
             this.#moveRecordUI.draw(this.#graphics);
             this.#piecesCapturedUI.draw(this.#graphics);
-            this.#gameStateUI.draw(this.#graphics);
+
+            if (this.#gameMode !== E_GameMode.FREE) {
+                this.#gameStateUI.draw(this.#graphics);
+            }
 
             this.#moveInputUI.draw(this.#graphics);
             this.#board.draw(this.#graphics);
 
             this.#drawRanksAndFiles(this.#graphics);
 
+            this.#updateResignButton();
+
             image(this.#graphics, this.#position.x, this.#position.y);
         }
 
 
         #onMoveInput(event) {
-            //if game is finished, disable input
-            if (this.isGameFinished()) return;
             //get input move
             let inputMove = event.detail.move;
 
@@ -2944,23 +3073,31 @@ var myBuild = (function (exports) {
                 //make move on board
                 this.#board.makeMove(legalMove);
                 //switch playing color
-                this.#switchPlayingColor();
+                if (this.#gameMode === E_GameMode.STANDARD) this.#switchPlayingColor();
                 //generate new set of legal moves
-                this.#legalMoves = this.#board.generateMoves(this.#playingColor);
+                this.#generateLegalMoves();
                 //check for end game conditions
-                this.#checkEndGame();
+                if (this.#gameMode !== E_GameMode.FREE) this.#checkEndGame(this.#playingColor);
             }
         }
 
         #switchPlayingColor() {
-            this.#playingColor = OppositePieceColor$1(this.#playingColor);
+            this.#playingColor = OppositePieceColor(this.#playingColor);
         }
 
-        #checkEndGame() {
+        #generateLegalMoves() {
+            this.#legalMoves = this.#board.generateMoves(this.#playingColor);
+            if (this.#gameMode === E_GameMode.FREE) {
+                this.#legalMoves = this.#legalMoves.concat(this.#board.generateMoves(OppositePieceColor(this.playingColor)));
+            }
+        }
+
+        #checkEndGame(playingColor) {
             //if there are no moves left
-            if (this.#legalMoves.length === 0) {
+            let legalMoves = this.#board.generateMoves(playingColor);
+            if (legalMoves.length === 0) {
                 //and king is in check
-                if (this.#board.isKingInCheck(this.#playingColor)) {
+                if (this.#board.isKingInCheck(playingColor)) {
                     //game finished by checkmate
                     this.#gameState = E_GameState.CHECKMATE;
                 }
@@ -2971,8 +3108,11 @@ var myBuild = (function (exports) {
             }
         }
 
-        #checkDraw() {
-        }
+        // #checkDraw() {
+        //     if (false) {
+        //         this.#gameState = E_GameState.DRAW;
+        //     }
+        // }
 
         #createResignButton() {
             let button = createButton(RESIGN_BUTTON_UI_SETTINGS.TEXT);
@@ -2981,6 +3121,15 @@ var myBuild = (function (exports) {
                 this.#gameState = E_GameState.RESIGNED;
                 button.hide();
             });
+            this.#resignButton = button;
+        }
+
+        #updateResignButton() {
+            if (this.isGameFinished() || this.#gameMode === E_GameMode.FREE) {
+                this.#resignButton.hide();
+            } else {
+                this.#resignButton.show();
+            }
         }
 
         #drawRanksAndFiles(graphics) {
@@ -3010,6 +3159,7 @@ var myBuild = (function (exports) {
 
     }
 
+    exports.E_GameMode = E_GameMode;
     exports.GAME_DIMENSIONS = GAME_DIMENSIONS;
     exports.default = Game;
 

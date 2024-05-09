@@ -9,6 +9,11 @@ export default class SlidingPiece extends Piece {
     getSlidingRays() {
         throw new Error("Method 'GetType()' must be implemented.");
     }
+
+    IsSlider() {
+        return true;
+    }
+
     /**
      * 
      * @param {BoardImplementation} board 

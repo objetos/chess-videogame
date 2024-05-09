@@ -2,13 +2,15 @@ import { NUMBER_OF_RANKS, NUMBER_OF_FILES } from "../Utils/ChessUtils.js";
 import { assert, assertPieceKey, assertRank, assertFile, assertPieceType, assertPieceColor } from "../../Testing/TestTools.js";
 import { E_PieceColor } from "../Enums/E_PieceColor.js";
 import { E_PieceType } from "../Enums/E_PieceType.js";
+import { E_MoveFlag } from "../Enums/E_MoveFlag.js";
+import { OppositePieceColor } from "../Utils/ChessUtils.js";
 import Piece from "../MoveGeneration/Pieces/Piece.js";
 import Rook from "../MoveGeneration/Pieces/Rook.js";
 import Bishop from "../MoveGeneration/Pieces/Bishop.js";
 import Knight from "../MoveGeneration/Pieces/Knight.js";
 import Pawn from "../MoveGeneration/Pieces/Pawn.js";
 import Queen from "../MoveGeneration/Pieces/Queen.js";
-import King from "../MoveGeneration/Pieces/Pawn.js";
+import King from "../MoveGeneration/Pieces/King.js";
 
 export default class BoardImplementation {
     #piecesDictionary = {}; //pieces categorized by color and type.
@@ -62,9 +64,8 @@ export default class BoardImplementation {
     /**
      * Adds a piece object to given rank and file
      * @param {Piece} piece 
-     * @param {Number} rank 
-     * @param {Number} file 
-     * @param {boolean} recordChange record addition so it can be undone?
+     * @param {number} rank 
+     * @param {number} file 
      */
     addPiece(piece, rank, file) {
         assert(piece instanceof Piece, "Invalid piece");
@@ -84,9 +85,8 @@ export default class BoardImplementation {
 
     /**
      * Removes a piece in given rank and file and returns it
-     * @param {Number} rank 
-     * @param {Number} file 
-     * @param {boolean} recordChange record removal so it can be undone?
+     * @param {number} rank 
+     * @param {number} file 
      * @returns 
      */
     removePiece(rank, file) {
@@ -116,7 +116,7 @@ export default class BoardImplementation {
     /**
      * 
      * @param {number} rank 
-     * @param {File} file 
+     * @param {number} file 
      * @returns Piece on given rank and file
      */
     getPieceOnRankFile(rank, file) {
@@ -135,6 +135,7 @@ export default class BoardImplementation {
      */
     getPiecesOfType(pieceColor = E_PieceType.Any, pieceType = E_PieceType.Any) {
         let pieces = [];
+
         if (pieceColor === E_PieceColor.Any && pieceType === E_PieceType.Any) {
             for (let color of Object.values(E_PieceColor)) {
                 for (let type of Object.values(E_PieceType)) {
@@ -160,7 +161,7 @@ export default class BoardImplementation {
      *
      * @param {E_PieceColor} pieceColor
      * @param {E_PieceType} pieceType
-     * @returns {BigInt} Bitboard that contains pieces of given characteristics.
+     * @returns {bigint} Bitboard that contains pieces of given characteristics.
      */
     getOccupied(pieceColor = E_PieceColor.Any, pieceType = E_PieceType.Any) {
         assertPieceType(pieceType);

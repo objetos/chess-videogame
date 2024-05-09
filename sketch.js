@@ -8,8 +8,8 @@ let game;
 let globalCanvas;
 function setup() {
     createCanvas(windowWidth, windowHeight);
-    game = new Game(windowWidth / 3, 10);
-    game.setGameMode(E_GameMode.STANDARD);
+    game = new myBuild.default(windowWidth / 3, 10);
+    game.setGameMode(myBuild.E_GameMode.AUTOMATIC);
 }
 
 function draw() {

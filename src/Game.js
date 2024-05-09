@@ -1,7 +1,10 @@
+/*globals color, createGraphics,deltaTime,random,image,createButton */
 import { E_PieceColor } from "./Enums/E_PieceColor.js";
 import { E_GameState } from "./Enums/E_GameState.js";
+import { E_GameMode } from "./Enums/E_GameMode.js";
 import { MOVE_RECORD_UI_SETTINGS, RANKS_FILES_UI_SETTING, BOARD_WIDTH, GAME_STATE_UI_SETTINGS, PIECES_CAPTURED_UI_SETTINGS, RESIGN_BUTTON_UI_SETTINGS, BOARD_LOCAL_POSITION, BOARD_HEIGHT } from "./UI/UISettings.js";
 import { OppositePieceColor } from "./Utils/ChessUtils.js";
+import { assert } from "../Testing/TestTools.js";
 import Board from "./Board/Board.js";
 import MoveRecord from "./MoveRecord.js";
 import MoveInput from "./MoveInput.js";
@@ -9,11 +12,9 @@ import MoveInputUI from "./UI/MoveInputUI.js";
 import MoveRecordUI from "./UI/MoveRecordUI.js";
 import PiecesCapturedUI from "./UI/PiecesCapturedUI.js";
 import GameStateUI from "./UI/GameStateUI.js";
+export { E_GameMode };
 //FENS
 const STANDARD_BOARD_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
-const JUST_PAWNS_FEN = '8/pppppppp/8/8/8/8/PPPPPPPP/8';
-const JUST_KINGS_FEN = '4k3/8/8/8/8/8/8/4K3';
-const STANDARD_NO_KINGS_FEN = 'rnbq1bnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQ1BNR';
 
 //--GAME DIMENSIONS--
 export const GAME_DIMENSIONS = {
@@ -241,11 +242,11 @@ export default class Game {
         }
     }
 
-    #checkDraw() {
-        if (false) {
-            this.#gameState = E_GameState.DRAW;
-        }
-    }
+    // #checkDraw() {
+    //     if (false) {
+    //         this.#gameState = E_GameState.DRAW;
+    //     }
+    // }
 
     #createResignButton() {
         let button = createButton(RESIGN_BUTTON_UI_SETTINGS.TEXT);

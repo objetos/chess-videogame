@@ -30,8 +30,8 @@ export default class MoveInput extends EventTarget {
 
     /**
      * @param {Board} board Board that Input should listen to
-     * @param {Number} globalBoardPositionX x position of board in canvas in pixels
-     * @param {Number} globalBoardPositionY y position of board in canvas in pixels
+     * @param {number} globalBoardPositionX x position of board in canvas in pixels
+     * @param {number} globalBoardPositionY y position of board in canvas in pixels
      */
     constructor(board, globalBoardPositionX, globalBoardPositionY) {
         assert(board instanceof Board, "Invalid board");

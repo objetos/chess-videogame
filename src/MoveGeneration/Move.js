@@ -11,11 +11,11 @@ export default class Move {
 
     /**
      * Creates a new move
-     * @param {Number} startRank 
-     * @param {Number} startFile 
-     * @param {Number} destinationRank 
-     * @param {Number} destinationFile 
-     * @param {Number} flag 
+     * @param {number} startRank 
+     * @param {number} startFile 
+     * @param {number} destinationRank 
+     * @param {number} destinationFile 
+     * @param {E_MoveFlag} flag 
      */
     constructor(startRank, startFile, destinationRank, destinationFile, flag = E_MoveFlag.None) {
 

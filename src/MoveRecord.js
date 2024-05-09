@@ -1,8 +1,9 @@
 import { E_MoveFlag } from "./Enums/E_MoveFlag";
 import { E_PieceColor } from "./Enums/E_PieceColor";
-import { FileToLetter, OppositePieceColor } from "./Utils/ChessUtils";
+import { FileToLetter, OppositePieceColor, pieceColorTypeToKey } from "./Utils/ChessUtils";
 import Move from "./MoveGeneration/Move";
 import Board from "./Board/Board";
+import MoveInput from "./MoveInput";
 export default class MoveRecord extends EventTarget {
     static events = {
         onMoveRecorded: "system:move-recorded",

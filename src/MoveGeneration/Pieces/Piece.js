@@ -53,6 +53,9 @@ export default class Piece {
         return this.#file;
     }
 
+    /**
+     * @returns {E_PieceType} Type of piece
+     */
     GetType() {
         throw new Error("Method 'GetType()' must be implemented.");
     }
@@ -66,7 +69,7 @@ export default class Piece {
     }
 
     IsSlider() {
-        return this instanceof SlidingPiece;
+        return false;
     }
 
     toString() {

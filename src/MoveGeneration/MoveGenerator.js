@@ -8,7 +8,6 @@ import { getRay, hyperbolaQuintessenceAlgorithm, getBooleanBitboard } from "../U
 import { NUMBER_OF_FILES } from "../Utils/ChessUtils.js";
 import BoardImplementation from "../Board/BoardImplementation.js";
 import Move from "./Move.js";
-import Piece from "./Pieces/Piece.js";
 export default class MoveGenerator {
     /**
      * @param {BoardImplementation} board 

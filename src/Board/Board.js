@@ -2,12 +2,13 @@ import { NUMBER_OF_RANKS, NUMBER_OF_FILES } from "../Utils/ChessUtils.js";
 import { E_PieceColor } from "../Enums/E_PieceColor.js";
 import { E_PieceType } from "../Enums/E_PieceType.js";
 import { E_MoveFlag } from "../Enums/E_MoveFlag.js";
-import { pieceColorTypeToKey, pieceKeyToColor } from "../Utils/ChessUtils.js";
+import { pieceColorTypeToKey, pieceKeyToColor, CASTLING_FILES } from "../Utils/ChessUtils.js";
 import { assert, assertFile, assertRank, assertPieceColor } from "../../Testing/TestTools.js";
 import { BOARD_LOCAL_POSITION, BOARD_SQUARE_SIZE } from "../UI/UISettings.js";
 import MoveGenerator from "../MoveGeneration/MoveGenerator.js";
 import BoardImplementation from "./BoardImplementation.js";
 import Move from "../MoveGeneration/Move.js";
+import MoveInput from "../MoveInput.js";
 
 //******  CLASS PROLOG, ASSERT AND DOCUMENT PRIVATE METHODS
 export default class Board {
@@ -96,8 +97,8 @@ export default class Board {
                 let rank = NUMBER_OF_RANKS - rookPosition.row;
                 let file = rookPosition.col + 1;
                 let isRookOnInitialSquare = color === E_PieceColor.White ?
-                    (rank === 1 && file === 1) | (rank === 1 && file === 8) :
-                    (rank === 8 && file === 1) | (rank === 8 && file === 8);
+                    (rank === 1 && file === 1) || (rank === 1 && file === 8) :
+                    (rank === 8 && file === 1) || (rank === 8 && file === 8);
 
                 if (isRookOnInitialSquare) {
                     let castlingSide = file === 1 ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
@@ -112,7 +113,7 @@ export default class Board {
 
 
     /**
-     * @param {E_PieceColor} color
+     * @param {E_PieceColor} pieceColor
      * @return {Move[]} Array of legal moves of pieces of given color
      */
     generateMoves(pieceColor) {
@@ -287,8 +288,8 @@ export default class Board {
     /**
      * Adds a piece to given rank and file
      * @param {string} pieceSymbol 
-     * @param {Number} rank 
-     * @param {Number} file 
+     * @param {number} rank 
+     * @param {number} file 
      */
     #addPiece(pieceSymbol, rank, file, recordChange = true) {
         assert(Object.values(Quadrille.chessSymbols).includes(pieceSymbol));
@@ -316,8 +317,8 @@ export default class Board {
 
     /**
      * Removes a piece in given rank and file and returns it
-     * @param {Number} rank 
-     * @param {Number} file 
+     * @param {number} rank 
+     * @param {number} file 
      * @param {boolean} recordChange record removal so it can be undone?
      * @returns 
      */
@@ -402,7 +403,6 @@ export default class Board {
     }
 
     #capturePiece(rank, file) {
-        //console.trace();
         //add piece to captured pieces
         let pieceSymbol = this.getPieceOnRankFile(rank, file);
         let pieceColor = pieceKeyToColor(Quadrille.chessKeys[pieceSymbol]);

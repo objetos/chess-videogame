@@ -5,8 +5,8 @@ import { assertRank, assertFile, assert } from "../../Testing/TestTools";
 
 /**
  * 
- * @param {Number} rank 
- * @param {Number} file 
+ * @param {number} rank 
+ * @param {number} file 
  * @returns Bitboard that holds the square given by rank and file
  */
 export function squareToBitboard(rank, file) {
@@ -21,10 +21,10 @@ export function squareToBitboard(rank, file) {
 
 /**
  * 
- * @param {Number} startRank 
- * @param {Number} startFile 
- * @param {Number} destinationRank 
- * @param {Number} destinationFile 
+ * @param {number} startRank 
+ * @param {number} startFile 
+ * @param {number} destinationRank 
+ * @param {number} destinationFile 
  * @param {boolean} includeStart Should the ray contain the start square?
  * @param {boolean} includeDestination Should the ray contain the destination square?
  * @returns Bitboard that holds a ray from given start and end square  
@@ -87,9 +87,9 @@ export function getRay(startRank, startFile, destinationRank, destinationFile, i
  * Calculates a sliding ray from given position to any square blocked by occupied in the direction of mask.
  * Calculates usign o^(o-2r) trick. 
  * Taken from https://www.youtube.com/watch?v=bCH4YK6oq8M&list=PLQV5mozTHmacMeRzJCW_8K3qw2miYqd0c&index=9&ab_channel=LogicCrazyChess.
- * @param {*} occupied Bitboard with occupied squares
- * @param {*} position Bitboard with position of piece
- * @param {*} mask Bitboard with sliding direction
+ * @param {bigint} occupied Bitboard with occupied squares
+ * @param {bigint} position Bitboard with position of piece
+ * @param {bigint} mask Bitboard with sliding direction
  * @returns Bitboard with sliding ray
  */
 export function hyperbolaQuintessenceAlgorithm(occupied, position, mask) {
@@ -198,7 +198,7 @@ export function getBooleanBitboard(bool) {
 /**
  * Gives a bitboard with a single file.
  * @param {number} fileNumber Number of the file, going from 1 to 8, where 1 is the leftmost column of the board.
- * @returns {BigInt} Bitboard that contains the specified file.
+ * @returns {bigint} Bitboard that contains the specified file.
  */
 export function getFile(fileNumber) {
     assertFile(fileNumber);
@@ -211,7 +211,7 @@ export function getFile(fileNumber) {
 /**
  * Gives a bitboard with a single file.
  * @param {number} rankNumber Number of the rank, going from 1 to 8, where 1 is the bottom row of the board.
- * @returns {BigInt} Bitboard that contains the specified rank.
+ * @returns {bigint} Bitboard that contains the specified rank.
  */
 export function getRank(rankNumber) {
 
@@ -227,7 +227,7 @@ export function getRank(rankNumber) {
  * Gives a bitboard with a single diagonal that contains the square given by rank and file.
  * @param {number} rank
  * @param {number} file
- * @returns {BigInt} Bitboard that contains the diagonal.
+ * @returns {bigint} Bitboard that contains the diagonal.
  */
 export function getDiagonal(rank, file) {
 
@@ -259,7 +259,7 @@ export function getDiagonal(rank, file) {
  * Gives a bitboard with a single antidiagonal that contains the square given by rank and file.
  * @param {number} rank
  * @param {number} file
- * @returns {BigInt} Bitboard that contains the antidiagonal.
+ * @returns {bigint} Bitboard that contains the antidiagonal.
  */
 export function getAntiDiagonal(rank, file) {
 
@@ -276,8 +276,8 @@ export function getAntiDiagonal(rank, file) {
 /**
  * Flips a bitboard along the 8th diagonal (middle diagonal).
  * Taken from: https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating
- * @param {BigInt} bitboard
- * @returns {BigInt} Flipped bitboard
+ * @param {bigint} bitboard
+ * @returns {bigint} Flipped bitboard
  */
 export function flipDiagonally(bitboard) {
     assert(typeof bitboard === "bigint", "Invalid bitboard");
@@ -300,8 +300,8 @@ export function flipDiagonally(bitboard) {
 /**
  * Mirrors a bitboard along a vertical line.
  * Taken from: https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating
- * @param {BigInt} bitboard
- * @returns {BigInt} Mirrored bitboard
+ * @param {bigint} bitboard
+ * @returns {bigint} Mirrored bitboard
  */
 export function mirrorHorizontally(bitboard) {
     assert(typeof bitboard === "bigint", "Invalid bitboard");
