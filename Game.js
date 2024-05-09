@@ -17,13 +17,15 @@ class Game {
     //Game State
     #playingColor = E_PieceColor.White;
     #gameState = E_GameState.PLAYING;
-
+    #gameMode = E_GameMode.STANDARD;
     get playingColor() {
         return this.#playingColor;
     }
     get state() {
         return this.#gameState;
     }
+    #timerToMove = 0;
+    #timeToMakeMove = 50;
 
     //Objects
     #legalMoves = [];
@@ -91,7 +93,45 @@ class Game {
         }
     }
 
-    draw() {
+    /**
+     * Updates game state and view.
+     */
+    update() {
+        if (this.#gameMode === E_GameMode.AUTOMATIC) {
+            this.#runGameAutomatically();
+        }
+        this.#draw();
+    }
+
+    /**
+     * Sets mode in which the game is playing.
+     * STANDARD: Standard chess with all moves. Player makes moves on board.
+     * AUTOMATIC: The machine will make random moves automatically until the game is finished. No option for resigning nor draw offers.
+     * FREE: Any color can move. Board might have a legal configuration or not. No end game. No option for resigning. No draw offers. Player makes moves on board.
+     * @param {E_GameMode} gameMode 
+     */
+    setGameMode(gameMode) {
+        assert(Object.values(E_GameMode).includes(gameMode), "Invalid game mode");
+        this.#gameMode = gameMode;
+        this.#generateLegalMoves();
+    }
+
+    #runGameAutomatically() {
+        if (this.isGameFinished()) return;
+        this.#timerToMove += deltaTime;
+        if (this.#timeToMakeMove < this.#timerToMove) {
+            let randomIndex = Math.floor(random(0, this.#legalMoves.length));
+            let randomMove = this.#legalMoves[randomIndex];
+            this.#moveRecord.recordMove(randomMove, this.#board, this.playingColor);
+            this.#board.makeMove(randomMove);
+            this.#switchPlayingColor();
+            this.#legalMoves = this.#board.generateMoves(this.playingColor);
+            this.#checkEndGame(this.#playingColor);
+            this.#timerToMove = 0;
+        }
+    }
+
+    #draw() {
         this.#graphics.background(255);
 
         this.#moveRecordUI.draw(this.#graphics);
@@ -108,8 +148,8 @@ class Game {
 
 
     #onMoveInput(event) {
-        //if game is finished, disable input
-        if (this.isGameFinished()) return;
+        //if game is finished or running automatically, disable input
+        if (this.isGameFinished() || this.#gameMode === E_GameMode.AUTOMATIC) return;
         //get input move
         let inputMove = event.detail.move;
 
@@ -122,11 +162,11 @@ class Game {
             //make move on board
             this.#board.makeMove(legalMove);
             //switch playing color
-            this.#switchPlayingColor();
+            if (this.#gameMode === E_GameMode.STANDARD) this.#switchPlayingColor();
             //generate new set of legal moves
-            this.#legalMoves = this.#board.generateMoves(this.#playingColor);
+            this.#generateLegalMoves();
             //check for end game conditions
-            this.#checkEndGame();
+            if (this.#gameMode !== E_GameMode.FREE) this.#checkEndGame(this.#playingColor);
         }
     }
 
@@ -134,11 +174,19 @@ class Game {
         this.#playingColor = OppositePieceColor(this.#playingColor);
     }
 
-    #checkEndGame() {
+    #generateLegalMoves() {
+        this.#legalMoves = this.#board.generateMoves(this.#playingColor);
+        if (this.#gameMode === E_GameMode.FREE) {
+            this.#legalMoves = this.#legalMoves.concat(this.#board.generateMoves(OppositePieceColor(this.playingColor)));
+        }
+    }
+
+    #checkEndGame(playingColor) {
         //if there are no moves left
-        if (this.#legalMoves.length === 0) {
+        let legalMoves = this.#board.generateMoves(playingColor);
+        if (legalMoves.length === 0) {
             //and king is in check
-            if (this.#board.isKingInCheck(this.#playingColor)) {
+            if (this.#board.isKingInCheck(playingColor)) {
                 //game finished by checkmate
                 this.#gameState = E_GameState.CHECKMATE;
             }

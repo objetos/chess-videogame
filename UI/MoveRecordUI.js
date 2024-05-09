@@ -82,7 +82,7 @@ class MoveRecordUI {
     #addNewRow() {
         this.#table.insert(this.#table.height);
         if (MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE < this.#lastRowNumber) {
-            this.#firstVisibleRow = rowNumber - MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE + 1;
+            this.#firstVisibleRow = this.#lastRowNumber - MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE;
         }
     }
 
