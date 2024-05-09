@@ -61,6 +61,7 @@ class Game {
         this.#legalMoves = this.#board.generateMoves(playingColor);
 
         this.#moveInput = new MoveInput(this.#board, xPosition + BOARD_LOCAL_POSITION.x, yPosition + BOARD_LOCAL_POSITION.y);
+        this.#moveInput.enabled = true;
         this.#moveInputUI = new MoveInputUI(this, this.#moveInput);
         this.#moveInput.addInputEventListener(MoveInput.inputEvents.onMoveInput, this.#onMoveInput.bind(this));
 
@@ -102,6 +103,9 @@ class Game {
             this.#runGameAutomatically();
         }
         this.#draw();
+
+        if (this.#gameMode === E_GameMode.FREE) this.#moveInput.enabled = true;
+        else if (this.#gameMode === E_GameMode.AUTOMATIC || this.isGameFinished()) this.#moveInput.enabled = false;
     }
 
     /**
@@ -155,8 +159,6 @@ class Game {
 
 
     #onMoveInput(event) {
-        //if game is finished or running automatically, disable input
-        if (this.isGameFinished() || this.#gameMode === E_GameMode.AUTOMATIC) return;
         //get input move
         let inputMove = event.detail.move;
 

@@ -13,6 +13,15 @@ class MoveInput extends EventTarget {
         onMoveDestinationSet: "user:move-destination-set"
     }
 
+    #enabled = true;
+    get enabled() {
+        return this.#enabled;
+    }
+    set enabled(enabled) {
+        assert(typeof enabled === 'boolean', "enabled is not boolean");
+        this.#enabled = enabled;
+    }
+
     /**
      * @param {Board} board Board that Input should listen to
      * @param {Number} globalBoardPositionX x position of board in canvas in pixels
@@ -40,6 +49,7 @@ class MoveInput extends EventTarget {
     }
 
     #handleClick(clickX, clickY, boardPositionX, boardPositionY) {
+        if (!this.#enabled) return;
         //get click coordinates relative to page
         let xCoordinate = clickX;
         let yCoordinate = clickY;
