@@ -1,6 +1,9 @@
+import { E_PieceColor } from "../src/Enums/E_PieceColor.js";
+import { E_PieceType } from "../src/Enums/E_PieceType.js";
+import { NUMBER_OF_RANKS, NUMBER_OF_FILES } from "../src/Utils/ChessUtils.js";
 const validPieceKeys = ['r', 'n', 'q', 'k', 'p', 'b', 'R', 'N', 'Q', 'K', 'P', 'B'];
 
-function assert(condition, message) {
+export function assert(condition, message) {
     if (!condition) {
         let error = new Error();
         let stack = error.stack;
@@ -13,7 +16,7 @@ function assert(condition, message) {
     }
 }
 
-function assertRank(rank) {
+export function assertRank(rank) {
     assert(rank !== undefined, "No rank provided");
     assert(typeof rank === "number", "Rank Invalid");
     assert(Number.isInteger(rank), "Rank is not an integer");
@@ -21,23 +24,23 @@ function assertRank(rank) {
 
 }
 
-function assertFile(file) {
+export function assertFile(file) {
     assert(file !== undefined, "No file provided");
     assert(typeof file === "number", "File Invalid");
     assert(Number.isInteger(file), "File is not an integer");
     assert(file >= 1 && file <= NUMBER_OF_FILES, "File " + file + " is out of bounds.");
 }
 
-function assertPieceColor(pieceColor) {
+export function assertPieceColor(pieceColor) {
     assert(Object.values(E_PieceColor).includes(pieceColor), "Invalid piece color");
     assert(pieceColor !== E_PieceColor.None, "No piece color provided");
 }
 
-function assertPieceType(pieceType) {
+export function assertPieceType(pieceType) {
     assert(Object.values(E_PieceType).includes(pieceType), "Invalid piece type");
     assert(pieceType !== E_PieceType.None, "No piece type provided");
 }
 
-function assertPieceKey(pieceKey) {
+export function assertPieceKey(pieceKey) {
     assert(Object.values(Quadrille.chessKeys).includes(pieceKey), "Invalid piece key");
 }
