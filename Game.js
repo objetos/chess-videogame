@@ -102,10 +102,10 @@ class Game {
         if (this.#gameMode === E_GameMode.AUTOMATIC) {
             this.#runGameAutomatically();
         }
+        this.#updateInput();
         this.#draw();
 
-        if (this.#gameMode === E_GameMode.FREE) this.#moveInput.enabled = true;
-        else if (this.#gameMode === E_GameMode.AUTOMATIC || this.isGameFinished()) this.#moveInput.enabled = false;
+
     }
 
     /**
@@ -120,6 +120,20 @@ class Game {
         this.#gameMode = gameMode;
         this.#generateLegalMoves();
         this.update();
+    }
+
+    #updateInput() {
+        switch (this.#gameMode) {
+            case E_GameMode.STANDARD:
+                this.#moveInput.enabled = !this.isGameFinished();
+                break;
+            case E_GameMode.AUTOMATIC:
+                this.#moveInput.enabled = false;
+                break;
+            case E_GameMode.FREE:
+                this.#moveInput.enabled = true;
+                break;
+        }
     }
 
     #runGameAutomatically() {
