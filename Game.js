@@ -41,6 +41,7 @@ class Game {
     #moveInputUI;
     #piecesCapturedUI;
     #gameStateUI;
+    #resignButton;
     #graphics;
     #position;
 
@@ -106,14 +107,15 @@ class Game {
     /**
      * Sets mode in which the game is playing.
      * STANDARD: Standard chess with all moves. Player makes moves on board.
-     * AUTOMATIC: The machine will make random moves automatically until the game is finished. No option for resigning nor draw offers.
-     * FREE: Any color can move. Board might have a legal configuration or not. No end game. No option for resigning. No draw offers. Player makes moves on board.
+     * AUTOMATIC: The machine will make random moves automatically until the game is finished. No draw offers.
+     * FREE: Any color can move. Board might have a legal configuration or not. No end game. No option for resigning nor draw offers. Player makes moves on board.
      * @param {E_GameMode} gameMode 
      */
     setGameMode(gameMode) {
         assert(Object.values(E_GameMode).includes(gameMode), "Invalid game mode");
         this.#gameMode = gameMode;
         this.#generateLegalMoves();
+        this.update();
     }
 
     #runGameAutomatically() {
@@ -136,12 +138,17 @@ class Game {
 
         this.#moveRecordUI.draw(this.#graphics);
         this.#piecesCapturedUI.draw(this.#graphics);
-        this.#gameStateUI.draw(this.#graphics);
+
+        if (this.#gameMode !== E_GameMode.FREE) {
+            this.#gameStateUI.draw(this.#graphics);
+        }
 
         this.#moveInputUI.draw(this.#graphics);
         this.#board.draw(this.#graphics);
 
         this.#drawRanksAndFiles(this.#graphics);
+
+        this.#updateResignButton();
 
         image(this.#graphics, this.#position.x, this.#position.y);
     }
@@ -212,6 +219,15 @@ class Game {
             this.#gameState = E_GameState.RESIGNED;
             button.hide();
         });
+        this.#resignButton = button;
+    }
+
+    #updateResignButton() {
+        if (this.isGameFinished() || this.#gameMode === E_GameMode.FREE) {
+            this.#resignButton.hide();
+        } else {
+            this.#resignButton.show();
+        }
     }
 
     #drawRanksAndFiles(graphics) {
