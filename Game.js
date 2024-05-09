@@ -17,13 +17,15 @@ class Game {
     //Game State
     #playingColor = E_PieceColor.White;
     #gameState = E_GameState.PLAYING;
-
+    #gameMode = E_GameMode.STANDARD;
     get playingColor() {
         return this.#playingColor;
     }
     get state() {
         return this.#gameState;
     }
+    #timerToMove = 0;
+    #timeToMakeMove = 50;
 
     //Objects
     #legalMoves = [];
@@ -39,6 +41,7 @@ class Game {
     #moveInputUI;
     #piecesCapturedUI;
     #gameStateUI;
+    #resignButton;
     #graphics;
     #position;
 
@@ -58,6 +61,7 @@ class Game {
         this.#legalMoves = this.#board.generateMoves(playingColor);
 
         this.#moveInput = new MoveInput(this.#board, xPosition + BOARD_LOCAL_POSITION.x, yPosition + BOARD_LOCAL_POSITION.y);
+        this.#moveInput.enabled = true;
         this.#moveInputUI = new MoveInputUI(this, this.#moveInput);
         this.#moveInput.addInputEventListener(MoveInput.inputEvents.onMoveInput, this.#onMoveInput.bind(this));
 
@@ -91,25 +95,84 @@ class Game {
         }
     }
 
-    draw() {
+    /**
+     * Updates game state and view.
+     */
+    update() {
+        if (this.#gameMode === E_GameMode.AUTOMATIC) {
+            this.#runGameAutomatically();
+        }
+        this.#updateInput();
+        this.#draw();
+
+
+    }
+
+    /**
+     * Sets mode in which the game is playing.
+     * STANDARD: Standard chess with all moves. Player makes moves on board.
+     * AUTOMATIC: The machine will make random moves automatically until the game is finished. No draw offers.
+     * FREE: Any color can move. Board might have a legal configuration or not. No end game. No option for resigning nor draw offers. Player makes moves on board.
+     * @param {E_GameMode} gameMode 
+     */
+    setGameMode(gameMode) {
+        assert(Object.values(E_GameMode).includes(gameMode), "Invalid game mode");
+        this.#gameMode = gameMode;
+        this.#generateLegalMoves();
+        this.update();
+    }
+
+    #updateInput() {
+        switch (this.#gameMode) {
+            case E_GameMode.STANDARD:
+                this.#moveInput.enabled = !this.isGameFinished();
+                break;
+            case E_GameMode.AUTOMATIC:
+                this.#moveInput.enabled = false;
+                break;
+            case E_GameMode.FREE:
+                this.#moveInput.enabled = true;
+                break;
+        }
+    }
+
+    #runGameAutomatically() {
+        if (this.isGameFinished()) return;
+        this.#timerToMove += deltaTime;
+        if (this.#timeToMakeMove < this.#timerToMove) {
+            let randomIndex = Math.floor(random(0, this.#legalMoves.length));
+            let randomMove = this.#legalMoves[randomIndex];
+            this.#moveRecord.recordMove(randomMove, this.#board, this.playingColor);
+            this.#board.makeMove(randomMove);
+            this.#switchPlayingColor();
+            this.#legalMoves = this.#board.generateMoves(this.playingColor);
+            this.#checkEndGame(this.#playingColor);
+            this.#timerToMove = 0;
+        }
+    }
+
+    #draw() {
         this.#graphics.background(255);
 
         this.#moveRecordUI.draw(this.#graphics);
         this.#piecesCapturedUI.draw(this.#graphics);
-        this.#gameStateUI.draw(this.#graphics);
+
+        if (this.#gameMode !== E_GameMode.FREE) {
+            this.#gameStateUI.draw(this.#graphics);
+        }
 
         this.#moveInputUI.draw(this.#graphics);
         this.#board.draw(this.#graphics);
 
         this.#drawRanksAndFiles(this.#graphics);
 
+        this.#updateResignButton();
+
         image(this.#graphics, this.#position.x, this.#position.y);
     }
 
 
     #onMoveInput(event) {
-        //if game is finished, disable input
-        if (this.isGameFinished()) return;
         //get input move
         let inputMove = event.detail.move;
 
@@ -122,11 +185,11 @@ class Game {
             //make move on board
             this.#board.makeMove(legalMove);
             //switch playing color
-            this.#switchPlayingColor();
+            if (this.#gameMode === E_GameMode.STANDARD) this.#switchPlayingColor();
             //generate new set of legal moves
-            this.#legalMoves = this.#board.generateMoves(this.#playingColor);
+            this.#generateLegalMoves();
             //check for end game conditions
-            this.#checkEndGame();
+            if (this.#gameMode !== E_GameMode.FREE) this.#checkEndGame(this.#playingColor);
         }
     }
 
@@ -134,11 +197,19 @@ class Game {
         this.#playingColor = OppositePieceColor(this.#playingColor);
     }
 
-    #checkEndGame() {
+    #generateLegalMoves() {
+        this.#legalMoves = this.#board.generateMoves(this.#playingColor);
+        if (this.#gameMode === E_GameMode.FREE) {
+            this.#legalMoves = this.#legalMoves.concat(this.#board.generateMoves(OppositePieceColor(this.playingColor)));
+        }
+    }
+
+    #checkEndGame(playingColor) {
         //if there are no moves left
-        if (this.#legalMoves.length === 0) {
+        let legalMoves = this.#board.generateMoves(playingColor);
+        if (legalMoves.length === 0) {
             //and king is in check
-            if (this.#board.isKingInCheck(this.#playingColor)) {
+            if (this.#board.isKingInCheck(playingColor)) {
                 //game finished by checkmate
                 this.#gameState = E_GameState.CHECKMATE;
             }
@@ -164,6 +235,15 @@ class Game {
             this.#gameState = E_GameState.RESIGNED;
             button.hide();
         });
+        this.#resignButton = button;
+    }
+
+    #updateResignButton() {
+        if (this.isGameFinished() || this.#gameMode === E_GameMode.FREE) {
+            this.#resignButton.hide();
+        } else {
+            this.#resignButton.show();
+        }
     }
 
     #drawRanksAndFiles(graphics) {

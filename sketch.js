@@ -8,11 +8,12 @@ let game;
 let globalCanvas;
 function setup() {
     createCanvas(windowWidth, windowHeight);
-    game = new Game(100, 50);
+    game = new Game(windowWidth / 3, 10);
+    game.setGameMode(E_GameMode.STANDARD);
 }
 
 function draw() {
     //fill(color(128));
     //rect(GAME_STATE_UI_SETTINGS.POSITION.x, GAME_STATE_UI_SETTINGS.POSITION.y, GAME_DIMENSIONS.WIDTH, GAME_DIMENSIONS.HEIGHT)
-    game.draw();
+    game.update();
 }
