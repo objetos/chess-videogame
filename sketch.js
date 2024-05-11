@@ -5,11 +5,10 @@ const JUST_KINGS_FEN = '4k3/8/8/8/8/8/8/4K3';
 const STANDARD_NO_KINGS_FEN = 'rnbq1bnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQ1BNR';
 
 let game;
-let globalCanvas;
 function setup() {
     createCanvas(windowWidth, windowHeight);
-    game = new Game(windowWidth / 3, 10);
-    game.setGameMode(E_GameMode.STANDARD);
+    game = new webBuild.Game(windowWidth / 3, 10);
+    game.setGameMode(webBuild.E_GameMode.STANDARD);
 }
 
 function draw() {

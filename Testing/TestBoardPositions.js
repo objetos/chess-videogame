@@ -1,3 +1,4 @@
+import { Board, E_PieceColor } from "../src/Game.js";
 class BoardPosition {
     fen;
     numberOfWhiteMoves;
@@ -40,7 +41,7 @@ var CUSTOM_POSITIONS = {
 }
 
 
-function testCustomBoardPositions() {
+export function testCustomBoardPositions() {
     console.log("Testing Move Generator with Custom Positions \n");
     let passed = true;
     for (let boardPositionName of Object.keys(CUSTOM_POSITIONS)) {
