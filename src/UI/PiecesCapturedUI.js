@@ -1,7 +1,7 @@
-import { assert } from "../../Testing/TestTools";
-import { PIECES_CAPTURED_UI_SETTINGS } from "./UISettings";
-import Board from "../Board/Board";
-import { E_PieceColor } from "../Enums/E_PieceColor";
+import { assert } from "../../Testing/TestTools.js";
+import { PIECES_CAPTURED_UI_SETTINGS } from "./UISettings.js";
+import Board from "../Board/Board.js";
+import { E_PieceColor } from "../Enums/E_PieceColor.js";
 export default class PiecesCapturedUI {
     #board;
 

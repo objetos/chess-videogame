@@ -1,6 +1,6 @@
 //class prolog
-import { assert, assertRank, assertFile } from "../../Testing/TestTools";
-import { E_MoveFlag } from "../Enums/E_MoveFlag";
+import { assert, assertRank, assertFile } from "../../Testing/TestTools.js";
+import { E_MoveFlag } from "../Enums/E_MoveFlag.js";
 
 export default class Move {
     #startRank;

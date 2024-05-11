@@ -1,8 +1,8 @@
-import { assert } from "../../Testing/TestTools";
-import { NUMBER_OF_RANKS, NUMBER_OF_FILES } from "../Utils/ChessUtils";
-import { MOVE_INPUT_UI_SETTINGS, BOARD_LOCAL_POSITION, BOARD_SQUARE_SIZE } from "./UISettings";
-import Game from "../Game";
-import MoveInput from "../MoveInput";
+import { assert } from "../../Testing/TestTools.js";
+import { NUMBER_OF_RANKS, NUMBER_OF_FILES } from "../Utils/ChessUtils.js";
+import { MOVE_INPUT_UI_SETTINGS, BOARD_LOCAL_POSITION, BOARD_SQUARE_SIZE } from "./UISettings.js";
+import { Game } from "../Game.js";
+import MoveInput from "../MoveInput.js";
 export default class MoveInputUI {
     #game;
     #UIQuadrille;

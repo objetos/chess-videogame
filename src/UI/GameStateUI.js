@@ -1,8 +1,7 @@
-import Game from "../Game";
-import { E_GameState } from "../Enums/E_GameState";
-import { E_PieceColor } from "../Enums/E_PieceColor";
-import { GAME_STATE_UI_SETTINGS, BOARD_WIDTH } from "./UISettings";
-import { OppositePieceColor } from "../Utils/ChessUtils";
+import { E_GameState } from "../Enums/E_GameState.js";
+import { E_PieceColor } from "../Enums/E_PieceColor.js";
+import { GAME_STATE_UI_SETTINGS, BOARD_WIDTH } from "./UISettings.js";
+import { OppositePieceColor } from "../Utils/ChessUtils.js";
 //assert, document
 export default class GameStateUI {
     #game;

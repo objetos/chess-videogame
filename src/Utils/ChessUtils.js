@@ -2,6 +2,7 @@ import { E_MoveFlag } from "../Enums/E_MoveFlag.js";
 import { E_PieceColor } from "../Enums/E_PieceColor.js";
 import { E_PieceType } from "../Enums/E_PieceType.js";
 import { assert, assertPieceColor, assertPieceType, assertPieceKey, assertFile } from "../../Testing/TestTools.js";
+import Move from "../MoveGeneration/Move.js";
 
 export const NUMBER_OF_RANKS = 8;
 export const NUMBER_OF_FILES = 8;

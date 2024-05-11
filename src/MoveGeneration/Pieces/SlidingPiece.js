@@ -1,4 +1,4 @@
-import Piece from "./Piece";
+import Piece from "./Piece.js";
 import { hyperbolaQuintessenceAlgorithm } from "../../Utils/BitboardUtils.js";
 export default class SlidingPiece extends Piece {
 

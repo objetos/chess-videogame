@@ -1,7 +1,7 @@
 const FIRST_FILE_BITBOARD = 0x0101010101010101n;
 const FIRST_RANK_BITBOARD = 0xFFn;
-import { NUMBER_OF_RANKS, NUMBER_OF_FILES } from "./ChessUtils";
-import { assertRank, assertFile, assert } from "../../Testing/TestTools";
+import { NUMBER_OF_RANKS, NUMBER_OF_FILES } from "./ChessUtils.js";
+import { assertRank, assertFile, assert } from "../../Testing/TestTools.js";
 
 /**
  * 

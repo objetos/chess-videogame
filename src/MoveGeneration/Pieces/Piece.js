@@ -3,7 +3,7 @@
 */
 import { E_PieceColor } from "../../Enums/E_PieceColor.js";
 import { E_PieceType } from "../../Enums/E_PieceType.js";
-import { assertRank, assertFile, assertPieceColor } from "../../../Testing/TestTools";
+import { assertRank, assertFile, assertPieceColor } from "../../../Testing/TestTools.js";
 import { squareToBitboard } from "../../Utils/BitboardUtils.js";
 export default class Piece {
     #color = E_PieceColor.None;

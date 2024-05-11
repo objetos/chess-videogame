@@ -1,6 +1,6 @@
-import { assert } from "../../Testing/TestTools";
-import { MOVE_RECORD_UI_SETTINGS } from "./UISettings";
-import MoveRecord from "../MoveRecord";
+import { assert } from "../../Testing/TestTools.js";
+import { MOVE_RECORD_UI_SETTINGS } from "./UISettings.js";
+import MoveRecord from "../MoveRecord.js";
 export default class MoveRecordUI {
     #table;
 

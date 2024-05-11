@@ -1,4 +1,4 @@
-import SlidingPiece from "./SlidingPiece";
+import SlidingPiece from "./SlidingPiece.js";
 import { E_PieceType } from "../../Enums/E_PieceType.js";
 import { getRank, getFile, getDiagonal, getAntiDiagonal } from "../../Utils/BitboardUtils.js";
 

@@ -1,6 +1,6 @@
-import SlidingPiece from "./SlidingPiece";
+import SlidingPiece from "./SlidingPiece.js";
 import { E_PieceType } from "../../Enums/E_PieceType.js";
-import { E_PieceColor } from "../../Enums/E_PieceColor";
+import { E_PieceColor } from "../../Enums/E_PieceColor.js";
 import { getRank, getFile } from "../../Utils/BitboardUtils.js";
 export default class Rook extends SlidingPiece {
 
