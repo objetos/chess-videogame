@@ -1,4 +1,4 @@
-/*globals color, createGraphics,deltaTime,random,image,createButton */
+/*globals  createGraphics,deltaTime,random,image,createButton */
 import { E_PieceColor } from "./Enums/E_PieceColor.js";
 import { E_GameState } from "./Enums/E_GameState.js";
 import { E_GameMode } from "./Enums/E_GameMode.js";
@@ -12,7 +12,7 @@ import MoveInputUI from "./UI/MoveInputUI.js";
 import MoveRecordUI from "./UI/MoveRecordUI.js";
 import PiecesCapturedUI from "./UI/PiecesCapturedUI.js";
 import GameStateUI from "./UI/GameStateUI.js";
-export { E_GameMode };
+
 //FENS
 const STANDARD_BOARD_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
 
@@ -30,10 +30,8 @@ export const GAME_DIMENSIONS = {
         PIECES_CAPTURED_UI_SETTINGS.PIECES_SIZE
 }
 
-
-
 //****** assert, document
-export default class Game {
+export class Game {
     //Game State
     #playingColor = E_PieceColor.White;
     #gameState = E_GameState.PLAYING;
@@ -292,3 +290,13 @@ export default class Game {
     }
 
 }
+
+//EXPORTS
+export { E_GameMode };
+export { default as Board } from "../src/Board/Board.js";
+export { E_PieceColor } from "../src/Enums/E_PieceColor.js";
+export { E_PieceType } from "../src/Enums/E_PieceType.js";
+export { E_MoveFlag } from "../src/Enums/E_MoveFlag.js";
+export * as ChessUtils from "../src/Utils/ChessUtils.js";
+export * as BitboardUtils from "../src/Utils/BitboardUtils.js";
+
