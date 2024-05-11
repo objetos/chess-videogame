@@ -1,4 +1,4 @@
-var myBuild = (function (exports) {
+var webBuild = (function (exports) {
     'use strict';
 
     const E_PieceColor = Object.freeze({
@@ -85,6 +85,63 @@ var myBuild = (function (exports) {
         assert(Object.values(Quadrille.chessKeys).includes(pieceKey), "Invalid piece key");
     }
 
+    //class prolog
+
+    class Move {
+        #startRank;
+        #startFile;
+        #endRank;
+        #endFile;
+        #flag;
+
+        /**
+         * Creates a new move
+         * @param {number} startRank 
+         * @param {number} startFile 
+         * @param {number} destinationRank 
+         * @param {number} destinationFile 
+         * @param {E_MoveFlag} flag 
+         */
+        constructor(startRank, startFile, destinationRank, destinationFile, flag = E_MoveFlag.None) {
+
+            this.#assertMove(startRank, startFile, destinationRank, destinationFile, flag);
+
+            this.#startRank = startRank;
+            this.#startFile = startFile;
+            this.#endRank = destinationRank;
+            this.#endFile = destinationFile;
+            this.#flag = flag;
+        }
+
+        get startRank() {
+            return this.#startRank;
+        }
+
+        get startFile() {
+            return this.#startFile;
+        }
+
+        get endRank() {
+            return this.#endRank;
+        }
+
+        get endFile() {
+            return this.#endFile;
+        }
+
+        get flag() {
+            return this.#flag;
+        }
+
+        #assertMove(startRank, startFile, endRank, endFile, flag) {
+            assertRank(startRank);
+            assertRank(endRank);
+            assertFile(startFile);
+            assertFile(endFile);
+            assert(!((startRank === endRank) && (startFile === endFile)), "Invalid move. Start and destination squares are the same");
+        }
+    }
+
     const NUMBER_OF_RANKS = 8;
     const NUMBER_OF_FILES = 8;
 
@@ -162,14 +219,14 @@ var myBuild = (function (exports) {
     /**
      * Provide piece key in lowercase to return piece type
      */
-    ({
+    const PIECE_TYPE_BY_KEY = {
         'k': E_PieceType.King,
         'b': E_PieceType.Bishop,
         'n': E_PieceType.Knight,
         'q': E_PieceType.Queen,
         'p': E_PieceType.Pawn,
         'r': E_PieceType.Rook
-    });
+    };
 
     /**
      * Transforms piece color and type to piece key
@@ -205,6 +262,16 @@ var myBuild = (function (exports) {
     }
 
     /**
+     * Transforms a piece key into its type
+     * @param {string} pieceKey 
+     * @returns Piece type
+     */
+    function pieceKeyToType(pieceKey) {
+        assertPieceKey(pieceKey);
+        return PIECE_TYPE_BY_KEY[pieceKey.toLowerCase()];
+    }
+
+    /**
      * Converts a file number into its letter representation
      * @param {number} file 
      * @returns 
@@ -213,6 +280,33 @@ var myBuild = (function (exports) {
         assertFile(file);
         return String.fromCharCode(96 + file);
     }
+
+    /**
+     * 
+     * @param {Move} move 
+     * @returns move in algebraic notation
+     */
+    function MoveToString(move) {
+        assert(move instanceof Move, "Invalid move");
+        let startFileLetter = FileToLetter(move.startFile);
+        let endFileLetter = FileToLetter(move.endFile);
+        return startFileLetter + move.startRank + endFileLetter + move.endRank;
+    }
+
+    var ChessUtils = /*#__PURE__*/Object.freeze({
+        __proto__: null,
+        CASTLING_FILES: CASTLING_FILES,
+        ENPASSANT_CAPTURING_RANKS: ENPASSANT_CAPTURING_RANKS,
+        FileToLetter: FileToLetter,
+        MoveToString: MoveToString,
+        NUMBER_OF_FILES: NUMBER_OF_FILES,
+        NUMBER_OF_RANKS: NUMBER_OF_RANKS,
+        OppositePieceColor: OppositePieceColor,
+        RANKS_TO_PROMOTE: RANKS_TO_PROMOTE,
+        pieceColorTypeToKey: pieceColorTypeToKey,
+        pieceKeyToColor: pieceKeyToColor,
+        pieceKeyToType: pieceKeyToType
+    });
 
     //UI SETTINGS ----------------------------------------------------------------
     //--Board--
@@ -442,6 +536,40 @@ var myBuild = (function (exports) {
     }
 
     /**
+     * Returns two's complement of a binary string. Taken from:https : https://stackoverflow.com/questions/70710579/javascript-bigint-print-unsigned-binary-represenation
+     * @param {string} binaryString 
+     */
+    function twosComplement(binaryString) {
+        let complement = BigInt('0b' + binaryString.split('').map(e => e === "0" ? "1" : "0").join(''));
+        return complement + BigInt(1);
+    }
+
+    /**
+     * Prints bitboard to console
+     * @param {bigint} bitboard 
+     */
+    function printBitboard(bitboard) {
+        assert(typeof bitboard === 'bigint', "Invalid bitboard");
+
+        let bitboardString = bitboardToString(bitboard);
+
+        let newString = "";
+
+        for (let i = 0; i < 64; i++) {
+            if (i < bitboardString.length) {
+                newString = bitboardString.charAt(bitboardString.length - 1 - i) + " " + newString;
+            } else {
+                newString = 0 + " " + newString;
+            }
+
+            if (((i + 1) % NUMBER_OF_FILES) === 0) {
+                newString = "\n" + newString;
+            }
+        }
+        console.log(newString);
+    }
+
+    /**
      * 
      * @param {boolean} bool 
      * @returns If true, a bitboard full of 1's. Otherwise, returns 0.
@@ -576,6 +704,24 @@ var myBuild = (function (exports) {
 
         return bitboard;
     }
+
+    var BitboardUtils = /*#__PURE__*/Object.freeze({
+        __proto__: null,
+        bitboardToString: bitboardToString,
+        flipDiagonally: flipDiagonally,
+        getAntiDiagonal: getAntiDiagonal,
+        getBooleanBitboard: getBooleanBitboard,
+        getDiagonal: getDiagonal,
+        getFile: getFile,
+        getRank: getRank,
+        getRay: getRay,
+        hyperbolaQuintessenceAlgorithm: hyperbolaQuintessenceAlgorithm,
+        mirrorHorizontally: mirrorHorizontally,
+        printBitboard: printBitboard,
+        reverseBitboard: reverseBitboard,
+        squareToBitboard: squareToBitboard,
+        twosComplement: twosComplement
+    });
 
     /*
     ****** class prolog
@@ -1263,63 +1409,6 @@ var myBuild = (function (exports) {
         }
 
 
-    }
-
-    //class prolog
-
-    class Move {
-        #startRank;
-        #startFile;
-        #endRank;
-        #endFile;
-        #flag;
-
-        /**
-         * Creates a new move
-         * @param {number} startRank 
-         * @param {number} startFile 
-         * @param {number} destinationRank 
-         * @param {number} destinationFile 
-         * @param {E_MoveFlag} flag 
-         */
-        constructor(startRank, startFile, destinationRank, destinationFile, flag = E_MoveFlag.None) {
-
-            this.#assertMove(startRank, startFile, destinationRank, destinationFile, flag);
-
-            this.#startRank = startRank;
-            this.#startFile = startFile;
-            this.#endRank = destinationRank;
-            this.#endFile = destinationFile;
-            this.#flag = flag;
-        }
-
-        get startRank() {
-            return this.#startRank;
-        }
-
-        get startFile() {
-            return this.#startFile;
-        }
-
-        get endRank() {
-            return this.#endRank;
-        }
-
-        get endFile() {
-            return this.#endFile;
-        }
-
-        get flag() {
-            return this.#flag;
-        }
-
-        #assertMove(startRank, startFile, endRank, endFile, flag) {
-            assertRank(startRank);
-            assertRank(endRank);
-            assertFile(startFile);
-            assertFile(endFile);
-            assert(!((startRank === endRank) && (startFile === endFile)), "Invalid move. Start and destination squares are the same");
-        }
     }
 
     //****** CLASS PROLOG
@@ -2880,7 +2969,7 @@ var myBuild = (function (exports) {
         }
     }
 
-    /*globals color, createGraphics,deltaTime,random,image,createButton */
+    /*globals  createGraphics,deltaTime,random,image,createButton */
     //FENS
     const STANDARD_BOARD_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
 
@@ -2897,8 +2986,6 @@ var myBuild = (function (exports) {
             PIECES_CAPTURED_UI_SETTINGS.SPACE_FROM_BOARD +
             PIECES_CAPTURED_UI_SETTINGS.PIECES_SIZE
     };
-
-
 
     //****** assert, document
     class Game {
@@ -3159,11 +3246,15 @@ var myBuild = (function (exports) {
 
     }
 
+    exports.BitboardUtils = BitboardUtils;
+    exports.Board = Board;
+    exports.ChessUtils = ChessUtils;
     exports.E_GameMode = E_GameMode;
+    exports.E_MoveFlag = E_MoveFlag;
+    exports.E_PieceColor = E_PieceColor;
+    exports.E_PieceType = E_PieceType;
     exports.GAME_DIMENSIONS = GAME_DIMENSIONS;
-    exports.default = Game;
-
-    Object.defineProperty(exports, '__esModule', { value: true });
+    exports.Game = Game;
 
     return exports;
 
