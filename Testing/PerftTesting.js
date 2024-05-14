@@ -1,9 +1,10 @@
-import Board from "../src/Board/Board.js"
-import { E_PieceColor } from "../src/Enums/E_PieceColor.js";
-import { E_PieceType } from "../src/Enums/E_PieceType.js";
-import { E_MoveFlag } from "../src/Enums/E_MoveFlag.js";
-import { OppositePieceColor, MoveToString, pieceColorTypeToKey } from "../src/Utils/ChessUtils.js";
-import { default as MoveInput } from "../src/MoveInput.js";
+var Board = webBuild.Board;
+var E_PieceColor = webBuild.E_PieceColor;
+var E_PieceType = webBuild.E_PieceType;
+var E_MoveFlag = webBuild.E_MoveFlag;
+var OppositePieceColor = webBuild.ChessUtils.OppositePieceColor;
+var MoveToString = webBuild.ChessUtils.MoveToString;
+var pieceColorTypeToKey = webBuild.ChessUtils.pieceColorTypeToKey;
 
 
 export function runPerftTest(testPosition) {
