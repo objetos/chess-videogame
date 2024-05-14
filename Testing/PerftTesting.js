@@ -46,12 +46,21 @@ export function perftTest(board, depth, debug = false, playingColor = E_PieceCol
     return numberOfPositions;
 }
 
+/**
+ * 
+ * @param {Promotion} promotion 
+ * @param {Board} board 
+ * @param {number} depth 
+ * @param {boolean} debug 
+ * @param {E_PieceColor} playingColor 
+ * @returns 
+ */
 function perftTestPromotion(promotion, board, depth, debug, playingColor = E_PieceColor.White) {
     let typesToPromote = [E_PieceType.Knight, E_PieceType.Bishop, E_PieceType.Rook, E_PieceType.Queen];
     let numberOfPositions = 0;
     for (let pieceType of typesToPromote) {
         let promotionString = MoveToString(promotion) + pieceColorTypeToKey(playingColor, pieceType);
-        MoveInput.pieceSelectedForPromotion = pieceType;
+        promotion.newPieceType = pieceType;
         board.makeMove(promotion);
         playingColor = OppositePieceColor(playingColor);
         let positions = perftTest(board, depth - 1, false, playingColor);
