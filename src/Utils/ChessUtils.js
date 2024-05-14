@@ -1,8 +1,8 @@
-import { E_MoveFlag } from "../Enums/E_MoveFlag.js";
 import { E_PieceColor } from "../Enums/E_PieceColor.js";
 import { E_PieceType } from "../Enums/E_PieceType.js";
 import { assert, assertPieceColor, assertPieceType, assertPieceKey, assertFile } from "../../Testing/TestTools.js";
 import Move from "../MoveGeneration/Move.js";
+import { E_CastlingSide } from "../Enums/E_CastlingSide.js";
 
 export const NUMBER_OF_RANKS = 8;
 export const NUMBER_OF_FILES = 8;
@@ -11,7 +11,7 @@ export const NUMBER_OF_FILES = 8;
  * Files involved in castling. Provide castling side and piece which is moving (rook or king)
  */
 export const CASTLING_FILES = {
-    [E_MoveFlag.QueenSideCastling]: {
+    [E_CastlingSide.QueenSide]: {
         [E_PieceType.King]: {
             startFile: 5,
             endFile: 3
@@ -21,7 +21,7 @@ export const CASTLING_FILES = {
             endFile: 4
         },
     },
-    [E_MoveFlag.KingSideCastling]: {
+    [E_CastlingSide.KingSide]: {
         [E_PieceType.King]: {
             startFile: 5,
             endFile: 7
@@ -48,6 +48,13 @@ export const ENPASSANT_CAPTURING_RANKS = {
     [E_PieceColor.White]: 5,
     [E_PieceColor.Black]: 4
 }
+
+export const PIECE_TYPES_TO_PROMOTE = [
+    E_PieceType.Bishop,
+    E_PieceType.Knight,
+    E_PieceType.Queen,
+    E_PieceType.Rook
+]
 
 /**
  * 

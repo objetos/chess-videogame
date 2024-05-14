@@ -1,9 +1,10 @@
-import Board from "../src/Board/Board.js"
-import { E_PieceColor } from "../src/Enums/E_PieceColor.js";
-import { E_PieceType } from "../src/Enums/E_PieceType.js";
-import { E_MoveFlag } from "../src/Enums/E_MoveFlag.js";
-import { OppositePieceColor, MoveToString, pieceColorTypeToKey } from "../src/Utils/ChessUtils.js";
-import { default as MoveInput } from "../src/MoveInput.js";
+var Board = webBuild.Board;
+var E_PieceColor = webBuild.E_PieceColor;
+var E_PieceType = webBuild.E_PieceType;
+var E_MoveFlag = webBuild.E_MoveFlag;
+var OppositePieceColor = webBuild.ChessUtils.OppositePieceColor;
+var MoveToString = webBuild.ChessUtils.MoveToString;
+var pieceColorTypeToKey = webBuild.ChessUtils.pieceColorTypeToKey;
 
 
 export function runPerftTest(testPosition) {
@@ -46,12 +47,21 @@ export function perftTest(board, depth, debug = false, playingColor = E_PieceCol
     return numberOfPositions;
 }
 
+/**
+ * 
+ * @param {Promotion} promotion 
+ * @param {Board} board 
+ * @param {number} depth 
+ * @param {boolean} debug 
+ * @param {E_PieceColor} playingColor 
+ * @returns 
+ */
 function perftTestPromotion(promotion, board, depth, debug, playingColor = E_PieceColor.White) {
     let typesToPromote = [E_PieceType.Knight, E_PieceType.Bishop, E_PieceType.Rook, E_PieceType.Queen];
     let numberOfPositions = 0;
     for (let pieceType of typesToPromote) {
         let promotionString = MoveToString(promotion) + pieceColorTypeToKey(playingColor, pieceType);
-        MoveInput.pieceSelectedForPromotion = pieceType;
+        promotion.newPieceType = pieceType;
         board.makeMove(promotion);
         playingColor = OppositePieceColor(playingColor);
         let positions = perftTest(board, depth - 1, false, playingColor);
