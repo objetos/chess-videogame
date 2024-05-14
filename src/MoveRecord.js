@@ -4,6 +4,10 @@ import { FileToLetter, OppositePieceColor, pieceColorTypeToKey } from "./Utils/C
 import Move from "./MoveGeneration/Move.js";
 import Board from "./Board/Board.js";
 import MoveInput from "./MoveInput.js";
+import Castling from "./MoveGeneration/Castling.js";
+import { E_CastlingSide } from "./Enums/E_CastlingSide.js";
+import { assert } from "../Testing/TestTools.js";
+
 export default class MoveRecord extends EventTarget {
     static events = {
         onMoveRecorded: "system:move-recorded",
@@ -22,9 +26,9 @@ export default class MoveRecord extends EventTarget {
 
         let moveString = "";
         //if it is a castling move
-        if (move.flag === E_MoveFlag.KingSideCastling || move.flag === E_MoveFlag.QueenSideCastling) {
+        if (move.flag === E_MoveFlag.Castling) {
             //add castling mark
-            moveString = move.flag === E_MoveFlag.KingSideCastling ? "0-0" : "0-0-0";
+            moveString = move.castlingSide === E_CastlingSide.KingSide ? "0-0" : "0-0-0";
             //notify
             let onMoveRecorded = new CustomEvent(MoveRecord.events.onMoveRecorded, { detail: { move: moveString } });
             this.dispatchEvent(onMoveRecorded);
@@ -72,7 +76,7 @@ export default class MoveRecord extends EventTarget {
                 moveString += 'e.p';
                 break;
             case E_MoveFlag.Promotion:
-                moveString += '=' + pieceColorTypeToKey(playingColor, MoveInput.pieceSelectedForPromotion);
+                moveString += '=' + pieceColorTypeToKey(playingColor, move.newPieceType);
                 break;
         }
 

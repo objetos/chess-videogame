@@ -4,10 +4,13 @@ import { E_PieceColor } from "../Enums/E_PieceColor.js";
 import { E_PieceType } from "../Enums/E_PieceType.js";
 import { E_MoveFlag } from "../Enums/E_MoveFlag.js";
 import { OppositePieceColor, ENPASSANT_CAPTURING_RANKS, CASTLING_FILES } from "../Utils/ChessUtils.js";
-import { getRay, hyperbolaQuintessenceAlgorithm, getBooleanBitboard } from "../Utils/BitboardUtils.js";
+import { getRay, hyperbolaQuintessenceAlgorithm, getBooleanBitboard, printBitboard } from "../Utils/BitboardUtils.js";
 import { NUMBER_OF_FILES } from "../Utils/ChessUtils.js";
 import BoardImplementation from "../Board/BoardImplementation.js";
 import Move from "./Move.js";
+import { E_CastlingSide } from "../Enums/E_CastlingSide.js";
+import Castling from "./Castling.js";
+import Promotion from "./Promotion.js";
 export default class MoveGenerator {
     /**
      * @param {BoardImplementation} board 
@@ -340,11 +343,11 @@ export default class MoveGenerator {
             if (!rook.isOnInitialSquare()) continue;
 
             //This side must have castling rights. That is, rooks cannot have moved or been captured and king cannot have moved.
-            let castlingSide = king.file > rook.file ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
+            let castlingSide = king.file > rook.file ? E_CastlingSide.QueenSide : E_CastlingSide.KingSide;
             if (!board.hasCastlingRights(rook.color, castlingSide)) continue;
 
             //There cannot be any piece between the rook and the king
-            let castlingPath = castlingSide === E_MoveFlag.QueenSideCastling ?
+            let castlingPath = castlingSide === E_CastlingSide.QueenSide ?
                 king.position << 1n | king.position << 2n | king.position << 3n :
                 king.position >> 1n | king.position >> 2n;
 
@@ -352,7 +355,7 @@ export default class MoveGenerator {
 
             //Your king can not pass through check
             let attackedSquares = board.getAttackedSquares(OppositePieceColor(king.color));
-            let kingPathToCastle = castlingSide === E_MoveFlag.QueenSideCastling ?
+            let kingPathToCastle = castlingSide === E_CastlingSide.QueenSide ?
                 king.position << 1n | king.position << 2n :
                 king.position >> 1n | king.position >> 2n;
 
@@ -360,7 +363,7 @@ export default class MoveGenerator {
 
             if (!isCastlingPathObstructed && !isKingPathChecked) {
                 let kingTargetFile = CASTLING_FILES[castlingSide][E_PieceType.King].endFile;
-                let kingMove = new Move(king.rank, king.file, king.rank, kingTargetFile, castlingSide);
+                let kingMove = new Castling(king.rank, king.file, king.rank, kingTargetFile, castlingSide);
                 castlingMoves.push(kingMove);
             }
         }
@@ -389,7 +392,12 @@ export default class MoveGenerator {
                 let endRank = Math.floor((index) / NUMBER_OF_FILES) + 1;
                 let endFile = NUMBER_OF_FILES - (index % NUMBER_OF_FILES);
                 //create move
-                let newMove = new Move(piece.rank, piece.file, endRank, endFile, moveFlag);
+                let newMove;
+                if (moveFlag === E_MoveFlag.Promotion) {
+                    newMove = new Promotion(piece.rank, piece.file, endRank, endFile);
+                } else {
+                    newMove = new Move(piece.rank, piece.file, endRank, endFile, moveFlag);
+                }
                 //add move to array
                 moves.push(newMove);
             }

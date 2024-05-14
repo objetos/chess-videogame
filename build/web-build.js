@@ -23,15 +23,6 @@ var webBuild = (function (exports) {
         FREE: Symbol("Free"),
     });
 
-    const E_MoveFlag = Object.freeze({
-        Promotion: Symbol("Promotion"),
-        QueenSideCastling: Symbol("QueenSideCastling"),
-        KingSideCastling: Symbol("KingSideCastling"),
-        EnPassant: Symbol("EnPassant"),
-        Regular: Symbol("Regular"),
-        None: Symbol("None")
-    });
-
     const E_PieceType = Object.freeze({
         King: Symbol("King"),
         Queen: Symbol("Queen"),
@@ -84,6 +75,14 @@ var webBuild = (function (exports) {
     function assertPieceKey(pieceKey) {
         assert(Object.values(Quadrille.chessKeys).includes(pieceKey), "Invalid piece key");
     }
+
+    const E_MoveFlag = Object.freeze({
+        Promotion: Symbol("Promotion"),
+        Castling: Symbol("Castling"),
+        EnPassant: Symbol("EnPassant"),
+        Regular: Symbol("Regular"),
+        None: Symbol("None")
+    });
 
     //class prolog
 
@@ -142,6 +141,12 @@ var webBuild = (function (exports) {
         }
     }
 
+    const E_CastlingSide = Object.freeze({
+        QueenSide: Symbol("QueenSide"),
+        KingSide: Symbol("KingSide"),
+        None: Symbol("None")
+    });
+
     const NUMBER_OF_RANKS = 8;
     const NUMBER_OF_FILES = 8;
 
@@ -149,7 +154,7 @@ var webBuild = (function (exports) {
      * Files involved in castling. Provide castling side and piece which is moving (rook or king)
      */
     const CASTLING_FILES = {
-        [E_MoveFlag.QueenSideCastling]: {
+        [E_CastlingSide.QueenSide]: {
             [E_PieceType.King]: {
                 startFile: 5,
                 endFile: 3
@@ -159,7 +164,7 @@ var webBuild = (function (exports) {
                 endFile: 4
             },
         },
-        [E_MoveFlag.KingSideCastling]: {
+        [E_CastlingSide.KingSide]: {
             [E_PieceType.King]: {
                 startFile: 5,
                 endFile: 7
@@ -186,6 +191,13 @@ var webBuild = (function (exports) {
         [E_PieceColor.White]: 5,
         [E_PieceColor.Black]: 4
     };
+
+    const PIECE_TYPES_TO_PROMOTE = [
+        E_PieceType.Bishop,
+        E_PieceType.Knight,
+        E_PieceType.Queen,
+        E_PieceType.Rook
+    ];
 
     /**
      * 
@@ -302,6 +314,7 @@ var webBuild = (function (exports) {
         NUMBER_OF_FILES: NUMBER_OF_FILES,
         NUMBER_OF_RANKS: NUMBER_OF_RANKS,
         OppositePieceColor: OppositePieceColor,
+        PIECE_TYPES_TO_PROMOTE: PIECE_TYPES_TO_PROMOTE,
         RANKS_TO_PROMOTE: RANKS_TO_PROMOTE,
         pieceColorTypeToKey: pieceColorTypeToKey,
         pieceKeyToColor: pieceKeyToColor,
@@ -1315,12 +1328,12 @@ var webBuild = (function (exports) {
         /**
          * 
          * @param {E_PieceColor} color 
-         * @param {E_MoveFlag} castlingSide 
+         * @param {E_CastlingSide} castlingSide 
          * @returns Whether the given side has rights to castle (It does not necesarilly mean castling is possible).
          */
         hasCastlingRights(color, castlingSide) {
             assertPieceColor(color);
-            assert(castlingSide === E_MoveFlag.QueenSideCastling || castlingSide === E_MoveFlag.KingSideCastling, "Invalid castling side");
+            assert(castlingSide === E_CastlingSide.QueenSide || castlingSide === E_CastlingSide.KingSide, "Invalid castling side");
 
             return this.#castlingRights[color][castlingSide];
         }
@@ -1409,6 +1422,38 @@ var webBuild = (function (exports) {
         }
 
 
+    }
+
+    class Castling extends Move {
+        #castlingSide;
+        constructor(startRank, startFile, destinationRank, destinationFile, castlingSide = E_CastlingSide.None) {
+            assert(Object.values(E_CastlingSide).includes(castlingSide), "Invalid castling side");
+            assert(castlingSide !== E_CastlingSide.None, "No castling side provided");
+            super(startRank, startFile, destinationRank, destinationFile, E_MoveFlag.Castling);
+            this.#castlingSide = castlingSide;
+        }
+
+        get castlingSide() {
+            return this.#castlingSide;
+        }
+    }
+
+    class Promotion extends Move {
+        #newPieceType;
+        constructor(startRank, startFile, destinationRank, destinationFile) {
+            super(startRank, startFile, destinationRank, destinationFile, E_MoveFlag.Promotion);
+            this.#newPieceType = E_PieceType.Queen;
+        }
+
+        get newPieceType() {
+            assert(this.#newPieceType !== undefined, "No piece set for promotion");
+            return this.#newPieceType;
+        }
+
+        set newPieceType(pieceType) {
+            assertPieceType(pieceType);
+            this.#newPieceType = pieceType;
+        }
     }
 
     //****** CLASS PROLOG
@@ -1737,11 +1782,11 @@ var webBuild = (function (exports) {
                 if (!rook.isOnInitialSquare()) continue;
 
                 //This side must have castling rights. That is, rooks cannot have moved or been captured and king cannot have moved.
-                let castlingSide = king.file > rook.file ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
+                let castlingSide = king.file > rook.file ? E_CastlingSide.QueenSide : E_CastlingSide.KingSide;
                 if (!board.hasCastlingRights(rook.color, castlingSide)) continue;
 
                 //There cannot be any piece between the rook and the king
-                let castlingPath = castlingSide === E_MoveFlag.QueenSideCastling ?
+                let castlingPath = castlingSide === E_CastlingSide.QueenSide ?
                     king.position << 1n | king.position << 2n | king.position << 3n :
                     king.position >> 1n | king.position >> 2n;
 
@@ -1749,7 +1794,7 @@ var webBuild = (function (exports) {
 
                 //Your king can not pass through check
                 let attackedSquares = board.getAttackedSquares(OppositePieceColor(king.color));
-                let kingPathToCastle = castlingSide === E_MoveFlag.QueenSideCastling ?
+                let kingPathToCastle = castlingSide === E_CastlingSide.QueenSide ?
                     king.position << 1n | king.position << 2n :
                     king.position >> 1n | king.position >> 2n;
 
@@ -1757,7 +1802,7 @@ var webBuild = (function (exports) {
 
                 if (!isCastlingPathObstructed && !isKingPathChecked) {
                     let kingTargetFile = CASTLING_FILES[castlingSide][E_PieceType.King].endFile;
-                    let kingMove = new Move(king.rank, king.file, king.rank, kingTargetFile, castlingSide);
+                    let kingMove = new Castling(king.rank, king.file, king.rank, kingTargetFile, castlingSide);
                     castlingMoves.push(kingMove);
                 }
             }
@@ -1786,7 +1831,12 @@ var webBuild = (function (exports) {
                     let endRank = Math.floor((index) / NUMBER_OF_FILES) + 1;
                     let endFile = NUMBER_OF_FILES - (index % NUMBER_OF_FILES);
                     //create move
-                    let newMove = new Move(piece.rank, piece.file, endRank, endFile, moveFlag);
+                    let newMove;
+                    if (moveFlag === E_MoveFlag.Promotion) {
+                        newMove = new Promotion(piece.rank, piece.file, endRank, endFile);
+                    } else {
+                        newMove = new Move(piece.rank, piece.file, endRank, endFile, moveFlag);
+                    }
                     //add move to array
                     moves.push(newMove);
                 }
@@ -1799,6 +1849,7 @@ var webBuild = (function (exports) {
         }
     }
 
+    /* globals select,mouseX,mouseY */
     class MoveInput extends EventTarget {
         #inputListener;
         #board;
@@ -1960,11 +2011,11 @@ var webBuild = (function (exports) {
 
         #castlingRights = {
             [E_PieceColor.White]: {
-                [E_MoveFlag.KingSideCastling]: false,
-                [E_MoveFlag.QueenSideCastling]: false
+                [E_CastlingSide.KingSide]: false,
+                [E_CastlingSide.QueenSide]: false
             }, [E_PieceColor.Black]: {
-                [E_MoveFlag.KingSideCastling]: false,
-                [E_MoveFlag.QueenSideCastling]: false
+                [E_CastlingSide.KingSide]: false,
+                [E_CastlingSide.QueenSide]: false
             }
         }
 
@@ -2002,8 +2053,8 @@ var webBuild = (function (exports) {
                 //if board has no king or king has moved from initial square
                 if (kingPos === undefined) {
                     //no castling is possible
-                    this.#setCastlingRights(color, E_MoveFlag.KingSideCastling, false);
-                    this.#setCastlingRights(color, E_MoveFlag.QueenSideCastling, false);
+                    this.#setCastlingRights(color, E_CastlingSide.KingSide, false);
+                    this.#setCastlingRights(color, E_CastlingSide.QueenSide, false);
                     continue;
 
                 } else { //else if there's a king
@@ -2015,8 +2066,8 @@ var webBuild = (function (exports) {
                     //if king is not in its initial square
                     if (!isKingOnInitialSquare) {
                         //no castling is possible
-                        this.#setCastlingRights(color, E_MoveFlag.KingSideCastling, false);
-                        this.#setCastlingRights(color, E_MoveFlag.QueenSideCastling, false);
+                        this.#setCastlingRights(color, E_CastlingSide.KingSide, false);
+                        this.#setCastlingRights(color, E_CastlingSide.QueenSide, false);
                         continue;
                     }
                 }
@@ -2033,7 +2084,7 @@ var webBuild = (function (exports) {
                         (rank === 8 && file === 1) || (rank === 8 && file === 8);
 
                     if (isRookOnInitialSquare) {
-                        let castlingSide = file === 1 ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
+                        let castlingSide = file === 1 ? E_CastlingSide.QueenSide : E_CastlingSide.KingSide;
                         this.#setCastlingRights(color, castlingSide, true);
                     }
                 }
@@ -2073,10 +2124,7 @@ var webBuild = (function (exports) {
                     case E_MoveFlag.Promotion:
                         this.#makePromotionMove(move);
                         break;
-                    case E_MoveFlag.KingSideCastling:
-                        this.#makeCastlingMove(move);
-                        break;
-                    case E_MoveFlag.QueenSideCastling:
+                    case E_MoveFlag.Castling:
                         this.#makeCastlingMove(move);
                         break;
                     case E_MoveFlag.EnPassant:
@@ -2304,10 +2352,10 @@ var webBuild = (function (exports) {
             let pawn = this.#removePiece(move.endRank, move.endFile);
             //get new piece characteristics
             let pawnKey = Quadrille.chessKeys[pawn];
-            let pieceTypeToPromote = MoveInput.pieceSelectedForPromotion;
+            let newPieceType = move.newPieceType;
             let pieceColor = pieceKeyToColor(pawnKey);
             //create piece symbol
-            let pieceKey = pieceColorTypeToKey(pieceColor, pieceTypeToPromote);
+            let pieceKey = pieceColorTypeToKey(pieceColor, newPieceType);
             let pieceSymbol = Quadrille.chessSymbols[pieceKey];
             //add promoted piece
             this.#addPiece(pieceSymbol, move.endRank, move.endFile);
@@ -2319,9 +2367,9 @@ var webBuild = (function (exports) {
             //move rook
             let rookMove = new Move(
                 move.startRank,
-                CASTLING_FILES[move.flag][E_PieceType.Rook].startFile,
+                CASTLING_FILES[move.castlingSide][E_PieceType.Rook].startFile,
                 move.startRank,
-                CASTLING_FILES[move.flag][E_PieceType.Rook].endFile,
+                CASTLING_FILES[move.castlingSide][E_PieceType.Rook].endFile,
                 E_MoveFlag.Regular
             );
             this.#makeRegularMove(rookMove);
@@ -2368,13 +2416,13 @@ var webBuild = (function (exports) {
             let pieceInDestination = this.#boardImplementation.getPieceOnRankFile(move.endRank, move.endFile);
 
             //if it is a castling move
-            let isCastlingMove = move.flag === E_MoveFlag.KingSideCastling | move.flag === E_MoveFlag.QueenSideCastling;
+            let isCastlingMove = move.flag === E_MoveFlag.Castling;
             if (isCastlingMove) {
 
                 //remove castling rights from both sides
                 let king = pieceInStart;
-                let castlingSide = move.flag;
-                let oppositeCastlingSide = move.flag === E_MoveFlag.KingSideCastling ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
+                let castlingSide = move.castlingSide;
+                let oppositeCastlingSide = castlingSide === E_CastlingSide.KingSide ? E_CastlingSide.QueenSide : E_CastlingSide.KingSide;
                 this.#disableCastlingRights(king.color, castlingSide);
                 this.#disableCastlingRights(king.color, oppositeCastlingSide);
 
@@ -2383,7 +2431,7 @@ var webBuild = (function (exports) {
                 //if a rook is moving
                 if (pieceInStart.GetType() === E_PieceType.Rook) {
                     let rook = pieceInStart;
-                    let rookCastlingSide = rook.file === 1 ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
+                    let rookCastlingSide = rook.file === 1 ? E_CastlingSide.QueenSide : E_CastlingSide.KingSide;
 
                     //if the rook that's moving is on its initial corner and hasn't moved
                     if (rook.isOnInitialSquare() && this.#hasCastlingRights(rook.color, rookCastlingSide)) {
@@ -2395,19 +2443,19 @@ var webBuild = (function (exports) {
                     let king = pieceInStart;
                     //if the king has not moved before
                     let hasKingMoved = !(king.isOnInitialSquare() &&
-                        this.#hasCastlingRights(king.color, E_MoveFlag.KingSideCastling) &&
-                        this.#hasCastlingRights(king.color, E_MoveFlag.QueenSideCastling));
+                        this.#hasCastlingRights(king.color, E_CastlingSide.KingSide) &&
+                        this.#hasCastlingRights(king.color, E_CastlingSide.QueenSide));
                     if (!hasKingMoved) {
                         //remove castling rights from both sides
-                        this.#disableCastlingRights(king.color, E_MoveFlag.KingSideCastling);
-                        this.#disableCastlingRights(king.color, E_MoveFlag.QueenSideCastling);
+                        this.#disableCastlingRights(king.color, E_CastlingSide.KingSide);
+                        this.#disableCastlingRights(king.color, E_CastlingSide.QueenSide);
                     }
                 }
 
                 //if a rook is captured
                 if (pieceInDestination !== null && pieceInDestination.GetType() === E_PieceType.Rook) {
                     let rook = pieceInDestination;
-                    let rookCastlingSide = rook.file === 1 ? E_MoveFlag.QueenSideCastling : E_MoveFlag.KingSideCastling;
+                    let rookCastlingSide = rook.file === 1 ? E_CastlingSide.QueenSide : E_CastlingSide.KingSide;
 
                     //if the rook that's being captured is on its initial corner  and hasn't moved
                     if (rook.isOnInitialSquare() && this.#hasCastlingRights(rook.color, rookCastlingSide)) {
@@ -2421,17 +2469,18 @@ var webBuild = (function (exports) {
         /**
          * 
          * @param {E_PieceColor} color 
-         * @param {E_MoveFlag} castlingSide 
+         * @param {E_CastlingSide} castlingSide 
          * @returns Whether the given side has rights to castle (It does not necesarilly mean castling is possible).
          */
         #hasCastlingRights(color, castlingSide) {
             assertPieceColor(color);
-            assert(castlingSide === E_MoveFlag.QueenSideCastling || castlingSide === E_MoveFlag.KingSideCastling, "Invalid castling side");
+            assert(Object.values(E_CastlingSide).includes(castlingSide), "Invalid castling side");
 
             return this.#castlingRights[color][castlingSide];
         }
 
         #setCastlingRights(color, castlingSide, enabled) {
+            assert(Object.values(E_CastlingSide).includes(castlingSide), "Invalid castling side");
             this.#castlingRights[color][castlingSide] = enabled;
         }
 
@@ -2512,9 +2561,9 @@ var webBuild = (function (exports) {
 
             let moveString = "";
             //if it is a castling move
-            if (move.flag === E_MoveFlag.KingSideCastling || move.flag === E_MoveFlag.QueenSideCastling) {
+            if (move.flag === E_MoveFlag.Castling) {
                 //add castling mark
-                moveString = move.flag === E_MoveFlag.KingSideCastling ? "0-0" : "0-0-0";
+                moveString = move.castlingSide === E_CastlingSide.KingSide ? "0-0" : "0-0-0";
                 //notify
                 let onMoveRecorded = new CustomEvent(MoveRecord.events.onMoveRecorded, { detail: { move: moveString } });
                 this.dispatchEvent(onMoveRecorded);
@@ -2562,7 +2611,7 @@ var webBuild = (function (exports) {
                     moveString += 'e.p';
                     break;
                 case E_MoveFlag.Promotion:
-                    moveString += '=' + pieceColorTypeToKey(playingColor, MoveInput.pieceSelectedForPromotion);
+                    moveString += '=' + pieceColorTypeToKey(playingColor, move.newPieceType);
                     break;
             }
 
@@ -2970,6 +3019,7 @@ var webBuild = (function (exports) {
     }
 
     /*globals  createGraphics,deltaTime,random,image,createButton */
+
     //FENS
     const STANDARD_BOARD_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
 

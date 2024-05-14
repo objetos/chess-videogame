@@ -2,7 +2,6 @@ import { NUMBER_OF_RANKS, NUMBER_OF_FILES } from "../Utils/ChessUtils.js";
 import { assert, assertPieceKey, assertRank, assertFile, assertPieceType, assertPieceColor } from "../../Testing/TestTools.js";
 import { E_PieceColor } from "../Enums/E_PieceColor.js";
 import { E_PieceType } from "../Enums/E_PieceType.js";
-import { E_MoveFlag } from "../Enums/E_MoveFlag.js";
 import { OppositePieceColor } from "../Utils/ChessUtils.js";
 import Piece from "../MoveGeneration/Pieces/Piece.js";
 import Rook from "../MoveGeneration/Pieces/Rook.js";
@@ -11,6 +10,7 @@ import Knight from "../MoveGeneration/Pieces/Knight.js";
 import Pawn from "../MoveGeneration/Pieces/Pawn.js";
 import Queen from "../MoveGeneration/Pieces/Queen.js";
 import King from "../MoveGeneration/Pieces/King.js";
+import { E_CastlingSide } from "../Enums/E_CastlingSide.js";
 
 export default class BoardImplementation {
     #piecesDictionary = {}; //pieces categorized by color and type.
@@ -244,12 +244,12 @@ export default class BoardImplementation {
     /**
      * 
      * @param {E_PieceColor} color 
-     * @param {E_MoveFlag} castlingSide 
+     * @param {E_CastlingSide} castlingSide 
      * @returns Whether the given side has rights to castle (It does not necesarilly mean castling is possible).
      */
     hasCastlingRights(color, castlingSide) {
         assertPieceColor(color);
-        assert(castlingSide === E_MoveFlag.QueenSideCastling || castlingSide === E_MoveFlag.KingSideCastling, "Invalid castling side");
+        assert(castlingSide === E_CastlingSide.QueenSide || castlingSide === E_CastlingSide.KingSide, "Invalid castling side");
 
         return this.#castlingRights[color][castlingSide];
     }
