@@ -56,7 +56,8 @@ export const MOVE_RECORD_UI_SETTINGS = {
         }
     },
     ROW_HEIGHT: BOARD_UI_SETTINGS.SQUARE_SIZE,
-    WIDTH: BOARD_UI_SETTINGS.SQUARE_SIZE * 3
+    WIDTH: BOARD_UI_SETTINGS.SQUARE_SIZE * 3,
+    get HEIGHT() { return this.ROW_HEIGHT * this.MAX_ROWS_VISIBLE }
 }
 //--Resign Button--
 export const RESIGN_BUTTON_UI_SETTINGS = {

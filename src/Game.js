@@ -173,7 +173,7 @@ export class Game {
     #draw() {
         this.#graphics.background(255);
 
-        this.#moveRecordUI.draw(this.#graphics);
+        this.#moveRecordUI.draw(this.#graphics, this.#position.x, this.#position.y);
         this.#piecesCapturedUI.draw(this.#graphics);
 
         if (this.#gameMode !== E_GameMode.FREE) {

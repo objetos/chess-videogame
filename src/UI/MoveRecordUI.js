@@ -28,12 +28,8 @@ export default class MoveRecordUI {
         this.#table = createQuadrille(3, 1);
         this.#table.fill(0, 0, 1);
 
-        const TABLE_HEIGHT = MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE * Quadrille.cellLength;
-        const TABLE_WIDTH = 3 * Quadrille.cellLength;
 
         this.#upButton = createButton("Up");
-        this.#upButton.position(MOVE_RECORD_UI_SETTINGS.POSITION.x + TABLE_WIDTH + 20,
-            MOVE_RECORD_UI_SETTINGS.POSITION.y + TABLE_HEIGHT / 2 - 25);
         this.#upButton.mouseClicked(() => {
             this.#firstVisibleRow--
             this.#updateButtons();
@@ -41,8 +37,6 @@ export default class MoveRecordUI {
         this.#upButton.hide();
 
         this.#downButton = createButton("Down");
-        this.#downButton.position(MOVE_RECORD_UI_SETTINGS.POSITION.x + TABLE_WIDTH + 20,
-            MOVE_RECORD_UI_SETTINGS.POSITION.y + TABLE_HEIGHT / 2 + 25);
         this.#downButton.mouseClicked(() => {
             this.#firstVisibleRow++
             this.#updateButtons();
@@ -109,7 +103,7 @@ export default class MoveRecordUI {
         }
     }
 
-    draw(graphics) {
+    draw(graphics, graphicsX, graphicsY) {
         //if there's no entries, do not draw
         if (this.#lastRowIndex === 0 && this.#table.isEmpty(0, 1)) return;
 
@@ -135,5 +129,10 @@ export default class MoveRecordUI {
                 graphics.text(value, cellLength / 2, cellLength / 2);
             },
         });
+
+        this.#upButton.position(graphicsX + MOVE_RECORD_UI_SETTINGS.POSITION.x + MOVE_RECORD_UI_SETTINGS.WIDTH + 20,
+            graphicsY + MOVE_RECORD_UI_SETTINGS.POSITION.y + MOVE_RECORD_UI_SETTINGS.HEIGHT / 2 - 25);
+        this.#downButton.position(graphicsX + MOVE_RECORD_UI_SETTINGS.POSITION.x + MOVE_RECORD_UI_SETTINGS.WIDTH + 20,
+            graphicsY + MOVE_RECORD_UI_SETTINGS.POSITION.y + MOVE_RECORD_UI_SETTINGS.HEIGHT / 2 + 25);
     }
 }
