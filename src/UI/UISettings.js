@@ -79,3 +79,7 @@ export const MOVE_INPUT_UI_SETTINGS = {
     COLOR_FOR_SELECTED_SQUARES: 'rgba(100,100,100,0.3)',
     COLOR_FOR_AVAILABLE_MOVES: '#b3ffb3'
 }
+//--Promotion Selector--
+export const PROMOTION_SELECTOR_SETTINGS = {
+    BACKGROUND_COLOR: 'rgba(255,255,255,1)'
+}

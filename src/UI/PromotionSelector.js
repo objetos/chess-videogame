@@ -1,7 +1,7 @@
 import { E_PieceColor, E_PieceType } from "../Game.js";
 import Promotion from "../MoveGeneration/Promotion.js";
 import { NUMBER_OF_RANKS, pieceColorTypeToKey, pieceKeyToType } from "../Utils/ChessUtils.js";
-import { BOARD_LOCAL_POSITION, BOARD_SQUARE_SIZE } from "./UISettings.js";
+import { BOARD_LOCAL_POSITION, BOARD_SQUARE_SIZE, PROMOTION_SELECTOR_SETTINGS } from "./UISettings.js";
 
 export default class PromotionSelector {
     #whiteSelectionUI;
@@ -35,7 +35,7 @@ export default class PromotionSelector {
         this.#whiteSelectionUI = new Quadrille(1, whitePieces);
         this.#blackSelectionUI = new Quadrille(1, blackPieces);
         this.#background = new Quadrille(1, 4);
-        this.#background.fill(color(255));
+        this.#background.fill(color(PROMOTION_SELECTOR_SETTINGS.BACKGROUND_COLOR));
     }
 
     /**
