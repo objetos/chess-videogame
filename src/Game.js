@@ -207,7 +207,7 @@ export class Game {
                     this.#makeMoveAndAdvance(legalMove);
                     this.#moveInput.enabled = true;
                 }
-                this.#promotionSelector.selectNewPiece(legalMove, onPieceSeleted.bind(this), this.#playingColor);
+                this.#promotionSelector.selectNewPiece(legalMove, onPieceSeleted.bind(this));
 
             } else {
                 this.#makeMoveAndAdvance(legalMove);

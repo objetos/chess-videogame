@@ -40,18 +40,17 @@ export default class PromotionSelector {
 
     /**
      * 
-     * @param {Promotion} promotion Promotion move involved
+     * @param {Promotion} promotion Promotion move
      * @param {function} onSelection Callback called when piece is successfully selected
-     * @param {E_PieceColor} playingColor Color that makes the promotion
      */
-    selectNewPiece(promotion, onSelection, playingColor) {
+    selectNewPiece(promotion, onSelection) {
         console.log("select new piece")
         this.#onSelection = function (pieceTypeSelected) {
             promotion.newPieceType = pieceTypeSelected;
             onSelection();
         }
         //enable selector  on destination square
-        let selector = playingColor === E_PieceColor.White ? this.#whiteSelectionUI : this.#blackSelectionUI;
+        let selector = promotion.endRank === 8 ? this.#whiteSelectionUI : this.#blackSelectionUI;
         this.#enableSelector(selector, promotion.endRank, promotion.endFile);
     }
 
