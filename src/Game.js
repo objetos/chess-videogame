@@ -2,8 +2,9 @@
 import { E_PieceColor } from "./Enums/E_PieceColor.js";
 import { E_GameState } from "./Enums/E_GameState.js";
 import { E_GameMode } from "./Enums/E_GameMode.js";
+import { E_MoveFlag } from "../src/Enums/E_MoveFlag.js";
 import { MOVE_RECORD_UI_SETTINGS, RANKS_FILES_UI_SETTING, BOARD_WIDTH, GAME_STATE_UI_SETTINGS, PIECES_CAPTURED_UI_SETTINGS, RESIGN_BUTTON_UI_SETTINGS, BOARD_LOCAL_POSITION, BOARD_HEIGHT } from "./UI/UISettings.js";
-import { OppositePieceColor } from "./Utils/ChessUtils.js";
+import { OppositePieceColor, PIECE_TYPES_TO_PROMOTE } from "./Utils/ChessUtils.js";
 import { assert } from "../Testing/TestTools.js";
 import Board from "./Board/Board.js";
 import MoveRecord from "./MoveRecord.js";
@@ -12,6 +13,8 @@ import MoveInputUI from "./UI/MoveInputUI.js";
 import MoveRecordUI from "./UI/MoveRecordUI.js";
 import PiecesCapturedUI from "./UI/PiecesCapturedUI.js";
 import GameStateUI from "./UI/GameStateUI.js";
+import PromotionSelector from "./UI/PromotionSelector.js";
+
 
 //FENS
 const STANDARD_BOARD_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
@@ -43,7 +46,7 @@ export class Game {
         return this.#gameState;
     }
     #timerToMove = 0;
-    #timeToMakeMove = 50;
+    #timeToMakeMove = 200;
 
     //Objects
     #legalMoves = [];
@@ -61,6 +64,7 @@ export class Game {
     #gameStateUI;
     #resignButton;
     #graphics;
+    #promotionSelector;
     #position;
 
     /**
@@ -87,6 +91,7 @@ export class Game {
         this.#moveRecordUI = new MoveRecordUI(this.#moveRecord);
         this.#piecesCapturedUI = new PiecesCapturedUI(this.#board);
         this.#gameStateUI = new GameStateUI(this);
+        this.#promotionSelector = new PromotionSelector();
         this.#createResignButton();
     }
 
@@ -120,10 +125,7 @@ export class Game {
         if (this.#gameMode === E_GameMode.AUTOMATIC) {
             this.#runGameAutomatically();
         }
-        this.#updateInput();
         this.#draw();
-
-
     }
 
     /**
@@ -138,6 +140,7 @@ export class Game {
         this.#gameMode = gameMode;
         this.#generateLegalMoves();
         this.update();
+        this.#updateInput();
     }
 
     #updateInput() {
@@ -158,13 +161,11 @@ export class Game {
         if (this.isGameFinished()) return;
         this.#timerToMove += deltaTime;
         if (this.#timeToMakeMove < this.#timerToMove) {
-            let randomIndex = Math.floor(random(0, this.#legalMoves.length));
-            let randomMove = this.#legalMoves[randomIndex];
-            this.#moveRecord.recordMove(randomMove, this.#board, this.playingColor);
-            this.#board.makeMove(randomMove);
-            this.#switchPlayingColor();
-            this.#legalMoves = this.#board.generateMoves(this.playingColor);
-            this.#checkEndGame(this.#playingColor);
+            let randomMove = random(this.#legalMoves);
+            if (randomMove.flag === E_MoveFlag.Promotion) {
+                randomMove.newPieceType = random(PIECE_TYPES_TO_PROMOTE);
+            }
+            this.#makeMoveAndAdvance(randomMove);
             this.#timerToMove = 0;
         }
     }
@@ -181,6 +182,7 @@ export class Game {
 
         this.#moveInputUI.draw(this.#graphics);
         this.#board.draw(this.#graphics);
+        this.#promotionSelector.draw(this.#graphics);
 
         this.#drawRanksAndFiles(this.#graphics);
 
@@ -198,17 +200,31 @@ export class Game {
         let result = this.isMoveLegal(inputMove);
         if (result.isLegal) {
             let legalMove = result.move;
-            //record move
-            this.#moveRecord.recordMove(legalMove, this.#board, this.#playingColor);
-            //make move on board
-            this.#board.makeMove(legalMove);
-            //switch playing color
-            if (this.#gameMode === E_GameMode.STANDARD) this.#switchPlayingColor();
-            //generate new set of legal moves
-            this.#generateLegalMoves();
-            //check for end game conditions
-            if (this.#gameMode !== E_GameMode.FREE) this.#checkEndGame(this.#playingColor);
+            if (legalMove.flag === E_MoveFlag.Promotion) {
+
+                this.#moveInput.enabled = false;
+                let onPieceSeleted = () => {
+                    this.#makeMoveAndAdvance(legalMove);
+                    this.#moveInput.enabled = true;
+                }
+                this.#promotionSelector.selectNewPiece(legalMove, onPieceSeleted.bind(this), this.#playingColor);
+
+            } else {
+                this.#makeMoveAndAdvance(legalMove);
+            }
         }
+    }
+
+    #makeMoveAndAdvance(move) {
+        this.#moveRecord.recordMove(move, this.#board, this.#playingColor);
+        //make move on board
+        this.#board.makeMove(move);
+        //switch playing color
+        if (this.#gameMode !== E_GameMode.FREE) this.#switchPlayingColor();
+        //generate new set of legal moves
+        this.#generateLegalMoves();
+        //check for end game conditions
+        if (this.#gameMode !== E_GameMode.FREE) this.#checkEndGame(this.#playingColor);
     }
 
     #switchPlayingColor() {

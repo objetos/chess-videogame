@@ -42,13 +42,16 @@ export const RANKS_TO_PROMOTE = {
 }
 
 /**
- * Ranks where pawns can perform an en-passant capture. Provide color
+ * Ranks where pawns can perform an en-passant capture. Provide color.
  */
 export const ENPASSANT_CAPTURING_RANKS = {
     [E_PieceColor.White]: 5,
     [E_PieceColor.Black]: 4
 }
 
+/**
+ * Piece types that a pawn can promote to.
+ */
 export const PIECE_TYPES_TO_PROMOTE = [
     E_PieceType.Bishop,
     E_PieceType.Knight,
