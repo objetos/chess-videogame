@@ -1,7 +1,7 @@
 import { E_PieceColor, E_PieceType } from "../Game.js";
 import Promotion from "../MoveGeneration/Promotion.js";
 import { NUMBER_OF_RANKS, pieceColorTypeToKey, pieceKeyToType } from "../Utils/ChessUtils.js";
-import { BOARD_LOCAL_POSITION, BOARD_SQUARE_SIZE, PROMOTION_SELECTOR_SETTINGS } from "./UISettings.js";
+import { BOARD_UI_SETTINGS, PROMOTION_SELECTOR_SETTINGS } from "./UISettings.js";
 
 export default class PromotionSelector {
     #whiteSelectionUI;
@@ -60,10 +60,10 @@ export default class PromotionSelector {
         let targetRow = NUMBER_OF_RANKS - rank + 1;
         let targetColumn = file;
 
-        this.#drawingCoordinates.x = BOARD_LOCAL_POSITION.x + (targetColumn - 1) * BOARD_SQUARE_SIZE;
+        this.#drawingCoordinates.x = BOARD_UI_SETTINGS.LOCAL_POSITION.x + (targetColumn - 1) * BOARD_UI_SETTINGS.SQUARE_SIZE;
         this.#drawingCoordinates.y = selector === this.#whiteSelectionUI ?
-            BOARD_LOCAL_POSITION.y + (targetRow - 1) * BOARD_SQUARE_SIZE :
-            BOARD_LOCAL_POSITION.y + (targetRow - 4) * BOARD_SQUARE_SIZE;
+            BOARD_UI_SETTINGS.LOCAL_POSITION.y + (targetRow - 1) * BOARD_UI_SETTINGS.SQUARE_SIZE :
+            BOARD_UI_SETTINGS.LOCAL_POSITION.y + (targetRow - 4) * BOARD_UI_SETTINGS.SQUARE_SIZE;
 
         select('canvas').elt.addEventListener("click", this.#clickListener)
     }
@@ -80,13 +80,13 @@ export default class PromotionSelector {
             {
                 x: this.#drawingCoordinates.x,
                 y: this.#drawingCoordinates.y,
-                cellLength: BOARD_SQUARE_SIZE
+                cellLength: BOARD_UI_SETTINGS.SQUARE_SIZE
             });
         graphics.drawQuadrille(this.#enabledSelector,
             {
                 x: this.#drawingCoordinates.x,
                 y: this.#drawingCoordinates.y,
-                cellLength: BOARD_SQUARE_SIZE
+                cellLength: BOARD_UI_SETTINGS.SQUARE_SIZE
             });
     }
 

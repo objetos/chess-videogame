@@ -1,7 +1,8 @@
+/* globals mouseX, mouseY */
 import { E_PieceType } from "./Enums/E_PieceType.js";
 import { assert, assertPieceType } from "../Testing/TestTools.js";
 import { NUMBER_OF_FILES, NUMBER_OF_RANKS } from "./Utils/ChessUtils.js";
-import { BOARD_SQUARE_SIZE } from "./UI/UISettings.js";
+import { BOARD_UI_SETTINGS } from "./UI/UISettings.js";
 import Board from "./Board/Board.js";
 import Move from "./MoveGeneration/Move.js";
 export default class MoveInput extends EventTarget {
@@ -61,8 +62,8 @@ export default class MoveInput extends EventTarget {
         let yCoordinate = clickY;
         //get clicked square
 
-        let clickedRank = 8 - this.#inputListener.screenRow(yCoordinate, boardPositionY, BOARD_SQUARE_SIZE);
-        let clickedFile = this.#inputListener.screenCol(xCoordinate, boardPositionX, BOARD_SQUARE_SIZE) + 1;
+        let clickedRank = 8 - this.#inputListener.screenRow(yCoordinate, boardPositionY, BOARD_UI_SETTINGS.SQUARE_SIZE);
+        let clickedFile = this.#inputListener.screenCol(xCoordinate, boardPositionX, BOARD_UI_SETTINGS.SQUARE_SIZE) + 1;
         let clickedSquare = {
             rank: clickedRank,
             file: clickedFile

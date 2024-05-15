@@ -2,27 +2,29 @@ import { NUMBER_OF_RANKS, NUMBER_OF_FILES } from "../Utils/ChessUtils.js";
 
 //UI SETTINGS ----------------------------------------------------------------
 //--Board--
-export const BOARD_SQUARE_SIZE = 40;
-export const BOARD_WIDTH = BOARD_SQUARE_SIZE * NUMBER_OF_FILES;
-export const BOARD_HEIGHT = BOARD_SQUARE_SIZE * NUMBER_OF_RANKS;
-export const BOARD_LOCAL_POSITION = {
-    get x() { return BOARD_SQUARE_SIZE },
-    get y() { return GAME_STATE_UI_SETTINGS.HEIGHT + GAME_STATE_UI_SETTINGS.SPACE_FROM_BOARD }
-};
+export const BOARD_UI_SETTINGS = {
+    SQUARE_SIZE: 40,
+    get WIDTH() { return this.SQUARE_SIZE * NUMBER_OF_FILES },
+    get HEIGHT() { return this.SQUARE_SIZE * NUMBER_OF_RANKS },
+    LOCAL_POSITION: {
+        get x() { return BOARD_UI_SETTINGS.SQUARE_SIZE },
+        get y() { return GAME_STATE_UI_SETTINGS.HEIGHT + GAME_STATE_UI_SETTINGS.SPACE_FROM_BOARD }
+    }
+}
 //--Pieces Captured UI--
 export const PIECES_CAPTURED_UI_SETTINGS = {
     PIECES_SIZE: 30,
     SPACE_FROM_BOARD: 10,
     get WHITE_PIECES_POSITION() {
         return {
-            x: BOARD_LOCAL_POSITION.x,
-            y: BOARD_LOCAL_POSITION.y - this.PIECES_SIZE - this.SPACE_FROM_BOARD
+            x: BOARD_UI_SETTINGS.LOCAL_POSITION.x,
+            y: BOARD_UI_SETTINGS.LOCAL_POSITION.y - this.PIECES_SIZE - this.SPACE_FROM_BOARD
         }
     },
     get BLACK_PIECES_POSITION() {
         return {
-            x: BOARD_LOCAL_POSITION.x,
-            y: BOARD_LOCAL_POSITION.y + BOARD_HEIGHT + this.SPACE_FROM_BOARD + RANKS_FILES_UI_SETTING.CELL_LENGTH
+            x: BOARD_UI_SETTINGS.LOCAL_POSITION.x,
+            y: BOARD_UI_SETTINGS.LOCAL_POSITION.y + BOARD_UI_SETTINGS.HEIGHT + this.SPACE_FROM_BOARD + RANKS_FILES_UI_SETTING.CELL_LENGTH
         }
     }
 }
@@ -31,14 +33,14 @@ export const GAME_STATE_UI_SETTINGS = {
     TEXT_SIZE: 20,
     TEXT_MARGIN: 10,
     SPACE_FROM_BOARD: 55,
-    WIDTH: BOARD_WIDTH,
+    WIDTH: BOARD_UI_SETTINGS.WIDTH,
     get HEIGHT() {
         return this.TEXT_SIZE + 2 * this.TEXT_MARGIN;
     },
     get POSITION() {
         return {
-            x: BOARD_LOCAL_POSITION.x,
-            y: BOARD_LOCAL_POSITION.y - this.TEXT_SIZE - this.TEXT_MARGIN - this.SPACE_FROM_BOARD
+            x: BOARD_UI_SETTINGS.LOCAL_POSITION.x,
+            y: BOARD_UI_SETTINGS.LOCAL_POSITION.y - this.TEXT_SIZE - this.TEXT_MARGIN - this.SPACE_FROM_BOARD
         }
     }
 }
@@ -49,12 +51,12 @@ export const MOVE_RECORD_UI_SETTINGS = {
     MAX_ROWS_VISIBLE: 8,
     get POSITION() {
         return {
-            x: BOARD_LOCAL_POSITION.x + BOARD_WIDTH + this.SPACE_FROM_BOARD,
-            y: BOARD_LOCAL_POSITION.y
+            x: BOARD_UI_SETTINGS.LOCAL_POSITION.x + BOARD_UI_SETTINGS.WIDTH + this.SPACE_FROM_BOARD,
+            y: BOARD_UI_SETTINGS.LOCAL_POSITION.y
         }
     },
-    ROW_HEIGHT: BOARD_SQUARE_SIZE,
-    WIDTH: BOARD_SQUARE_SIZE * 3
+    ROW_HEIGHT: BOARD_UI_SETTINGS.SQUARE_SIZE,
+    WIDTH: BOARD_UI_SETTINGS.SQUARE_SIZE * 3
 }
 //--Resign Button--
 export const RESIGN_BUTTON_UI_SETTINGS = {
@@ -68,7 +70,7 @@ export const RESIGN_BUTTON_UI_SETTINGS = {
 }
 //--Rank Files UI--
 export const RANKS_FILES_UI_SETTING = {
-    CELL_LENGTH: BOARD_SQUARE_SIZE,
+    CELL_LENGTH: BOARD_UI_SETTINGS.SQUARE_SIZE,
     TEXT_ZOOM: 0.5,
     TEXT_COLOR: 0,
     RANKS: new Quadrille(1, ['8', '7', '6', '5', '4', '3', '2', '1']),

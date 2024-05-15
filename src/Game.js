@@ -3,7 +3,7 @@ import { E_PieceColor } from "./Enums/E_PieceColor.js";
 import { E_GameState } from "./Enums/E_GameState.js";
 import { E_GameMode } from "./Enums/E_GameMode.js";
 import { E_MoveFlag } from "../src/Enums/E_MoveFlag.js";
-import { MOVE_RECORD_UI_SETTINGS, RANKS_FILES_UI_SETTING, BOARD_WIDTH, GAME_STATE_UI_SETTINGS, PIECES_CAPTURED_UI_SETTINGS, RESIGN_BUTTON_UI_SETTINGS, BOARD_LOCAL_POSITION, BOARD_HEIGHT } from "./UI/UISettings.js";
+import { MOVE_RECORD_UI_SETTINGS, RANKS_FILES_UI_SETTING, BOARD_UI_SETTINGS, GAME_STATE_UI_SETTINGS, PIECES_CAPTURED_UI_SETTINGS, RESIGN_BUTTON_UI_SETTINGS } from "./UI/UISettings.js";
 import { OppositePieceColor, PIECE_TYPES_TO_PROMOTE } from "./Utils/ChessUtils.js";
 import { assert } from "../Testing/TestTools.js";
 import Board from "./Board/Board.js";
@@ -22,13 +22,13 @@ const STANDARD_BOARD_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
 //--GAME DIMENSIONS--
 export const GAME_DIMENSIONS = {
     WIDTH: RANKS_FILES_UI_SETTING.CELL_LENGTH +
-        BOARD_WIDTH +
+        BOARD_UI_SETTINGS.WIDTH +
         MOVE_RECORD_UI_SETTINGS.SPACE_FROM_BOARD +
         MOVE_RECORD_UI_SETTINGS.WIDTH,
     HEIGHT: RANKS_FILES_UI_SETTING.CELL_LENGTH +
         GAME_STATE_UI_SETTINGS.HEIGHT +
         GAME_STATE_UI_SETTINGS.SPACE_FROM_BOARD +
-        BOARD_WIDTH +
+        BOARD_UI_SETTINGS.WIDTH +
         PIECES_CAPTURED_UI_SETTINGS.SPACE_FROM_BOARD +
         PIECES_CAPTURED_UI_SETTINGS.PIECES_SIZE
 }
@@ -82,7 +82,7 @@ export class Game {
         this.#playingColor = playingColor;
         this.#legalMoves = this.#board.generateMoves(playingColor);
 
-        this.#moveInput = new MoveInput(this.#board, xPosition + BOARD_LOCAL_POSITION.x, yPosition + BOARD_LOCAL_POSITION.y);
+        this.#moveInput = new MoveInput(this.#board, xPosition + BOARD_UI_SETTINGS.LOCAL_POSITION.x, yPosition + BOARD_UI_SETTINGS.LOCAL_POSITION.y);
         this.#moveInput.enabled = true;
         this.#moveInputUI = new MoveInputUI(this, this.#moveInput);
         this.#moveInput.addInputEventListener(MoveInput.inputEvents.onMoveInput, this.#onMoveInput.bind(this));
@@ -284,8 +284,8 @@ export class Game {
         graphics.drawQuadrille(
             RANKS_FILES_UI_SETTING.RANKS,
             {
-                x: BOARD_LOCAL_POSITION.x - RANKS_FILES_UI_SETTING.CELL_LENGTH,
-                y: BOARD_LOCAL_POSITION.y,
+                x: BOARD_UI_SETTINGS.LOCAL_POSITION.x - RANKS_FILES_UI_SETTING.CELL_LENGTH,
+                y: BOARD_UI_SETTINGS.LOCAL_POSITION.y,
                 cellLength: RANKS_FILES_UI_SETTING.CELL_LENGTH,
                 textZoom: RANKS_FILES_UI_SETTING.TEXT_ZOOM,
                 textColor: color(RANKS_FILES_UI_SETTING.TEXT_COLOR),
@@ -296,8 +296,8 @@ export class Game {
         graphics.drawQuadrille(
             RANKS_FILES_UI_SETTING.FILES,
             {
-                x: BOARD_LOCAL_POSITION.x,
-                y: BOARD_LOCAL_POSITION.y + BOARD_HEIGHT,
+                x: BOARD_UI_SETTINGS.LOCAL_POSITION.x,
+                y: BOARD_UI_SETTINGS.LOCAL_POSITION.y + BOARD_UI_SETTINGS.HEIGHT,
                 cellLength: RANKS_FILES_UI_SETTING.CELL_LENGTH,
                 textZoom: RANKS_FILES_UI_SETTING.TEXT_ZOOM,
                 textColor: color(RANKS_FILES_UI_SETTING.TEXT_COLOR),

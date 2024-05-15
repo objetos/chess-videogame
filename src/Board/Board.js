@@ -5,7 +5,7 @@ import { E_MoveFlag } from "../Enums/E_MoveFlag.js";
 import { E_CastlingSide } from "../Enums/E_CastlingSide.js";
 import { pieceColorTypeToKey, pieceKeyToColor, CASTLING_FILES } from "../Utils/ChessUtils.js";
 import { assert, assertFile, assertRank, assertPieceColor } from "../../Testing/TestTools.js";
-import { BOARD_LOCAL_POSITION, BOARD_SQUARE_SIZE } from "../UI/UISettings.js";
+import { BOARD_UI_SETTINGS } from "../UI/UISettings.js";
 import MoveGenerator from "../MoveGeneration/MoveGenerator.js";
 import BoardImplementation from "./BoardImplementation.js";
 import Move from "../MoveGeneration/Move.js";
@@ -256,7 +256,7 @@ export default class Board {
      * Draws board
      */
     draw(graphics) {
-        graphics.drawQuadrille(this.#board, { x: BOARD_LOCAL_POSITION.x, y: BOARD_LOCAL_POSITION.y, cellLength: BOARD_SQUARE_SIZE });
+        graphics.drawQuadrille(this.#board, { x: BOARD_UI_SETTINGS.LOCAL_POSITION.x, y: BOARD_UI_SETTINGS.LOCAL_POSITION.y, cellLength: BOARD_UI_SETTINGS.SQUARE_SIZE });
     }
 
     /**

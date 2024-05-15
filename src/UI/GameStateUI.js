@@ -1,6 +1,7 @@
+/*globals BOLD, NORMAL, LEFT, BOTTOM, CENTER, TOP */
 import { E_GameState } from "../Enums/E_GameState.js";
 import { E_PieceColor } from "../Enums/E_PieceColor.js";
-import { GAME_STATE_UI_SETTINGS, BOARD_WIDTH } from "./UISettings.js";
+import { GAME_STATE_UI_SETTINGS, BOARD_UI_SETTINGS } from "./UISettings.js";
 import { OppositePieceColor } from "../Utils/ChessUtils.js";
 //assert, document
 export default class GameStateUI {
@@ -50,7 +51,7 @@ export default class GameStateUI {
                 break;
         }
 
-        let rectCenter = GAME_STATE_UI_SETTINGS.POSITION.x + BOARD_WIDTH / 2;
+        let rectCenter = GAME_STATE_UI_SETTINGS.POSITION.x + BOARD_UI_SETTINGS.WIDTH / 2;
         graphics.noStroke();
         graphics.fill(rectFillTargetColour);
         graphics.rect(GAME_STATE_UI_SETTINGS.POSITION.x,

@@ -1,6 +1,6 @@
 import { assert } from "../../Testing/TestTools.js";
 import { NUMBER_OF_RANKS, NUMBER_OF_FILES } from "../Utils/ChessUtils.js";
-import { MOVE_INPUT_UI_SETTINGS, BOARD_LOCAL_POSITION, BOARD_SQUARE_SIZE } from "./UISettings.js";
+import { MOVE_INPUT_UI_SETTINGS, BOARD_UI_SETTINGS } from "./UISettings.js";
 import { Game } from "../Game.js";
 import MoveInput from "../MoveInput.js";
 export default class MoveInputUI {
@@ -81,6 +81,6 @@ export default class MoveInputUI {
     }
 
     draw(graphics) {
-        graphics.drawQuadrille(this.#UIQuadrille, { x: BOARD_LOCAL_POSITION.x, y: BOARD_LOCAL_POSITION.y, cellLength: BOARD_SQUARE_SIZE });
+        graphics.drawQuadrille(this.#UIQuadrille, { x: BOARD_UI_SETTINGS.LOCAL_POSITION.x, y: BOARD_UI_SETTINGS.LOCAL_POSITION.y, cellLength: BOARD_UI_SETTINGS.SQUARE_SIZE });
     }
 }
