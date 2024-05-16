@@ -46,7 +46,14 @@ export class Game {
         return this.#gameState;
     }
     #timerToMove = 0;
-    #timeToMakeMove = 200;
+    #automaticMovesTimeInterval = 1000;
+    /**
+     * Time between moves in Automatic mode in miliseconds. 1000ms by default
+     */
+    set automaticMovesTimeInterval(value) {
+        assert(typeof value === 'number', "Invalid value");
+        this.#automaticMovesTimeInterval = value;
+    }
 
     //Objects
     #legalMoves = [];
@@ -160,7 +167,7 @@ export class Game {
     #runGameAutomatically() {
         if (this.isGameFinished()) return;
         this.#timerToMove += deltaTime;
-        if (this.#timeToMakeMove < this.#timerToMove) {
+        if (this.#automaticMovesTimeInterval < this.#timerToMove) {
             let randomMove = random(this.#legalMoves);
             if (randomMove.flag === E_MoveFlag.Promotion) {
                 randomMove.newPieceType = random(PIECE_TYPES_TO_PROMOTE);
