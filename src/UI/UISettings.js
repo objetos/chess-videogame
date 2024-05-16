@@ -49,6 +49,9 @@ export const MOVE_RECORD_UI_SETTINGS = {
     CELL_LENGTH: 40,
     SPACE_FROM_BOARD: 20,
     MAX_ROWS_VISIBLE: 8,
+    BUTTON_SPACE_FROM_TABLE: 20,
+    BUTTON_WIDTH: 50,
+    BUTTON_HEIGHT: 20,
     get POSITION() {
         return {
             x: BOARD_UI_SETTINGS.LOCAL_POSITION.x + BOARD_UI_SETTINGS.WIDTH + this.SPACE_FROM_BOARD,
@@ -56,7 +59,9 @@ export const MOVE_RECORD_UI_SETTINGS = {
         }
     },
     ROW_HEIGHT: BOARD_UI_SETTINGS.SQUARE_SIZE,
-    WIDTH: BOARD_UI_SETTINGS.SQUARE_SIZE * 3,
+    get TABLE_WIDTH() { return BOARD_UI_SETTINGS.SQUARE_SIZE * 3 },
+    get TABLE_HEIGHT() { return this.ROW_HEIGHT * this.MAX_ROWS_VISIBLE },
+    get WIDTH() { return this.TABLE_WIDTH + this.BUTTON_SPACE_FROM_TABLE + this.BUTTON_WIDTH },
     get HEIGHT() { return this.ROW_HEIGHT * this.MAX_ROWS_VISIBLE }
 }
 //--Resign Button--

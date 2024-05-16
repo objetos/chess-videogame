@@ -34,6 +34,7 @@ export default class MoveRecordUI {
             this.#firstVisibleRow--
             this.#updateButtons();
         });
+        this.#upButton.size(MOVE_RECORD_UI_SETTINGS.BUTTON_WIDTH, MOVE_RECORD_UI_SETTINGS.BUTTON_HEIGHT);
         this.#upButton.hide();
 
         this.#downButton = createButton("Down");
@@ -41,7 +42,7 @@ export default class MoveRecordUI {
             this.#firstVisibleRow++
             this.#updateButtons();
         });
-
+        this.#downButton.size(MOVE_RECORD_UI_SETTINGS.BUTTON_WIDTH, MOVE_RECORD_UI_SETTINGS.BUTTON_HEIGHT);
         this.#downButton.hide();
     }
 
@@ -130,9 +131,13 @@ export default class MoveRecordUI {
             },
         });
 
-        this.#upButton.position(graphicsX + MOVE_RECORD_UI_SETTINGS.POSITION.x + MOVE_RECORD_UI_SETTINGS.WIDTH + 20,
-            graphicsY + MOVE_RECORD_UI_SETTINGS.POSITION.y + MOVE_RECORD_UI_SETTINGS.HEIGHT / 2 - 25);
-        this.#downButton.position(graphicsX + MOVE_RECORD_UI_SETTINGS.POSITION.x + MOVE_RECORD_UI_SETTINGS.WIDTH + 20,
-            graphicsY + MOVE_RECORD_UI_SETTINGS.POSITION.y + MOVE_RECORD_UI_SETTINGS.HEIGHT / 2 + 25);
+        this.#upButton.position(
+            graphicsX + MOVE_RECORD_UI_SETTINGS.POSITION.x + MOVE_RECORD_UI_SETTINGS.TABLE_WIDTH + MOVE_RECORD_UI_SETTINGS.BUTTON_SPACE_FROM_TABLE,
+            graphicsY + MOVE_RECORD_UI_SETTINGS.POSITION.y + MOVE_RECORD_UI_SETTINGS.TABLE_HEIGHT / 2 - 25
+        );
+        this.#downButton.position(
+            graphicsX + MOVE_RECORD_UI_SETTINGS.POSITION.x + MOVE_RECORD_UI_SETTINGS.TABLE_WIDTH + MOVE_RECORD_UI_SETTINGS.BUTTON_SPACE_FROM_TABLE,
+            graphicsY + MOVE_RECORD_UI_SETTINGS.POSITION.y + MOVE_RECORD_UI_SETTINGS.TABLE_HEIGHT / 2 + 25
+        );
     }
 }
