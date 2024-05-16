@@ -1,10 +1,10 @@
-var Board = webBuild.Board;
-var E_PieceColor = webBuild.E_PieceColor;
-var E_PieceType = webBuild.E_PieceType;
-var E_MoveFlag = webBuild.E_MoveFlag;
-var OppositePieceColor = webBuild.ChessUtils.OppositePieceColor;
-var MoveToString = webBuild.ChessUtils.MoveToString;
-var pieceColorTypeToKey = webBuild.ChessUtils.pieceColorTypeToKey;
+var Board = Chess.Board;
+var E_PieceColor = Chess.E_PieceColor;
+var E_PieceType = Chess.E_PieceType;
+var E_MoveFlag = Chess.E_MoveFlag;
+var OppositePieceColor = Chess.ChessUtils.OppositePieceColor;
+var MoveToString = Chess.ChessUtils.MoveToString;
+var pieceColorTypeToKey = Chess.ChessUtils.pieceColorTypeToKey;
 
 
 export function runPerftTest(testPosition) {
