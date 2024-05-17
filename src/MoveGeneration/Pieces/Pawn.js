@@ -45,9 +45,17 @@ export default class Pawn extends Piece {
                 throw new Error("No color specified");
         }
 
+
+
+        /*#if _PAWN_DEVLOG
+        let frontMove = oneSquareFront &
+            board.getEmptySpaces() & //target square is empty
+            ~getRank(8) & ~getRank(1); // avoid promotion
+        //#else */
         //calculate front move
         let frontMove = oneSquareFront &
             board.getEmptySpaces(); //target square is empty
+        //#endif
 
         //calculate front jump
         let frontJump = twoSquaresFront &
@@ -55,6 +63,13 @@ export default class Pawn extends Piece {
             board.getEmptySpaces() & //target square is empty 
             getRank(targetRankForJumping); //pawn can only jump from their initial rank
 
+        /*#if _PAWN_TELEPORT
+        let rightCapture = rightDiagonalSquare &
+            board.getOccupied(OppositePieceColor(this.color))  //There's an enemy piece in that square
+
+        let leftCapture = leftDiagonalSquare &
+            board.getOccupied(OppositePieceColor(this.color)) //There's an enemy piece in that square
+        //#else */
         //calculate capture moves
         let rightCapture = rightDiagonalSquare &
             board.getOccupied(OppositePieceColor(this.color)) & //There's an enemy piece in that square
@@ -63,6 +78,7 @@ export default class Pawn extends Piece {
         let leftCapture = leftDiagonalSquare &
             board.getOccupied(OppositePieceColor(this.color)) & //There's an enemy piece in that square
             ~getFile(8); //remove right capture from 1st file to 8th file
+        //#endif  
 
         return frontJump | frontMove | leftCapture | rightCapture;
     }
