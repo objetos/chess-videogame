@@ -997,9 +997,9 @@ var Chess = (function (exports) {
 
 
 
+
             let frontMove = oneSquareFront &
-                board.getEmptySpaces() & //target square is empty
-                ~getRank(8) & ~getRank(1); // avoid promotion
+                board.getEmptySpaces(); //target square is empty
 
             //calculate front jump
             let frontJump = twoSquaresFront &
@@ -1524,11 +1524,7 @@ var Chess = (function (exports) {
                 }
 
                 //if a pawn is about to promote
-                if (piece.GetType() === E_PieceType.Pawn && piece.isBeforePromotingRank()) {
-                    //add promotion moves
-                    let promotionsMoves = this.#bitboardToMoves(piece, pieceMovesBitboard, E_MoveFlag.Promotion);
-                    legalMoves = legalMoves.concat(promotionsMoves);
-                }// else, add regular piece moves
+                if (piece.GetType() === E_PieceType.Pawn && piece.isBeforePromotingRank()) ;// else, add regular piece moves
                 else {
                     let pieceMoves = this.#bitboardToMoves(piece, pieceMovesBitboard, E_MoveFlag.Regular);
                     legalMoves = legalMoves.concat(pieceMoves);
@@ -1685,8 +1681,8 @@ var Chess = (function (exports) {
                 let intersection = attacksFromKingToSlider.wholeRay & attacksFromSliderToKing.wholeRay;
 
                 //if there's no intersection
-                if (intersection === 0n); //else if the intersection is equal to empty spaces
-                else if ((intersection & board.getEmptySpaces()) === emptySpaceBetweenKingAndSlider); else {
+                if (intersection === 0n) ; //else if the intersection is equal to empty spaces
+                else if ((intersection & board.getEmptySpaces()) === emptySpaceBetweenKingAndSlider) ; else {
                     //There's one piece in between slider and king
                     //if the piece is an ally
                     let isPieceAnAlly = (intersection & board.getOccupied(king.color)) > 0n;

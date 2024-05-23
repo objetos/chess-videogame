@@ -65,9 +65,13 @@ export default class MoveGenerator {
 
             //if a pawn is about to promote
             if (piece.GetType() === E_PieceType.Pawn && piece.isBeforePromotingRank()) {
+                /*#if _NO_PROMOTION
+                //#else */
                 //add promotion moves
                 let promotionsMoves = this.#bitboardToMoves(piece, pieceMovesBitboard, E_MoveFlag.Promotion);
                 legalMoves = legalMoves.concat(promotionsMoves);
+                //#endif  
+
             }// else, add regular piece moves
             else {
                 let pieceMoves = this.#bitboardToMoves(piece, pieceMovesBitboard, E_MoveFlag.Regular);

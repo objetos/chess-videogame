@@ -47,15 +47,9 @@ export default class Pawn extends Piece {
 
 
 
-        /*#if _PAWN_DEVLOG
-        let frontMove = oneSquareFront &
-            board.getEmptySpaces() & //target square is empty
-            ~getRank(8) & ~getRank(1); // avoid promotion
-        //#else */
-        //calculate front move
+
         let frontMove = oneSquareFront &
             board.getEmptySpaces(); //target square is empty
-        //#endif
 
         //calculate front jump
         let frontJump = twoSquaresFront &
