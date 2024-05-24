@@ -9,7 +9,12 @@ export const BOARD_UI_SETTINGS = {
     LOCAL_POSITION: {
         get x() { return BOARD_UI_SETTINGS.SQUARE_SIZE },
         get y() { return GAME_STATE_UI_SETTINGS.HEIGHT + GAME_STATE_UI_SETTINGS.SPACE_FROM_BOARD }
-    }
+    },
+    WHITE_SQUARE_COLOR: '#ffffff',
+    BLACK_SQUARE_COLOR: '#44c969',
+    OUTLINE: '#44c969',
+    PIECES_SIZE: 35,
+    PIECES_COLOR: '#000000'
 }
 //--Pieces Captured UI--
 export const PIECES_CAPTURED_UI_SETTINGS = {
@@ -84,8 +89,8 @@ export const RANKS_FILES_UI_SETTING = {
 }
 
 export const MOVE_INPUT_UI_SETTINGS = {
-    COLOR_FOR_SELECTED_SQUARES: 'rgba(100,100,100,0.3)',
-    COLOR_FOR_AVAILABLE_MOVES: '#b3ffb3'
+    COLOR_FOR_SELECTED_SQUARES: 'rgba(100,100,100,0.5)',
+    COLOR_FOR_AVAILABLE_MOVES: 'rgba(245, 246, 130,0.7)'
 }
 //--Promotion Selector--
 export const PROMOTION_SELECTOR_SETTINGS = {

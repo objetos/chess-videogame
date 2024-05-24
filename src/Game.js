@@ -187,8 +187,8 @@ export class Game {
             this.#gameStateUI.draw(this.#graphics);
         }
 
-        this.#moveInputUI.draw(this.#graphics);
         this.#board.draw(this.#graphics);
+        this.#moveInputUI.draw(this.#graphics);
         this.#promotionSelector.draw(this.#graphics);
 
         this.#drawRanksAndFiles(this.#graphics);
