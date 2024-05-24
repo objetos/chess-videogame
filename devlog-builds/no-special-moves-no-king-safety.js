@@ -1494,20 +1494,7 @@ var Chess = (function (exports) {
             let moveFilterForPinnedPieces = {};//filter for moves of pinned pieces
 
             if (king !== undefined) {
-                let checkers = this.#calculateCheckers(king, enemyPieces, board);
                 let kingSafeMoves = this.#generateKingSafeMoves(king, enemyPieces, board);
-
-                //if there's more than one checker
-                if (1 < checkers.length) {
-                    //the only possible moves are king moves
-                    return kingSafeMoves;
-                } //else if there is just 1 checker
-                else if (checkers.length === 1) {
-                    //calculate squares that can block the check or capture checker
-                    targetSquaresToAvoidCheck = this.#calculateSquaresToAvoidCheck(king, checkers[0], board);
-                }
-
-                moveFilterForPinnedPieces = this.#calculatePinnedPieces(king, enemyPieces, board);
                 legalMoves = legalMoves.concat(kingSafeMoves);
             }
 
@@ -1535,13 +1522,7 @@ var Chess = (function (exports) {
             }
 
             //generate enpassant move
-            let pawns = board.getPiecesOfType(pieceColor, E_PieceType.Pawn);
-            let enPassantMoves = this.#generateEnPassantMoves(pawns, board);
-            legalMoves = legalMoves.concat(enPassantMoves);
-            //generate castling moves
-            let rooks = board.getPiecesOfType(pieceColor, E_PieceType.Rook);
-            let castlingMoves = this.#generateCastlingMoves(king, rooks, board);
-            legalMoves = legalMoves.concat(castlingMoves);
+
 
             return legalMoves;
         }
@@ -1574,12 +1555,6 @@ var Chess = (function (exports) {
          */
         #generateKingSafeMoves(king, enemyPieces, board) {
             let dangerousSquaresForKing = 0n;
-            board.removePiece(king.rank, king.file);//remove king temporarily to consider squares behind the king
-            let squaresAttackedByEnemy = board.getAttackedSquares(OppositePieceColor(king.color));
-            let dangerouseCaptures = this.#calculateProtectedPieces(enemyPieces, board);
-            board.addPiece(king, king.rank, king.file);
-
-            dangerousSquaresForKing = dangerouseCaptures | squaresAttackedByEnemy;
 
             let kingMovesBitboard = king.GetMoves(board) & ~dangerousSquaresForKing;
             return this.#bitboardToMoves(king, kingMovesBitboard, E_MoveFlag.Regular);
@@ -1740,38 +1715,7 @@ var Chess = (function (exports) {
          * @returns Whether the en passant move is legal
          */
         #isEnPassantLegal(playingColor, enPassant, board) {
-            let capturedPawnRank = enPassant.startRank;
-            let capturedPawnFile = enPassant.endFile;
-            let capturingPawnRank = enPassant.startRank;
-            let capturingPawnFile = enPassant.startFile;
-
-            //check is king is currently in check
-            let checkBeforeEnPassant = board.isKingInCheck(playingColor);
-
-            //simulate making the en passant capture by removing both pieces
-            let capturedPawn = board.removePiece(capturedPawnRank, capturedPawnFile);
-            let capturingPawn = board.removePiece(capturingPawnRank, capturingPawnFile);
-
-            //check if king is in check after making the en passant capture
-            let checkAfterEnPassant = board.isKingInCheck(playingColor);
-
-            //add removed pawns
-            board.addPiece(capturedPawn, capturedPawnRank, capturedPawnFile);
-            board.addPiece(capturingPawn, capturingPawnRank, capturingPawnFile);
-
-            if (!checkBeforeEnPassant & !checkAfterEnPassant) {
-                //en passant is legal
-                return true;
-            } else if (checkBeforeEnPassant && !checkAfterEnPassant) {
-                //en passant blocks the check or captures pawn that was checking. Therefore, it is legal
-                return true;
-            } else if (!checkBeforeEnPassant & checkAfterEnPassant) {
-                //en passant discovers a check. Therefore, it is illegal
-                return false;
-            } else if (checkBeforeEnPassant & checkAfterEnPassant) {
-                //en passant discovered another check or enpassant move does not remove the check
-                return false;
-            }
+            return true;
         }
 
         /**

@@ -31,8 +31,10 @@ export default class MoveGenerator {
         let moveFilterForPinnedPieces = {};//filter for moves of pinned pieces
 
         if (king !== undefined) {
-            let checkers = this.#calculateCheckers(king, enemyPieces, board);
             let kingSafeMoves = this.#generateKingSafeMoves(king, enemyPieces, board);
+            /*#if _NO_KING_SAFETY
+            //#else */
+            let checkers = this.#calculateCheckers(king, enemyPieces, board);
 
             //if there's more than one checker
             if (1 < checkers.length) {
@@ -45,6 +47,7 @@ export default class MoveGenerator {
             }
 
             moveFilterForPinnedPieces = this.#calculatePinnedPieces(king, enemyPieces, board);
+            //#endif  
             legalMoves = legalMoves.concat(kingSafeMoves);
         }
 
@@ -65,7 +68,7 @@ export default class MoveGenerator {
 
             //if a pawn is about to promote
             if (piece.GetType() === E_PieceType.Pawn && piece.isBeforePromotingRank()) {
-                /*#if _NO_PROMOTION
+                /*#if _NO_SPECIAL_MOVES
                 //#else */
                 //add promotion moves
                 let promotionsMoves = this.#bitboardToMoves(piece, pieceMovesBitboard, E_MoveFlag.Promotion);
@@ -80,13 +83,18 @@ export default class MoveGenerator {
         }
 
         //generate enpassant move
+        /*#if _NO_SPECIAL_MOVES
+        //#else */
         let pawns = board.getPiecesOfType(pieceColor, E_PieceType.Pawn);
         let enPassantMoves = this.#generateEnPassantMoves(pawns, board);
         legalMoves = legalMoves.concat(enPassantMoves);
+
         //generate castling moves
         let rooks = board.getPiecesOfType(pieceColor, E_PieceType.Rook);
         let castlingMoves = this.#generateCastlingMoves(king, rooks, board);
         legalMoves = legalMoves.concat(castlingMoves);
+        //#endif  
+
 
         return legalMoves;
     }
@@ -119,12 +127,15 @@ export default class MoveGenerator {
      */
     #generateKingSafeMoves(king, enemyPieces, board) {
         let dangerousSquaresForKing = 0n;
+        /*#if _NO_KING_SAFETY
+        //#else */
         board.removePiece(king.rank, king.file);//remove king temporarily to consider squares behind the king
         let squaresAttackedByEnemy = board.getAttackedSquares(OppositePieceColor(king.color));
         let dangerouseCaptures = this.#calculateProtectedPieces(enemyPieces, board);
         board.addPiece(king, king.rank, king.file);
 
         dangerousSquaresForKing = dangerouseCaptures | squaresAttackedByEnemy;
+        //#endif  
 
         let kingMovesBitboard = king.GetMoves(board) & ~dangerousSquaresForKing;
         return this.#bitboardToMoves(king, kingMovesBitboard, E_MoveFlag.Regular);
@@ -292,6 +303,9 @@ export default class MoveGenerator {
      * @returns Whether the en passant move is legal
      */
     #isEnPassantLegal(playingColor, enPassant, board) {
+        /*#if _NO_KING_SAFETY
+        return true;
+        //#else */
         let capturedPawnRank = enPassant.startRank;
         let capturedPawnFile = enPassant.endFile;
         let capturingPawnRank = enPassant.startRank;
@@ -324,6 +338,7 @@ export default class MoveGenerator {
             //en passant discovered another check or enpassant move does not remove the check
             return false;
         }
+        //#endif  
     }
 
     /**
