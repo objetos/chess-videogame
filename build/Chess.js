@@ -333,7 +333,12 @@ var Chess = (function (exports) {
         LOCAL_POSITION: {
             get x() { return BOARD_UI_SETTINGS.SQUARE_SIZE },
             get y() { return GAME_STATE_UI_SETTINGS.HEIGHT + GAME_STATE_UI_SETTINGS.SPACE_FROM_BOARD }
-        }
+        },
+        WHITE_SQUARE_COLOR: '#ffffff',
+        BLACK_SQUARE_COLOR: '#44c969',
+        OUTLINE: '#44c969',
+        PIECES_SIZE: 35,
+        PIECES_COLOR: '#000000'
     };
     //--Pieces Captured UI--
     const PIECES_CAPTURED_UI_SETTINGS = {
@@ -373,6 +378,9 @@ var Chess = (function (exports) {
         CELL_LENGTH: 40,
         SPACE_FROM_BOARD: 20,
         MAX_ROWS_VISIBLE: 8,
+        BUTTON_SPACE_FROM_TABLE: 20,
+        BUTTON_WIDTH: 50,
+        BUTTON_HEIGHT: 20,
         get POSITION() {
             return {
                 x: BOARD_UI_SETTINGS.LOCAL_POSITION.x + BOARD_UI_SETTINGS.WIDTH + this.SPACE_FROM_BOARD,
@@ -380,7 +388,9 @@ var Chess = (function (exports) {
             }
         },
         ROW_HEIGHT: BOARD_UI_SETTINGS.SQUARE_SIZE,
-        WIDTH: BOARD_UI_SETTINGS.SQUARE_SIZE * 3,
+        get TABLE_WIDTH() { return BOARD_UI_SETTINGS.SQUARE_SIZE * 3 },
+        get TABLE_HEIGHT() { return this.ROW_HEIGHT * this.MAX_ROWS_VISIBLE },
+        get WIDTH() { return this.TABLE_WIDTH + this.BUTTON_SPACE_FROM_TABLE + this.BUTTON_WIDTH },
         get HEIGHT() { return this.ROW_HEIGHT * this.MAX_ROWS_VISIBLE }
     };
     //--Resign Button--
@@ -403,8 +413,8 @@ var Chess = (function (exports) {
     };
 
     const MOVE_INPUT_UI_SETTINGS = {
-        COLOR_FOR_SELECTED_SQUARES: 'rgba(100,100,100,0.3)',
-        COLOR_FOR_AVAILABLE_MOVES: '#b3ffb3'
+        COLOR_FOR_SELECTED_SQUARES: 'rgba(100,100,100,0.5)',
+        COLOR_FOR_AVAILABLE_MOVES: 'rgba(245, 246, 130,0.7)'
     };
     //--Promotion Selector--
     const PROMOTION_SELECTOR_SETTINGS = {
@@ -2003,12 +2013,15 @@ var Chess = (function (exports) {
         }
     }
 
+    /* globals CENTER */
+
     //******  CLASS PROLOG, ASSERT AND DOCUMENT PRIVATE METHODS
     class Board {
         #moveGenerator;
         #boardImplementation;
 
         #board = new Quadrille(NUMBER_OF_FILES, NUMBER_OF_RANKS); //board with pieces in symbol representation
+        #boardBackground;
 
         #boardChanges = [];
         #E_BoardChangeType = Object.freeze({
@@ -2102,6 +2115,11 @@ var Chess = (function (exports) {
 
             //initialize board implementation
             this.#boardImplementation = new BoardImplementation(inputFen, this.#castlingRights, this.#enPassantInfo);
+
+            Quadrille.whiteSquare = BOARD_UI_SETTINGS.WHITE_SQUARE_COLOR;
+            Quadrille.blackSquare = BOARD_UI_SETTINGS.BLACK_SQUARE_COLOR;
+            this.#boardBackground = new Quadrille();
+
         }
 
 
@@ -2246,7 +2264,19 @@ var Chess = (function (exports) {
          * Draws board
          */
         draw(graphics) {
-            graphics.drawQuadrille(this.#board, { x: BOARD_UI_SETTINGS.LOCAL_POSITION.x, y: BOARD_UI_SETTINGS.LOCAL_POSITION.y, cellLength: BOARD_UI_SETTINGS.SQUARE_SIZE });
+            graphics.drawQuadrille(this.#boardBackground, { x: BOARD_UI_SETTINGS.LOCAL_POSITION.x, y: BOARD_UI_SETTINGS.LOCAL_POSITION.y, cellLength: BOARD_UI_SETTINGS.SQUARE_SIZE });
+            graphics.drawQuadrille(this.#board, {
+                x: BOARD_UI_SETTINGS.LOCAL_POSITION.x,
+                y: BOARD_UI_SETTINGS.LOCAL_POSITION.y,
+                cellLength: BOARD_UI_SETTINGS.SQUARE_SIZE,
+                outline: color(BOARD_UI_SETTINGS.OUTLINE),
+                stringDisplay: ({ graphics, value, cellLength = Quadrille.cellLength } = {}) => {
+                    graphics.textAlign(CENTER, CENTER);
+                    graphics.textSize(BOARD_UI_SETTINGS.PIECES_SIZE);
+                    graphics.fill(color(BOARD_UI_SETTINGS.PIECES_COLOR));
+                    graphics.text(value, cellLength / 2, cellLength / 2);
+                }
+            });
         }
 
         /**
@@ -2791,7 +2821,13 @@ var Chess = (function (exports) {
         }
 
         draw(graphics) {
-            graphics.drawQuadrille(this.#UIQuadrille, { x: BOARD_UI_SETTINGS.LOCAL_POSITION.x, y: BOARD_UI_SETTINGS.LOCAL_POSITION.y, cellLength: BOARD_UI_SETTINGS.SQUARE_SIZE });
+            graphics.drawQuadrille(this.#UIQuadrille,
+                {
+                    x: BOARD_UI_SETTINGS.LOCAL_POSITION.x,
+                    y: BOARD_UI_SETTINGS.LOCAL_POSITION.y,
+                    cellLength: BOARD_UI_SETTINGS.SQUARE_SIZE,
+                    outlineWeight: 0
+                });
         }
     }
 
@@ -2828,6 +2864,7 @@ var Chess = (function (exports) {
                 this.#firstVisibleRow--;
                 this.#updateButtons();
             });
+            this.#upButton.size(MOVE_RECORD_UI_SETTINGS.BUTTON_WIDTH, MOVE_RECORD_UI_SETTINGS.BUTTON_HEIGHT);
             this.#upButton.hide();
 
             this.#downButton = createButton("Down");
@@ -2835,7 +2872,7 @@ var Chess = (function (exports) {
                 this.#firstVisibleRow++;
                 this.#updateButtons();
             });
-
+            this.#downButton.size(MOVE_RECORD_UI_SETTINGS.BUTTON_WIDTH, MOVE_RECORD_UI_SETTINGS.BUTTON_HEIGHT);
             this.#downButton.hide();
         }
 
@@ -2924,10 +2961,14 @@ var Chess = (function (exports) {
                 },
             });
 
-            this.#upButton.position(graphicsX + MOVE_RECORD_UI_SETTINGS.POSITION.x + MOVE_RECORD_UI_SETTINGS.WIDTH + 20,
-                graphicsY + MOVE_RECORD_UI_SETTINGS.POSITION.y + MOVE_RECORD_UI_SETTINGS.HEIGHT / 2 - 25);
-            this.#downButton.position(graphicsX + MOVE_RECORD_UI_SETTINGS.POSITION.x + MOVE_RECORD_UI_SETTINGS.WIDTH + 20,
-                graphicsY + MOVE_RECORD_UI_SETTINGS.POSITION.y + MOVE_RECORD_UI_SETTINGS.HEIGHT / 2 + 25);
+            this.#upButton.position(
+                graphicsX + MOVE_RECORD_UI_SETTINGS.POSITION.x + MOVE_RECORD_UI_SETTINGS.TABLE_WIDTH + MOVE_RECORD_UI_SETTINGS.BUTTON_SPACE_FROM_TABLE,
+                graphicsY + MOVE_RECORD_UI_SETTINGS.POSITION.y + MOVE_RECORD_UI_SETTINGS.TABLE_HEIGHT / 2 - 25
+            );
+            this.#downButton.position(
+                graphicsX + MOVE_RECORD_UI_SETTINGS.POSITION.x + MOVE_RECORD_UI_SETTINGS.TABLE_WIDTH + MOVE_RECORD_UI_SETTINGS.BUTTON_SPACE_FROM_TABLE,
+                graphicsY + MOVE_RECORD_UI_SETTINGS.POSITION.y + MOVE_RECORD_UI_SETTINGS.TABLE_HEIGHT / 2 + 25
+            );
         }
     }
 
@@ -3303,8 +3344,8 @@ var Chess = (function (exports) {
                 this.#gameStateUI.draw(this.#graphics);
             }
 
-            this.#moveInputUI.draw(this.#graphics);
             this.#board.draw(this.#graphics);
+            this.#moveInputUI.draw(this.#graphics);
             this.#promotionSelector.draw(this.#graphics);
 
             this.#drawRanksAndFiles(this.#graphics);

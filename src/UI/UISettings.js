@@ -9,7 +9,12 @@ export const BOARD_UI_SETTINGS = {
     LOCAL_POSITION: {
         get x() { return BOARD_UI_SETTINGS.SQUARE_SIZE },
         get y() { return GAME_STATE_UI_SETTINGS.HEIGHT + GAME_STATE_UI_SETTINGS.SPACE_FROM_BOARD }
-    }
+    },
+    WHITE_SQUARE_COLOR: '#ffffff',
+    BLACK_SQUARE_COLOR: '#44c969',
+    OUTLINE: '#44c969',
+    PIECES_SIZE: 35,
+    PIECES_COLOR: '#000000'
 }
 //--Pieces Captured UI--
 export const PIECES_CAPTURED_UI_SETTINGS = {
@@ -49,6 +54,9 @@ export const MOVE_RECORD_UI_SETTINGS = {
     CELL_LENGTH: 40,
     SPACE_FROM_BOARD: 20,
     MAX_ROWS_VISIBLE: 8,
+    BUTTON_SPACE_FROM_TABLE: 20,
+    BUTTON_WIDTH: 50,
+    BUTTON_HEIGHT: 20,
     get POSITION() {
         return {
             x: BOARD_UI_SETTINGS.LOCAL_POSITION.x + BOARD_UI_SETTINGS.WIDTH + this.SPACE_FROM_BOARD,
@@ -56,7 +64,9 @@ export const MOVE_RECORD_UI_SETTINGS = {
         }
     },
     ROW_HEIGHT: BOARD_UI_SETTINGS.SQUARE_SIZE,
-    WIDTH: BOARD_UI_SETTINGS.SQUARE_SIZE * 3,
+    get TABLE_WIDTH() { return BOARD_UI_SETTINGS.SQUARE_SIZE * 3 },
+    get TABLE_HEIGHT() { return this.ROW_HEIGHT * this.MAX_ROWS_VISIBLE },
+    get WIDTH() { return this.TABLE_WIDTH + this.BUTTON_SPACE_FROM_TABLE + this.BUTTON_WIDTH },
     get HEIGHT() { return this.ROW_HEIGHT * this.MAX_ROWS_VISIBLE }
 }
 //--Resign Button--
@@ -79,8 +89,8 @@ export const RANKS_FILES_UI_SETTING = {
 }
 
 export const MOVE_INPUT_UI_SETTINGS = {
-    COLOR_FOR_SELECTED_SQUARES: 'rgba(100,100,100,0.3)',
-    COLOR_FOR_AVAILABLE_MOVES: '#b3ffb3'
+    COLOR_FOR_SELECTED_SQUARES: 'rgba(100,100,100,0.5)',
+    COLOR_FOR_AVAILABLE_MOVES: 'rgba(245, 246, 130,0.7)'
 }
 //--Promotion Selector--
 export const PROMOTION_SELECTOR_SETTINGS = {

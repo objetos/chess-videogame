@@ -1,3 +1,4 @@
+/* globals CENTER */
 import { NUMBER_OF_RANKS, NUMBER_OF_FILES } from "../Utils/ChessUtils.js";
 import { E_PieceColor } from "../Enums/E_PieceColor.js";
 import { E_PieceType } from "../Enums/E_PieceType.js";
@@ -19,6 +20,7 @@ export default class Board {
     #boardImplementation;
 
     #board = new Quadrille(NUMBER_OF_FILES, NUMBER_OF_RANKS); //board with pieces in symbol representation
+    #boardBackground;
 
     #boardChanges = [];
     #E_BoardChangeType = Object.freeze({
@@ -112,6 +114,11 @@ export default class Board {
 
         //initialize board implementation
         this.#boardImplementation = new BoardImplementation(inputFen, this.#castlingRights, this.#enPassantInfo);
+
+        Quadrille.whiteSquare = BOARD_UI_SETTINGS.WHITE_SQUARE_COLOR;
+        Quadrille.blackSquare = BOARD_UI_SETTINGS.BLACK_SQUARE_COLOR;
+        this.#boardBackground = new Quadrille();
+
     }
 
 
@@ -256,7 +263,19 @@ export default class Board {
      * Draws board
      */
     draw(graphics) {
-        graphics.drawQuadrille(this.#board, { x: BOARD_UI_SETTINGS.LOCAL_POSITION.x, y: BOARD_UI_SETTINGS.LOCAL_POSITION.y, cellLength: BOARD_UI_SETTINGS.SQUARE_SIZE });
+        graphics.drawQuadrille(this.#boardBackground, { x: BOARD_UI_SETTINGS.LOCAL_POSITION.x, y: BOARD_UI_SETTINGS.LOCAL_POSITION.y, cellLength: BOARD_UI_SETTINGS.SQUARE_SIZE });
+        graphics.drawQuadrille(this.#board, {
+            x: BOARD_UI_SETTINGS.LOCAL_POSITION.x,
+            y: BOARD_UI_SETTINGS.LOCAL_POSITION.y,
+            cellLength: BOARD_UI_SETTINGS.SQUARE_SIZE,
+            outline: color(BOARD_UI_SETTINGS.OUTLINE),
+            stringDisplay: ({ graphics, value, cellLength = Quadrille.cellLength } = {}) => {
+                graphics.textAlign(CENTER, CENTER);
+                graphics.textSize(BOARD_UI_SETTINGS.PIECES_SIZE);
+                graphics.fill(color(BOARD_UI_SETTINGS.PIECES_COLOR));
+                graphics.text(value, cellLength / 2, cellLength / 2);
+            }
+        });
     }
 
     /**
