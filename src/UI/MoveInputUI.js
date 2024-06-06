@@ -81,6 +81,12 @@ export default class MoveInputUI {
     }
 
     draw(graphics) {
-        graphics.drawQuadrille(this.#UIQuadrille, { x: BOARD_UI_SETTINGS.LOCAL_POSITION.x, y: BOARD_UI_SETTINGS.LOCAL_POSITION.y, cellLength: BOARD_UI_SETTINGS.SQUARE_SIZE });
+        graphics.drawQuadrille(this.#UIQuadrille,
+            {
+                x: BOARD_UI_SETTINGS.LOCAL_POSITION.x,
+                y: BOARD_UI_SETTINGS.LOCAL_POSITION.y,
+                cellLength: BOARD_UI_SETTINGS.SQUARE_SIZE,
+                outlineWeight: 0
+            });
     }
 }
