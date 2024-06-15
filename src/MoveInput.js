@@ -132,7 +132,6 @@ export default class MoveInput extends EventTarget {
     }
 
     #CancelMove() {
-        console.log("Cancel move");
         this.#inputMoveStart = null;
         this.#inputMoveDestination = null;
         let moveCanceled = new CustomEvent(MoveInput.inputEvents.onMoveCanceled);

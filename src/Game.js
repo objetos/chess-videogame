@@ -117,6 +117,8 @@ export class Game {
 
         this.#checkEndGame(playingColor);
         this.#checkEndGame(OppositePieceColor(playingColor));
+
+        this.update();
     }
 
     isGameFinished() {
@@ -164,6 +166,8 @@ export class Game {
         assert(Object.values(E_GameMode).includes(gameMode), "Invalid game mode");
         this.#gameMode = gameMode;
         this.#generateLegalMoves();
+        this.#checkEndGame(this.#playingColor);
+        this.#checkEndGame(OppositePieceColor(this.#playingColor));
         this.update();
         this.#updateInput();
     }
@@ -297,8 +301,6 @@ export class Game {
         } else {
             //this.#checkDraw();
         }
-
-        this.update();
     }
 
     // #checkDraw() {
