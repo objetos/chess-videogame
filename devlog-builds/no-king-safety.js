@@ -1751,6 +1751,9 @@ var Chess = (function (exports) {
             //The king cannot be in check
             if (board.isKingInCheck(king.color)) return [];
 
+            //if the king is not on its initial square, castling is not possible
+            if (!king.isOnInitialSquare()) return [];
+
             let castlingMoves = [];
             for (let rook of rooks) {
                 //if rook is not on its initial square, skip
@@ -2028,7 +2031,7 @@ var Chess = (function (exports) {
                 let kingKey = pieceColorTypeToKey(color, E_PieceType.King);
                 let kingSymbol = Quadrille.chessSymbols[kingKey];
                 let kingPos = this.#board.search(createQuadrille([kingSymbol]), true)[0];
-                //if board has no king or king has moved from initial square
+                //if board has no king
                 if (kingPos === undefined) {
                     //no castling is possible
                     this.#setCastlingRights(color, E_CastlingSide.KingSide, false);
@@ -2257,8 +2260,6 @@ var Chess = (function (exports) {
 
             console.log(string);
         }
-
-
 
         /**
          * Adds a piece to given rank and file
@@ -3175,6 +3176,9 @@ var Chess = (function (exports) {
         #moveRecord;
         #moveInput;
         #board;
+        get board() {
+            return this.#board;
+        }
 
         //UI
         #moveRecordUI;
