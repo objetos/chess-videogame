@@ -43,10 +43,7 @@ export class Game {
     #timerToMove = 0;
     #automaticMovesTimeInterval = 1000;
     #winningColor = null;
-    #startConditions = {
-        fen: undefined,
-        playingColor: undefined,
-    }
+    #startColor = undefined;
 
     get playingColor() {
         return this.#playingColor;
@@ -116,8 +113,7 @@ export class Game {
         this.#createResignButton();
         this.#createResetButton();
 
-        this.#startConditions.fen = inputFen;
-        this.#startConditions.playingColor = playingColor;
+        this.#startColor = playingColor;
 
         this.#checkEndGame(playingColor);
         this.#checkEndGame(OppositePieceColor(playingColor));
@@ -174,9 +170,15 @@ export class Game {
 
     reset() {
         this.#gameState = E_GameState.PLAYING;
-        this.#playingColor = this.#startConditions.playingColor;
-        this.#legalMoves = this.#board.generateMoves(this.#playingColor);
+        this.#playingColor = this.#startColor;
+        this.#board.reset();
         this.#moveRecord.clear();
+        this.#moveInput.reset();
+        this.#winningColor = null;
+        this.#generateLegalMoves();
+        this.#checkEndGame(this.#playingColor);
+        this.#checkEndGame(OppositePieceColor(this.#playingColor));
+        this.update();
     }
 
     #updateInput() {

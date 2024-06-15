@@ -1,3 +1,4 @@
+/* globals CENTER createButton*/
 import { assert } from "../../Testing/TestTools.js";
 import { MOVE_RECORD_UI_SETTINGS } from "./UISettings.js";
 import MoveRecord from "../MoveRecord.js";
@@ -24,6 +25,7 @@ export default class MoveRecordUI {
 
         moveRecord.addEventListener(MoveRecord.events.onMoveRecorded, this.#onMoveRecorded.bind(this));
         moveRecord.addEventListener(MoveRecord.events.onMoveUnrecorded, this.#onMoveUnrecorded.bind(this));
+        moveRecord.addEventListener(MoveRecord.events.onClear, this.#onClear.bind(this));
 
         this.#table = createQuadrille(3, 1);
         this.#table.fill(0, 0, 1);
@@ -53,6 +55,12 @@ export default class MoveRecordUI {
 
     #onMoveUnrecorded(event) {
 
+    }
+
+    #onClear(event) {
+        this.#table = createQuadrille(3, 1);
+        this.#table.fill(0, 0, 1);
+        this.#updateButtons();
     }
 
     #addNewEntry(move) {

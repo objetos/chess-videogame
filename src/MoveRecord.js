@@ -11,7 +11,8 @@ import { assert } from "../Testing/TestTools.js";
 export default class MoveRecord extends EventTarget {
     static events = {
         onMoveRecorded: "system:move-recorded",
-        onMoveUnrecorded: "system:move-recorded"
+        onMoveUnrecorded: "system:move-recorded",
+        onClear: "system:move-record-clear"
     }
 
     #record = [];
@@ -169,5 +170,8 @@ export default class MoveRecord extends EventTarget {
 
     clear() {
         this.#record = [];
+        //notify
+        let onClear = new CustomEvent(MoveRecord.events.onClear);
+        this.dispatchEvent(onClear);
     }
 }

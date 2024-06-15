@@ -55,6 +55,10 @@ export default class MoveInput extends EventTarget {
         this.addEventListener(event, callback);
     }
 
+    reset() {
+        this.#CancelMove();
+    }
+
     #handleClick(clickX, clickY, boardPositionX, boardPositionY) {
         if (!this.#enabled) return;
         //get click coordinates relative to page
@@ -128,6 +132,7 @@ export default class MoveInput extends EventTarget {
     }
 
     #CancelMove() {
+        console.log("Cancel move");
         this.#inputMoveStart = null;
         this.#inputMoveDestination = null;
         let moveCanceled = new CustomEvent(MoveInput.inputEvents.onMoveCanceled);
