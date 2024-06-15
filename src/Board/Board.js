@@ -72,7 +72,7 @@ export default class Board {
             let kingKey = pieceColorTypeToKey(color, E_PieceType.King);
             let kingSymbol = Quadrille.chessSymbols[kingKey];
             let kingPos = this.#board.search(createQuadrille([kingSymbol]), true)[0];
-            //if board has no king or king has moved from initial square
+            //if board has no king
             if (kingPos === undefined) {
                 //no castling is possible
                 this.#setCastlingRights(color, E_CastlingSide.KingSide, false);
@@ -301,8 +301,6 @@ export default class Board {
 
         console.log(string);
     }
-
-
 
     /**
      * Adds a piece to given rank and file
