@@ -63,6 +63,9 @@ export class Game {
     #moveRecord;
     #moveInput;
     #board;
+    get board() {
+        return this.#board;
+    }
 
     //UI
     #moveRecordUI;

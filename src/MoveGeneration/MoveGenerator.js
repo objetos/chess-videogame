@@ -356,6 +356,9 @@ export default class MoveGenerator {
         //The king cannot be in check
         if (board.isKingInCheck(king.color)) return [];
 
+        //if the king is not on its initial square, castling is not possible
+        if (!king.isOnInitialSquare()) return [];
+
         let castlingMoves = [];
         for (let rook of rooks) {
             //if rook is not on its initial square, skip
