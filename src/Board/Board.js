@@ -260,6 +260,26 @@ export default class Board {
     }
 
     /**
+     * 
+     * @param {E_PieceColor} color 
+     * @param {E_CastlingSide} castlingSide 
+     * @returns Whether the given side has rights to castle (It does not necesarilly mean castling is possible).
+     */
+    hasCastlingRights(color, castlingSide) {
+        assertPieceColor(color);
+        assert(castlingSide === E_CastlingSide.QueenSide || castlingSide === E_CastlingSide.KingSide, "Invalid castling side");
+
+        return this.#castlingRights[color][castlingSide];
+    }
+    /**
+     * 
+     * @returns Object with information about en passant capture
+     */
+    getEnPassantInfo() {
+        return this.#enPassantInfo;
+    }
+
+    /**
      * Draws board
      */
     draw(graphics) {

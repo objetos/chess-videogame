@@ -166,4 +166,8 @@ export default class MoveRecord extends EventTarget {
     getRecord() {
         return [...this.#record];
     }
+
+    clear() {
+        this.#record = [];
+    }
 }

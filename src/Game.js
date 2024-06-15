@@ -3,7 +3,7 @@ import { E_PieceColor } from "./Enums/E_PieceColor.js";
 import { E_GameState } from "./Enums/E_GameState.js";
 import { E_GameMode } from "./Enums/E_GameMode.js";
 import { E_MoveFlag } from "../src/Enums/E_MoveFlag.js";
-import { MOVE_RECORD_UI_SETTINGS, RANKS_FILES_UI_SETTING, BOARD_UI_SETTINGS, GAME_STATE_UI_SETTINGS, PIECES_CAPTURED_UI_SETTINGS, RESIGN_BUTTON_UI_SETTINGS } from "./UI/UISettings.js";
+import { MOVE_RECORD_UI_SETTINGS, RANKS_FILES_UI_SETTING, BOARD_UI_SETTINGS, GAME_STATE_UI_SETTINGS, PIECES_CAPTURED_UI_SETTINGS, RESIGN_BUTTON_UI_SETTINGS, RESET_BUTTON_UI_SETTINGS } from "./UI/UISettings.js";
 import { OppositePieceColor, PIECE_TYPES_TO_PROMOTE } from "./Utils/ChessUtils.js";
 import { assert } from "../Testing/TestTools.js";
 import Board from "./Board/Board.js";
@@ -14,6 +14,7 @@ import MoveRecordUI from "./UI/MoveRecordUI.js";
 import PiecesCapturedUI from "./UI/PiecesCapturedUI.js";
 import GameStateUI from "./UI/GameStateUI.js";
 import PromotionSelector from "./UI/PromotionSelector.js";
+import { E_CastlingSide } from "./Enums/E_CastlingSide.js";
 
 
 //FENS
@@ -39,14 +40,23 @@ export class Game {
     #playingColor = E_PieceColor.White;
     #gameState = E_GameState.PLAYING;
     #gameMode = E_GameMode.STANDARD;
+    #timerToMove = 0;
+    #automaticMovesTimeInterval = 1000;
+    #winningColor = null;
+    #startConditions = {
+        fen: undefined,
+        playingColor: undefined,
+    }
+
     get playingColor() {
         return this.#playingColor;
     }
     get state() {
         return this.#gameState;
     }
-    #timerToMove = 0;
-    #automaticMovesTimeInterval = 1000;
+    get winningColor() {
+        return this.#winningColor;
+    }
     /**
      * Time between moves in Automatic mode in miliseconds. 1000ms by default
      */
@@ -73,6 +83,7 @@ export class Game {
     #piecesCapturedUI;
     #gameStateUI;
     #resignButton;
+    #resetButton;
     #graphics;
     #promotionSelector;
     #position;
@@ -103,6 +114,13 @@ export class Game {
         this.#gameStateUI = new GameStateUI(this);
         this.#promotionSelector = new PromotionSelector();
         this.#createResignButton();
+        this.#createResetButton();
+
+        this.#startConditions.fen = inputFen;
+        this.#startConditions.playingColor = playingColor;
+
+        this.#checkEndGame(playingColor);
+        this.#checkEndGame(OppositePieceColor(playingColor));
     }
 
     isGameFinished() {
@@ -143,6 +161,7 @@ export class Game {
      * STANDARD: Standard chess with all moves. Player makes moves on board.
      * AUTOMATIC: The machine will make random moves automatically until the game is finished. No draw offers.
      * FREE: Any color can move. Board might have a legal configuration or not. No end game. No option for resigning nor draw offers. Player makes moves on board.
+     * VIEW-ONLY: No input received. 
      * @param {E_GameMode} gameMode 
      */
     setGameMode(gameMode) {
@@ -151,6 +170,13 @@ export class Game {
         this.#generateLegalMoves();
         this.update();
         this.#updateInput();
+    }
+
+    reset() {
+        this.#gameState = E_GameState.PLAYING;
+        this.#playingColor = this.#startConditions.playingColor;
+        this.#legalMoves = this.#board.generateMoves(this.#playingColor);
+        this.#moveRecord.clear();
     }
 
     #updateInput() {
@@ -163,6 +189,9 @@ export class Game {
                 break;
             case E_GameMode.FREE:
                 this.#moveInput.enabled = true;
+                break;
+            case E_GameMode.VIEW_ONLY:
+                this.#moveInput.enabled = false;
                 break;
         }
     }
@@ -197,6 +226,7 @@ export class Game {
         this.#drawRanksAndFiles(this.#graphics);
 
         this.#updateResignButton();
+        this.#updateResetButton();
 
         image(this.#graphics, this.#position.x, this.#position.y);
     }
@@ -256,6 +286,7 @@ export class Game {
             if (this.#board.isKingInCheck(playingColor)) {
                 //game finished by checkmate
                 this.#gameState = E_GameState.CHECKMATE;
+                this.#winningColor = OppositePieceColor(playingColor);
             }
             else {
                 //game finished by stalemate
@@ -264,6 +295,8 @@ export class Game {
         } else {
             //this.#checkDraw();
         }
+
+        this.update();
     }
 
     // #checkDraw() {
@@ -275,19 +308,38 @@ export class Game {
     #createResignButton() {
         let button = createButton(RESIGN_BUTTON_UI_SETTINGS.TEXT);
         button.position(this.#position.x + RESIGN_BUTTON_UI_SETTINGS.POSITION.x, this.#position.y + RESIGN_BUTTON_UI_SETTINGS.POSITION.y);
-        button.mouseClicked(() => {
-            this.#gameState = E_GameState.RESIGNED;
-            button.hide();
-        });
+        button.mouseClicked(this.#onResign.bind(this));
         this.#resignButton = button;
     }
 
+    #createResetButton() {
+        let button = createButton(RESET_BUTTON_UI_SETTINGS.TEXT);
+        button.position(this.#position.x + RESET_BUTTON_UI_SETTINGS.POSITION.x, this.#position.y + RESET_BUTTON_UI_SETTINGS.POSITION.y);
+        button.mouseClicked(() => {
+            this.reset();
+        });
+        this.#resetButton = button;
+    }
+
+    #updateResetButton() {
+        if (this.#gameMode === E_GameMode.VIEW_ONLY) {
+            this.#resetButton.hide();
+        } else {
+            this.#resetButton.show();
+        }
+    }
+
     #updateResignButton() {
-        if (this.isGameFinished() || this.#gameMode === E_GameMode.FREE) {
+        if (this.isGameFinished() || this.#gameMode === E_GameMode.FREE || this.#gameMode === E_GameMode.VIEW_ONLY) {
             this.#resignButton.hide();
         } else {
             this.#resignButton.show();
         }
+    }
+
+    #onResign() {
+        this.#gameState = E_GameState.RESIGNED;
+        this.#winningColor = OppositePieceColor(this.#playingColor);
     }
 
     #drawRanksAndFiles(graphics) {
@@ -322,6 +374,7 @@ export { E_GameMode };
 export { default as Board } from "../src/Board/Board.js";
 export { E_PieceColor } from "../src/Enums/E_PieceColor.js";
 export { E_PieceType } from "../src/Enums/E_PieceType.js";
+export { E_CastlingSide } from "../src/Enums/E_CastlingSide.js"
 export { E_MoveFlag } from "../src/Enums/E_MoveFlag.js";
 export * as ChessUtils from "../src/Utils/ChessUtils.js";
 export * as BitboardUtils from "../src/Utils/BitboardUtils.js";
