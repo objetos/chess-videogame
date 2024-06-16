@@ -514,15 +514,10 @@ export default class Board {
             } //else if a king is moving
             else if (pieceInStart.GetType() === E_PieceType.King) {
                 let king = pieceInStart;
-                //if the king has not moved before
-                let hasKingMoved = !(king.isOnInitialSquare() &&
-                    this.#hasCastlingRights(king.color, E_CastlingSide.KingSide) &&
-                    this.#hasCastlingRights(king.color, E_CastlingSide.QueenSide));
-                if (!hasKingMoved) {
-                    //remove castling rights from both sides
-                    this.#disableCastlingRights(king.color, E_CastlingSide.KingSide);
-                    this.#disableCastlingRights(king.color, E_CastlingSide.QueenSide);
-                }
+                //remove castling rights from both sides
+                this.#disableCastlingRights(king.color, E_CastlingSide.KingSide);
+                this.#disableCastlingRights(king.color, E_CastlingSide.QueenSide);
+
             }
 
             //if a rook is captured

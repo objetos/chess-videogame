@@ -1,7 +1,7 @@
 import { runPerftTest, perftTest } from "./PerftTesting.js";
 import { testCustomBoardPositions } from "./TestBoardPositions.js";
 
-var wikiTestPositions = {
+var testPositions = {
     standard: {
         fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR',
         positions: [20, 400, 8902, 197281]
@@ -25,18 +25,22 @@ var wikiTestPositions = {
     pos6: {
         fen: 'r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1',
         positions: [46, 2079, 89890, 3894594]
+    },
+    posForCastlingRights: {
+        fen: 'r3k2r/8/8/R6r/8/8/8/R3K2R',
+        positions: [32, 863, 26487, 760297]
     }
 }
 
 function runFullSuite() {
     testCustomBoardPositions();
-    for (let position of Object.keys(wikiTestPositions)) {
+    for (let position of Object.keys(testPositions)) {
         console.log("FULL PERFT OF POSITION: " + position)
-        runPerftTest(wikiTestPositions[position]);
+        runPerftTest(testPositions[position]);
     }
 }
 
 window.runFullSuite = runFullSuite;
 window.perftTest = perftTest;
 window.runPerftTest = runPerftTest;
-window.wikiTestPositions = wikiTestPositions;
+window.testPositions = testPositions;
