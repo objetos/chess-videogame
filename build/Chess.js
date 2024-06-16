@@ -3595,8 +3595,10 @@ var Chess = (function (exports) {
 
     }
 
+    exports.Bishop = Bishop;
     exports.BitboardUtils = BitboardUtils;
     exports.Board = Board;
+    exports.BoardImplementation = BoardImplementation;
     exports.ChessUtils = ChessUtils;
     exports.E_CastlingSide = E_CastlingSide;
     exports.E_GameMode = E_GameMode;
@@ -3605,6 +3607,11 @@ var Chess = (function (exports) {
     exports.E_PieceType = E_PieceType;
     exports.GAME_DIMENSIONS = GAME_DIMENSIONS;
     exports.Game = Game;
+    exports.King = King;
+    exports.Knight = Knight;
+    exports.Pawn = Pawn;
+    exports.Queen = Queen;
+    exports.Rook = Rook;
 
     return exports;
 

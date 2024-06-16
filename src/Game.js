@@ -15,6 +15,7 @@ import PiecesCapturedUI from "./UI/PiecesCapturedUI.js";
 import GameStateUI from "./UI/GameStateUI.js";
 import PromotionSelector from "./UI/PromotionSelector.js";
 import { E_CastlingSide } from "./Enums/E_CastlingSide.js";
+import BoardImplementation from "./Board/BoardImplementation.js";
 
 
 //FENS
@@ -380,6 +381,13 @@ export { E_PieceColor } from "../src/Enums/E_PieceColor.js";
 export { E_PieceType } from "../src/Enums/E_PieceType.js";
 export { E_CastlingSide } from "../src/Enums/E_CastlingSide.js"
 export { E_MoveFlag } from "../src/Enums/E_MoveFlag.js";
+export { default as BoardImplementation } from "../src/Board/BoardImplementation.js";
+export { default as Rook } from "../src/MoveGeneration/Pieces/Rook.js";
+export { default as Bishop } from "../src/MoveGeneration/Pieces/Bishop.js";
+export { default as Knight } from "../src/MoveGeneration/Pieces/Knight.js";
+export { default as Pawn } from "../src/MoveGeneration/Pieces/Pawn.js";
+export { default as Queen } from "../src/MoveGeneration/Pieces/Queen.js";
+export { default as King } from "../src/MoveGeneration/Pieces/King.js";
 export * as ChessUtils from "../src/Utils/ChessUtils.js";
 export * as BitboardUtils from "../src/Utils/BitboardUtils.js";
 
