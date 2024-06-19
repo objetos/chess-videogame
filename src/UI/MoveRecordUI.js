@@ -1,3 +1,4 @@
+/* globals CENTER createButton*/
 import { assert } from "../../Testing/TestTools.js";
 import { MOVE_RECORD_UI_SETTINGS } from "./UISettings.js";
 import MoveRecord from "../MoveRecord.js";
@@ -24,6 +25,7 @@ export default class MoveRecordUI {
 
         moveRecord.addEventListener(MoveRecord.events.onMoveRecorded, this.#onMoveRecorded.bind(this));
         moveRecord.addEventListener(MoveRecord.events.onMoveUnrecorded, this.#onMoveUnrecorded.bind(this));
+        moveRecord.addEventListener(MoveRecord.events.onClear, this.#onClear.bind(this));
 
         this.#table = createQuadrille(3, 1);
         this.#table.fill(0, 0, 1);
@@ -55,6 +57,15 @@ export default class MoveRecordUI {
 
     }
 
+    #onClear(event) {
+        this.#table.clear();
+        this.#table.fill(0, 0, 1);
+        this.#table.height = 1;
+        this.#currentColumnIndex = 1;
+        this.#firstVisibleRow = 1;
+        this.#updateButtons();
+    }
+
     #addNewEntry(move) {
         //if row is filled
         if (this.#isRowFill()) {
@@ -80,13 +91,13 @@ export default class MoveRecordUI {
     #addNewRow() {
         this.#table.insert(this.#table.height);
         if (MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE < this.#lastRowNumber) {
-            this.#firstVisibleRow = this.#lastRowNumber - MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE;
+            this.#firstVisibleRow = this.#lastRowNumber - MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE + 1;
         }
     }
 
     #updateButtons() {
         //if table has not overflown
-        if (this.#firstVisibleRow < 2 && this.#table.height < MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE) {
+        if (this.#firstVisibleRow < 2 && this.#table.height <= MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE) {
             this.#upButton.hide();
             this.#downButton.hide();
         } //else if user is at the top of the table
@@ -111,9 +122,10 @@ export default class MoveRecordUI {
         //if table is overflowing, extract visible rows
         let tableToDraw = this.#table;
         if (MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE < this.#table.height) {
-            tableToDraw = this.#table.row(this.#firstVisibleRow - 1);
+            let firstVisibleRowIndex = this.#firstVisibleRow - 1;
+            tableToDraw = this.#table.row(firstVisibleRowIndex);
             for (let i = 1; i < MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE; i++) {
-                let rowIndex = this.#firstVisibleRow - 1 + i;
+                let rowIndex = firstVisibleRowIndex + i;
                 tableToDraw = Quadrille.or(tableToDraw, this.#table.row(rowIndex), i);
             }
         }

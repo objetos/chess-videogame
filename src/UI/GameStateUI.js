@@ -30,14 +30,14 @@ export default class GameStateUI {
                 message = playingColor === E_PieceColor.White ? "White Moves" : "Black Moves";
                 break;
             case E_GameState.CHECKMATE:
-                rectFillTargetColour = OppositePieceColor(playingColor) === E_PieceColor.White ? color(255) : color(0);
-                textColor = OppositePieceColor(playingColor) === E_PieceColor.White ? color(0) : color(255);
-                message = "Checkmate! " + (OppositePieceColor(playingColor) === E_PieceColor.White ? "White Wins" : "Black Wins");
+                rectFillTargetColour = this.#game.winningColor === E_PieceColor.White ? color(255) : color(0);
+                textColor = this.#game.winningColor === E_PieceColor.White ? color(0) : color(255);
+                message = "Checkmate! " + (this.#game.winningColor === E_PieceColor.White ? "White Wins" : "Black Wins");
                 break;
             case E_GameState.RESIGNED:
-                rectFillTargetColour = OppositePieceColor(playingColor) === E_PieceColor.White ? color(255) : color(0);
-                textColor = OppositePieceColor(playingColor) === E_PieceColor.White ? color(0) : color(255);
-                message = (OppositePieceColor(playingColor) === E_PieceColor.White ? "White Wins" : "Black Wins");
+                rectFillTargetColour = this.#game.winningColor === E_PieceColor.White ? color(255) : color(0);
+                textColor = this.#game.winningColor === E_PieceColor.White ? color(0) : color(255);
+                message = (this.#game.winningColor === E_PieceColor.White ? "White Wins" : "Black Wins");
                 break;
             case E_GameState.STALEMATE:
                 rectFillTargetColour = color(175);

@@ -20,6 +20,7 @@ var Chess = (function (exports) {
     const E_GameMode = Object.freeze({
         STANDARD: Symbol("Standard"),
         AUTOMATIC: Symbol("Automatic"),
+        VIEW_ONLY: Symbol("View-Only"),
         FREE: Symbol("Free"),
     });
 
@@ -343,7 +344,7 @@ var Chess = (function (exports) {
     //--Pieces Captured UI--
     const PIECES_CAPTURED_UI_SETTINGS = {
         PIECES_SIZE: 30,
-        SPACE_FROM_BOARD: 10,
+        SPACE_FROM_BOARD: 0,
         get WHITE_PIECES_POSITION() {
             return {
                 x: BOARD_UI_SETTINGS.LOCAL_POSITION.x,
@@ -393,6 +394,15 @@ var Chess = (function (exports) {
         get WIDTH() { return this.TABLE_WIDTH + this.BUTTON_SPACE_FROM_TABLE + this.BUTTON_WIDTH },
         get HEIGHT() { return this.ROW_HEIGHT * this.MAX_ROWS_VISIBLE }
     };
+    //--Rank Files UI--
+    const RANKS_FILES_UI_SETTING = {
+        CELL_LENGTH: BOARD_UI_SETTINGS.SQUARE_SIZE,
+        TEXT_ZOOM: 0.5,
+        TEXT_COLOR: 0,
+        RANKS: new Quadrille(1, ['8', '7', '6', '5', '4', '3', '2', '1']),
+        FILES: new Quadrille(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'])
+    };
+
     //--Resign Button--
     const RESIGN_BUTTON_UI_SETTINGS = {
         POSITION: {
@@ -403,13 +413,15 @@ var Chess = (function (exports) {
         HEIGHT: 20,
         TEXT: "Resign"
     };
-    //--Rank Files UI--
-    const RANKS_FILES_UI_SETTING = {
-        CELL_LENGTH: BOARD_UI_SETTINGS.SQUARE_SIZE,
-        TEXT_ZOOM: 0.5,
-        TEXT_COLOR: 0,
-        RANKS: new Quadrille(1, ['8', '7', '6', '5', '4', '3', '2', '1']),
-        FILES: new Quadrille(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'])
+    //--Reset Button--
+    const RESET_BUTTON_UI_SETTINGS = {
+        POSITION: {
+            x: BOARD_UI_SETTINGS.LOCAL_POSITION.x,
+            y: BOARD_UI_SETTINGS.LOCAL_POSITION.y + BOARD_UI_SETTINGS.HEIGHT + RANKS_FILES_UI_SETTING.CELL_LENGTH + PIECES_CAPTURED_UI_SETTINGS.SPACE_FROM_BOARD + PIECES_CAPTURED_UI_SETTINGS.PIECES_SIZE + 10
+        },
+        WIDTH: 40,
+        HEIGHT: 20,
+        TEXT: "Reset"
     };
 
     const MOVE_INPUT_UI_SETTINGS = {
@@ -1796,6 +1808,9 @@ var Chess = (function (exports) {
             //The king cannot be in check
             if (board.isKingInCheck(king.color)) return [];
 
+            //if the king is not on its initial square, castling is not possible
+            if (!king.isOnInitialSquare()) return [];
+
             let castlingMoves = [];
             for (let rook of rooks) {
                 //if rook is not on its initial square, skip
@@ -1918,6 +1933,10 @@ var Chess = (function (exports) {
         addInputEventListener(event, callback) {
             assert(Object.values(MoveInput.inputEvents).includes(event), "Invalid event");
             this.addEventListener(event, callback);
+        }
+
+        reset() {
+            this.#CancelMove();
         }
 
         #handleClick(clickX, clickY, boardPositionX, boardPositionY) {
@@ -2053,6 +2072,8 @@ var Chess = (function (exports) {
             [E_PieceColor.Black]: ""
         }
 
+        #startFen = undefined;
+
         /**
         * Creates a new chess board
         * @param {string} inputFen FEN of board
@@ -2060,66 +2081,16 @@ var Chess = (function (exports) {
         constructor(inputFen) {
             assert(typeof inputFen === 'string', "Invalid FEN");
 
-            //initialize move generator
             this.#moveGenerator = new MoveGenerator();
-            //initialize board
             this.#board = new Quadrille(inputFen);
-
-            //calculate castling rights
-            //for each color
-            for (let color of Object.values(E_PieceColor)) {
-                if (color === E_PieceColor.None || color === E_PieceColor.Any) continue;
-
-                let kingKey = pieceColorTypeToKey(color, E_PieceType.King);
-                let kingSymbol = Quadrille.chessSymbols[kingKey];
-                let kingPos = this.#board.search(createQuadrille([kingSymbol]), true)[0];
-                //if board has no king or king has moved from initial square
-                if (kingPos === undefined) {
-                    //no castling is possible
-                    this.#setCastlingRights(color, E_CastlingSide.KingSide, false);
-                    this.#setCastlingRights(color, E_CastlingSide.QueenSide, false);
-                    continue;
-
-                } else { //else if there's a king
-                    let rank = NUMBER_OF_RANKS - kingPos.row;
-                    let file = kingPos.col + 1;
-                    let isKingOnInitialSquare = color === E_PieceColor.White ?
-                        (rank === 1 && file === 5) :
-                        (rank === 8 && file === 5);
-                    //if king is not in its initial square
-                    if (!isKingOnInitialSquare) {
-                        //no castling is possible
-                        this.#setCastlingRights(color, E_CastlingSide.KingSide, false);
-                        this.#setCastlingRights(color, E_CastlingSide.QueenSide, false);
-                        continue;
-                    }
-                }
-
-                let rookKey = pieceColorTypeToKey(color, E_PieceType.Rook);
-                let rookSymbol = Quadrille.chessSymbols[rookKey];
-                let rookPositions = this.#board.search(createQuadrille([rookSymbol]), true);
-                for (let rookPosition of rookPositions) {
-
-                    let rank = NUMBER_OF_RANKS - rookPosition.row;
-                    let file = rookPosition.col + 1;
-                    let isRookOnInitialSquare = color === E_PieceColor.White ?
-                        (rank === 1 && file === 1) || (rank === 1 && file === 8) :
-                        (rank === 8 && file === 1) || (rank === 8 && file === 8);
-
-                    if (isRookOnInitialSquare) {
-                        let castlingSide = file === 1 ? E_CastlingSide.QueenSide : E_CastlingSide.KingSide;
-                        this.#setCastlingRights(color, castlingSide, true);
-                    }
-                }
-            }
-
-            //initialize board implementation
+            this.#calculateCastlingRights();
             this.#boardImplementation = new BoardImplementation(inputFen, this.#castlingRights, this.#enPassantInfo);
 
             Quadrille.whiteSquare = BOARD_UI_SETTINGS.WHITE_SQUARE_COLOR;
             Quadrille.blackSquare = BOARD_UI_SETTINGS.BLACK_SQUARE_COLOR;
             this.#boardBackground = new Quadrille();
 
+            this.#startFen = inputFen;
         }
 
 
@@ -2261,6 +2232,39 @@ var Chess = (function (exports) {
         }
 
         /**
+         * 
+         * @param {E_PieceColor} color 
+         * @param {E_CastlingSide} castlingSide 
+         * @returns Whether the given side has rights to castle (It does not necesarilly mean castling is possible).
+         */
+        hasCastlingRights(color, castlingSide) {
+            assertPieceColor(color);
+            assert(castlingSide === E_CastlingSide.QueenSide || castlingSide === E_CastlingSide.KingSide, "Invalid castling side");
+
+            return this.#castlingRights[color][castlingSide];
+        }
+        /**
+         * 
+         * @returns Object with information about en passant capture
+         */
+        getEnPassantInfo() {
+            return this.#enPassantInfo;
+        }
+
+        reset() {
+            this.#board = new Quadrille(this.#startFen);
+            this.#calculateCastlingRights();
+            this.#enPassantInfo.rightToEnPassant = false;
+            this.#enPassantInfo.captureRank = null;
+            this.#enPassantInfo.captureFile = null;
+            this.#boardChanges = [];
+            this.#capturedPieces[E_PieceColor.White] = "";
+            this.#capturedPieces[E_PieceColor.Black] = "";
+            this.#boardImplementation = new BoardImplementation(this.#startFen, this.#castlingRights, this.#enPassantInfo);
+        }
+
+
+        /**
          * Draws board
          */
         draw(graphics) {
@@ -2302,7 +2306,6 @@ var Chess = (function (exports) {
 
             console.log(string);
         }
-
 
 
         /**
@@ -2447,6 +2450,56 @@ var Chess = (function (exports) {
         }
 
 
+        #calculateCastlingRights() {
+            //calculate castling rights
+            //for each color
+            for (let color of Object.values(E_PieceColor)) {
+                if (color === E_PieceColor.None || color === E_PieceColor.Any) continue;
+
+                this.#setCastlingRights(color, E_CastlingSide.KingSide, false);
+                this.#setCastlingRights(color, E_CastlingSide.QueenSide, false);
+
+                let kingKey = pieceColorTypeToKey(color, E_PieceType.King);
+                let kingSymbol = Quadrille.chessSymbols[kingKey];
+                let kingPos = this.#board.search(createQuadrille([kingSymbol]), true)[0];
+                //if board has no king
+                if (kingPos === undefined) {
+                    //no castling is possible
+                    continue;
+
+                } else { //else if there's a king
+                    let rank = NUMBER_OF_RANKS - kingPos.row;
+                    let file = kingPos.col + 1;
+                    let isKingOnInitialSquare = color === E_PieceColor.White ?
+                        (rank === 1 && file === 5) :
+                        (rank === 8 && file === 5);
+                    //if king is not in its initial square
+                    if (!isKingOnInitialSquare) {
+                        //no castling is possible
+                        continue;
+                    }
+                }
+
+                let rookKey = pieceColorTypeToKey(color, E_PieceType.Rook);
+                let rookSymbol = Quadrille.chessSymbols[rookKey];
+                let rookPositions = this.#board.search(createQuadrille([rookSymbol]), true);
+                for (let rookPosition of rookPositions) {
+
+                    let rank = NUMBER_OF_RANKS - rookPosition.row;
+                    let file = rookPosition.col + 1;
+                    let isRookOnInitialSquare = color === E_PieceColor.White ?
+                        (rank === 1 && file === 1) || (rank === 1 && file === 8) :
+                        (rank === 8 && file === 1) || (rank === 8 && file === 8);
+
+                    if (isRookOnInitialSquare) {
+                        let castlingSide = file === 1 ? E_CastlingSide.QueenSide : E_CastlingSide.KingSide;
+                        this.#setCastlingRights(color, castlingSide, true);
+                    }
+                }
+            }
+        }
+
+
         /**
          * 
          * @param {Move} move 
@@ -2481,15 +2534,10 @@ var Chess = (function (exports) {
                 } //else if a king is moving
                 else if (pieceInStart.GetType() === E_PieceType.King) {
                     let king = pieceInStart;
-                    //if the king has not moved before
-                    let hasKingMoved = !(king.isOnInitialSquare() &&
-                        this.#hasCastlingRights(king.color, E_CastlingSide.KingSide) &&
-                        this.#hasCastlingRights(king.color, E_CastlingSide.QueenSide));
-                    if (!hasKingMoved) {
-                        //remove castling rights from both sides
-                        this.#disableCastlingRights(king.color, E_CastlingSide.KingSide);
-                        this.#disableCastlingRights(king.color, E_CastlingSide.QueenSide);
-                    }
+                    //remove castling rights from both sides
+                    this.#disableCastlingRights(king.color, E_CastlingSide.KingSide);
+                    this.#disableCastlingRights(king.color, E_CastlingSide.QueenSide);
+
                 }
 
                 //if a rook is captured
@@ -2586,7 +2634,8 @@ var Chess = (function (exports) {
     class MoveRecord extends EventTarget {
         static events = {
             onMoveRecorded: "system:move-recorded",
-            onMoveUnrecorded: "system:move-recorded"
+            onMoveUnrecorded: "system:move-recorded",
+            onClear: "system:move-record-clear"
         }
 
         #record = [];
@@ -2741,6 +2790,13 @@ var Chess = (function (exports) {
         getRecord() {
             return [...this.#record];
         }
+
+        clear() {
+            this.#record = [];
+            //notify
+            let onClear = new CustomEvent(MoveRecord.events.onClear);
+            this.dispatchEvent(onClear);
+        }
     }
 
     class MoveInputUI {
@@ -2831,6 +2887,7 @@ var Chess = (function (exports) {
         }
     }
 
+    /* globals CENTER createButton*/
     class MoveRecordUI {
         #table;
 
@@ -2854,6 +2911,7 @@ var Chess = (function (exports) {
 
             moveRecord.addEventListener(MoveRecord.events.onMoveRecorded, this.#onMoveRecorded.bind(this));
             moveRecord.addEventListener(MoveRecord.events.onMoveUnrecorded, this.#onMoveUnrecorded.bind(this));
+            moveRecord.addEventListener(MoveRecord.events.onClear, this.#onClear.bind(this));
 
             this.#table = createQuadrille(3, 1);
             this.#table.fill(0, 0, 1);
@@ -2885,6 +2943,15 @@ var Chess = (function (exports) {
 
         }
 
+        #onClear(event) {
+            this.#table.clear();
+            this.#table.fill(0, 0, 1);
+            this.#table.height = 1;
+            this.#currentColumnIndex = 1;
+            this.#firstVisibleRow = 1;
+            this.#updateButtons();
+        }
+
         #addNewEntry(move) {
             //if row is filled
             if (this.#isRowFill()) {
@@ -2910,13 +2977,13 @@ var Chess = (function (exports) {
         #addNewRow() {
             this.#table.insert(this.#table.height);
             if (MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE < this.#lastRowNumber) {
-                this.#firstVisibleRow = this.#lastRowNumber - MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE;
+                this.#firstVisibleRow = this.#lastRowNumber - MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE + 1;
             }
         }
 
         #updateButtons() {
             //if table has not overflown
-            if (this.#firstVisibleRow < 2 && this.#table.height < MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE) {
+            if (this.#firstVisibleRow < 2 && this.#table.height <= MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE) {
                 this.#upButton.hide();
                 this.#downButton.hide();
             } //else if user is at the top of the table
@@ -2941,9 +3008,10 @@ var Chess = (function (exports) {
             //if table is overflowing, extract visible rows
             let tableToDraw = this.#table;
             if (MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE < this.#table.height) {
-                tableToDraw = this.#table.row(this.#firstVisibleRow - 1);
+                let firstVisibleRowIndex = this.#firstVisibleRow - 1;
+                tableToDraw = this.#table.row(firstVisibleRowIndex);
                 for (let i = 1; i < MOVE_RECORD_UI_SETTINGS.MAX_ROWS_VISIBLE; i++) {
-                    let rowIndex = this.#firstVisibleRow - 1 + i;
+                    let rowIndex = firstVisibleRowIndex + i;
                     tableToDraw = Quadrille.or(tableToDraw, this.#table.row(rowIndex), i);
                 }
             }
@@ -3025,14 +3093,14 @@ var Chess = (function (exports) {
                     message = playingColor === E_PieceColor.White ? "White Moves" : "Black Moves";
                     break;
                 case E_GameState.CHECKMATE:
-                    rectFillTargetColour = OppositePieceColor(playingColor) === E_PieceColor.White ? color(255) : color(0);
-                    textColor = OppositePieceColor(playingColor) === E_PieceColor.White ? color(0) : color(255);
-                    message = "Checkmate! " + (OppositePieceColor(playingColor) === E_PieceColor.White ? "White Wins" : "Black Wins");
+                    rectFillTargetColour = this.#game.winningColor === E_PieceColor.White ? color(255) : color(0);
+                    textColor = this.#game.winningColor === E_PieceColor.White ? color(0) : color(255);
+                    message = "Checkmate! " + (this.#game.winningColor === E_PieceColor.White ? "White Wins" : "Black Wins");
                     break;
                 case E_GameState.RESIGNED:
-                    rectFillTargetColour = OppositePieceColor(playingColor) === E_PieceColor.White ? color(255) : color(0);
-                    textColor = OppositePieceColor(playingColor) === E_PieceColor.White ? color(0) : color(255);
-                    message = (OppositePieceColor(playingColor) === E_PieceColor.White ? "White Wins" : "Black Wins");
+                    rectFillTargetColour = this.#game.winningColor === E_PieceColor.White ? color(255) : color(0);
+                    textColor = this.#game.winningColor === E_PieceColor.White ? color(0) : color(255);
+                    message = (this.#game.winningColor === E_PieceColor.White ? "White Wins" : "Black Wins");
                     break;
                 case E_GameState.STALEMATE:
                     rectFillTargetColour = color(175);
@@ -3196,14 +3264,20 @@ var Chess = (function (exports) {
         #playingColor = E_PieceColor.White;
         #gameState = E_GameState.PLAYING;
         #gameMode = E_GameMode.STANDARD;
+        #timerToMove = 0;
+        #automaticMovesTimeInterval = 1000;
+        #winningColor = null;
+        #startColor = undefined;
+
         get playingColor() {
             return this.#playingColor;
         }
         get state() {
             return this.#gameState;
         }
-        #timerToMove = 0;
-        #automaticMovesTimeInterval = 1000;
+        get winningColor() {
+            return this.#winningColor;
+        }
         /**
          * Time between moves in Automatic mode in miliseconds. 1000ms by default
          */
@@ -3220,6 +3294,9 @@ var Chess = (function (exports) {
         #moveRecord;
         #moveInput;
         #board;
+        get board() {
+            return this.#board;
+        }
 
         //UI
         #moveRecordUI;
@@ -3227,6 +3304,7 @@ var Chess = (function (exports) {
         #piecesCapturedUI;
         #gameStateUI;
         #resignButton;
+        #resetButton;
         #graphics;
         #promotionSelector;
         #position;
@@ -3257,6 +3335,14 @@ var Chess = (function (exports) {
             this.#gameStateUI = new GameStateUI(this);
             this.#promotionSelector = new PromotionSelector();
             this.#createResignButton();
+            this.#createResetButton();
+
+            this.#startColor = playingColor;
+
+            this.#checkEndGame(playingColor);
+            this.#checkEndGame(OppositePieceColor(playingColor));
+
+            this.update();
         }
 
         isGameFinished() {
@@ -3297,14 +3383,30 @@ var Chess = (function (exports) {
          * STANDARD: Standard chess with all moves. Player makes moves on board.
          * AUTOMATIC: The machine will make random moves automatically until the game is finished. No draw offers.
          * FREE: Any color can move. Board might have a legal configuration or not. No end game. No option for resigning nor draw offers. Player makes moves on board.
+         * VIEW-ONLY: No input received. 
          * @param {E_GameMode} gameMode 
          */
         setGameMode(gameMode) {
             assert(Object.values(E_GameMode).includes(gameMode), "Invalid game mode");
             this.#gameMode = gameMode;
             this.#generateLegalMoves();
+            this.#checkEndGame(this.#playingColor);
+            this.#checkEndGame(OppositePieceColor(this.#playingColor));
             this.update();
             this.#updateInput();
+        }
+
+        reset() {
+            this.#gameState = E_GameState.PLAYING;
+            this.#playingColor = this.#startColor;
+            this.#board.reset();
+            this.#moveRecord.clear();
+            this.#moveInput.reset();
+            this.#winningColor = null;
+            this.#generateLegalMoves();
+            this.#checkEndGame(this.#playingColor);
+            this.#checkEndGame(OppositePieceColor(this.#playingColor));
+            this.update();
         }
 
         #updateInput() {
@@ -3317,6 +3419,9 @@ var Chess = (function (exports) {
                     break;
                 case E_GameMode.FREE:
                     this.#moveInput.enabled = true;
+                    break;
+                case E_GameMode.VIEW_ONLY:
+                    this.#moveInput.enabled = false;
                     break;
             }
         }
@@ -3351,6 +3456,7 @@ var Chess = (function (exports) {
             this.#drawRanksAndFiles(this.#graphics);
 
             this.#updateResignButton();
+            this.#updateResetButton();
 
             image(this.#graphics, this.#position.x, this.#position.y);
         }
@@ -3410,6 +3516,7 @@ var Chess = (function (exports) {
                 if (this.#board.isKingInCheck(playingColor)) {
                     //game finished by checkmate
                     this.#gameState = E_GameState.CHECKMATE;
+                    this.#winningColor = OppositePieceColor(playingColor);
                 }
                 else {
                     //game finished by stalemate
@@ -3427,19 +3534,38 @@ var Chess = (function (exports) {
         #createResignButton() {
             let button = createButton(RESIGN_BUTTON_UI_SETTINGS.TEXT);
             button.position(this.#position.x + RESIGN_BUTTON_UI_SETTINGS.POSITION.x, this.#position.y + RESIGN_BUTTON_UI_SETTINGS.POSITION.y);
-            button.mouseClicked(() => {
-                this.#gameState = E_GameState.RESIGNED;
-                button.hide();
-            });
+            button.mouseClicked(this.#onResign.bind(this));
             this.#resignButton = button;
         }
 
+        #createResetButton() {
+            let button = createButton(RESET_BUTTON_UI_SETTINGS.TEXT);
+            button.position(this.#position.x + RESET_BUTTON_UI_SETTINGS.POSITION.x, this.#position.y + RESET_BUTTON_UI_SETTINGS.POSITION.y);
+            button.mouseClicked(() => {
+                this.reset();
+            });
+            this.#resetButton = button;
+        }
+
+        #updateResetButton() {
+            if (this.#gameMode === E_GameMode.VIEW_ONLY) {
+                this.#resetButton.hide();
+            } else {
+                this.#resetButton.show();
+            }
+        }
+
         #updateResignButton() {
-            if (this.isGameFinished() || this.#gameMode === E_GameMode.FREE) {
+            if (this.isGameFinished() || this.#gameMode === E_GameMode.FREE || this.#gameMode === E_GameMode.VIEW_ONLY) {
                 this.#resignButton.hide();
             } else {
                 this.#resignButton.show();
             }
+        }
+
+        #onResign() {
+            this.#gameState = E_GameState.RESIGNED;
+            this.#winningColor = OppositePieceColor(this.#playingColor);
         }
 
         #drawRanksAndFiles(graphics) {
@@ -3469,15 +3595,23 @@ var Chess = (function (exports) {
 
     }
 
+    exports.Bishop = Bishop;
     exports.BitboardUtils = BitboardUtils;
     exports.Board = Board;
+    exports.BoardImplementation = BoardImplementation;
     exports.ChessUtils = ChessUtils;
+    exports.E_CastlingSide = E_CastlingSide;
     exports.E_GameMode = E_GameMode;
     exports.E_MoveFlag = E_MoveFlag;
     exports.E_PieceColor = E_PieceColor;
     exports.E_PieceType = E_PieceType;
     exports.GAME_DIMENSIONS = GAME_DIMENSIONS;
     exports.Game = Game;
+    exports.King = King;
+    exports.Knight = Knight;
+    exports.Pawn = Pawn;
+    exports.Queen = Queen;
+    exports.Rook = Rook;
 
     return exports;
 

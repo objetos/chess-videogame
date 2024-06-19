@@ -55,6 +55,10 @@ export default class MoveInput extends EventTarget {
         this.addEventListener(event, callback);
     }
 
+    reset() {
+        this.#CancelMove();
+    }
+
     #handleClick(clickX, clickY, boardPositionX, boardPositionY) {
         if (!this.#enabled) return;
         //get click coordinates relative to page

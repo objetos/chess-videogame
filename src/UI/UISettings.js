@@ -19,7 +19,7 @@ export const BOARD_UI_SETTINGS = {
 //--Pieces Captured UI--
 export const PIECES_CAPTURED_UI_SETTINGS = {
     PIECES_SIZE: 30,
-    SPACE_FROM_BOARD: 10,
+    SPACE_FROM_BOARD: 0,
     get WHITE_PIECES_POSITION() {
         return {
             x: BOARD_UI_SETTINGS.LOCAL_POSITION.x,
@@ -69,6 +69,15 @@ export const MOVE_RECORD_UI_SETTINGS = {
     get WIDTH() { return this.TABLE_WIDTH + this.BUTTON_SPACE_FROM_TABLE + this.BUTTON_WIDTH },
     get HEIGHT() { return this.ROW_HEIGHT * this.MAX_ROWS_VISIBLE }
 }
+//--Rank Files UI--
+export const RANKS_FILES_UI_SETTING = {
+    CELL_LENGTH: BOARD_UI_SETTINGS.SQUARE_SIZE,
+    TEXT_ZOOM: 0.5,
+    TEXT_COLOR: 0,
+    RANKS: new Quadrille(1, ['8', '7', '6', '5', '4', '3', '2', '1']),
+    FILES: new Quadrille(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'])
+}
+
 //--Resign Button--
 export const RESIGN_BUTTON_UI_SETTINGS = {
     POSITION: {
@@ -79,13 +88,15 @@ export const RESIGN_BUTTON_UI_SETTINGS = {
     HEIGHT: 20,
     TEXT: "Resign"
 }
-//--Rank Files UI--
-export const RANKS_FILES_UI_SETTING = {
-    CELL_LENGTH: BOARD_UI_SETTINGS.SQUARE_SIZE,
-    TEXT_ZOOM: 0.5,
-    TEXT_COLOR: 0,
-    RANKS: new Quadrille(1, ['8', '7', '6', '5', '4', '3', '2', '1']),
-    FILES: new Quadrille(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'])
+//--Reset Button--
+export const RESET_BUTTON_UI_SETTINGS = {
+    POSITION: {
+        x: BOARD_UI_SETTINGS.LOCAL_POSITION.x,
+        y: BOARD_UI_SETTINGS.LOCAL_POSITION.y + BOARD_UI_SETTINGS.HEIGHT + RANKS_FILES_UI_SETTING.CELL_LENGTH + PIECES_CAPTURED_UI_SETTINGS.SPACE_FROM_BOARD + PIECES_CAPTURED_UI_SETTINGS.PIECES_SIZE + 10
+    },
+    WIDTH: 40,
+    HEIGHT: 20,
+    TEXT: "Reset"
 }
 
 export const MOVE_INPUT_UI_SETTINGS = {
