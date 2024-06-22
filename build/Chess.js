@@ -433,6 +433,19 @@ var Chess = (function (exports) {
         BACKGROUND_COLOR: 'rgba(255,255,255,1)'
     };
 
+    var UISettings = /*#__PURE__*/Object.freeze({
+        __proto__: null,
+        BOARD_UI_SETTINGS: BOARD_UI_SETTINGS,
+        GAME_STATE_UI_SETTINGS: GAME_STATE_UI_SETTINGS,
+        MOVE_INPUT_UI_SETTINGS: MOVE_INPUT_UI_SETTINGS,
+        MOVE_RECORD_UI_SETTINGS: MOVE_RECORD_UI_SETTINGS,
+        PIECES_CAPTURED_UI_SETTINGS: PIECES_CAPTURED_UI_SETTINGS,
+        PROMOTION_SELECTOR_SETTINGS: PROMOTION_SELECTOR_SETTINGS,
+        RANKS_FILES_UI_SETTING: RANKS_FILES_UI_SETTING,
+        RESET_BUTTON_UI_SETTINGS: RESET_BUTTON_UI_SETTINGS,
+        RESIGN_BUTTON_UI_SETTINGS: RESIGN_BUTTON_UI_SETTINGS
+    });
+
     const FIRST_FILE_BITBOARD = 0x0101010101010101n;
     const FIRST_RANK_BITBOARD = 0xFFn;
 
@@ -1575,7 +1588,7 @@ var Chess = (function (exports) {
         #calculateCheckers(king, enemyPieces, board) {
             let checkers = [];
             for (let enemyPiece of enemyPieces) {
-                let pieceChecksKing = (enemyPiece.GetMoves(board) & king.position) > 1n;
+                let pieceChecksKing = (enemyPiece.GetMoves(board) & king.position) > 0n;
                 if (pieceChecksKing) {
                     assert(enemyPiece.GetType() !== E_PieceType.King, "A king cannot check another king");
                     checkers.push(enemyPiece);
@@ -1587,7 +1600,7 @@ var Chess = (function (exports) {
         /**
          * 
          * @param {King} king 
-         * @param {bigint} protectedPieces 
+         * @param {Piece[]} enemyPieces 
          * @param {BoardImplementation} board 
          * @returns Array of moves the king can do safely
          */
@@ -1679,27 +1692,30 @@ var Chess = (function (exports) {
                 if (!enemyPiece.IsSlider()) continue;
 
                 let slider = enemyPiece;
-                let sliderRays = slider.getSlidingRays();
-                let rayFromSliderToKing = getRay(slider.rank, slider.file, king.rank, king.file, false, true);
+                let rayFromSliderToKing = getRay(slider.rank, slider.file, king.rank, king.file, false, false);
 
-                //if there's no possible ray between slider and king, king is not within slider's attack range, continue.
+                //if there's no  ray between slider and king:
+                //1) king is not within slider's attack range
+                //2) slider is besides the king. There's no pinned pieces
+                //then, continue.
                 if (rayFromSliderToKing === 0n) continue;
 
                 //calculate if slider is allowed to move on the ray to the king
+                let sliderRays = slider.getSlidingRays();
                 let isSliderAllowedToMoveOnRay = false;
                 for (let ray of sliderRays) {
                     if ((ray & rayFromSliderToKing) > 0n) {
                         isSliderAllowedToMoveOnRay = true;
                     }
                 }
-                //if slider is not allowed to move on the ray to the king, king is not within slider's attack range, do nothing. 
+                //if slider is not allowed to move on the ray to the king, king is not within slider's attack range, continue. 
                 if (!isSliderAllowedToMoveOnRay) continue;
 
                 //check for pinned pieces
                 //Taken from https://www.chessprogramming.org/Checks_and_Pinned_Pieces_(Bitboards)
                 let attacksFromSliderToKing = hyperbolaQuintessenceAlgorithm(board.getOccupied(), slider.position, rayFromSliderToKing);
                 let attacksFromKingToSlider = hyperbolaQuintessenceAlgorithm(board.getOccupied(), king.position, rayFromSliderToKing);
-                let emptySpaceBetweenKingAndSlider = rayFromSliderToKing & ~king.position;
+                let emptySpaceBetweenKingAndSlider = rayFromSliderToKing;
                 let intersection = attacksFromKingToSlider.wholeRay & attacksFromSliderToKing.wholeRay;
 
                 //if there's no intersection
@@ -3612,6 +3628,7 @@ var Chess = (function (exports) {
     exports.Pawn = Pawn;
     exports.Queen = Queen;
     exports.Rook = Rook;
+    exports.UISettings = UISettings;
 
     return exports;
 

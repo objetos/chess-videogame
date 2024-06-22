@@ -390,4 +390,5 @@ export { default as Queen } from "../src/MoveGeneration/Pieces/Queen.js";
 export { default as King } from "../src/MoveGeneration/Pieces/King.js";
 export * as ChessUtils from "../src/Utils/ChessUtils.js";
 export * as BitboardUtils from "../src/Utils/BitboardUtils.js";
+export * as UISettings from "../src/UI/UISettings.js"
 
