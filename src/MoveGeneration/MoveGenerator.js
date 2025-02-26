@@ -109,7 +109,7 @@ export default class MoveGenerator {
     /**
      * 
      * @param {King} king 
-     * @param {bigint} protectedPieces 
+     * @param {Piece[]} enemyPieces 
      * @param {BoardImplementation} board 
      * @returns Array of moves the king can do safely
      */
@@ -136,6 +136,7 @@ export default class MoveGenerator {
     #calculateProtectedPieces(enemyPieces, board) { // ****** repeated code, transfer to piece?
         let protectedPieces = 0n;
         //for every enemy piece
+        let squaresOccupiedByEnemyPieces = board.getOccupied(enemyPieces[0].color);
         for (let enemyPiece of enemyPieces) {
             //if it is a slider
             if (enemyPiece.IsSlider()) {
@@ -150,17 +151,17 @@ export default class MoveGenerator {
                 });
 
 
-                protectedPieces |= slidingMoves & board.getOccupied(enemyPiece.color);
+                protectedPieces |= slidingMoves & squaresOccupiedByEnemyPieces;
 
             } else if (enemyPiece.GetType() === E_PieceType.Pawn) {
 
                 let pawnCapturingSquares = enemyPiece.GetCapturingSquares();
-                protectedPieces |= pawnCapturingSquares & board.getOccupied(enemyPiece.color);
+                protectedPieces |= pawnCapturingSquares & squaresOccupiedByEnemyPieces;
 
             } else if (enemyPiece.GetType() === E_PieceType.Knight | enemyPiece.GetType() === E_PieceType.King) {
                 let emptyBoard = new BoardImplementation('8/8/8/8/8/8/8/8');
                 let enemyMovesInEmptyBoard = enemyPiece.GetMoves(emptyBoard);
-                protectedPieces |= enemyMovesInEmptyBoard & board.getOccupied(enemyPiece.color);
+                protectedPieces |= enemyMovesInEmptyBoard & squaresOccupiedByEnemyPieces;
             }
         }
 
@@ -219,8 +220,9 @@ export default class MoveGenerator {
 
             //check for pinned pieces
             //Taken from https://www.chessprogramming.org/Checks_and_Pinned_Pieces_(Bitboards)
-            let attacksFromSliderToKing = hyperbolaQuintessenceAlgorithm(board.getOccupied(), slider.position, rayFromSliderToKing);
-            let attacksFromKingToSlider = hyperbolaQuintessenceAlgorithm(board.getOccupied(), king.position, rayFromSliderToKing);
+            let occupied = board.getOccupied();
+            let attacksFromSliderToKing = hyperbolaQuintessenceAlgorithm(occupied, slider.position, rayFromSliderToKing);
+            let attacksFromKingToSlider = hyperbolaQuintessenceAlgorithm(occupied, king.position, rayFromSliderToKing);
             let emptySpaceBetweenKingAndSlider = rayFromSliderToKing & ~king.position;
             let intersection = attacksFromKingToSlider.wholeRay & attacksFromSliderToKing.wholeRay;
 
