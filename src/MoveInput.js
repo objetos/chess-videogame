@@ -46,7 +46,7 @@ export default class MoveInput extends EventTarget {
 
         //listen to click events on main canvas
         select('canvas').mouseClicked(() => {
-            this.#handleClick(mouseX, mouseY, globalBoardPositionX, globalBoardPositionY);
+            this.#handleClick(globalBoardPositionX, globalBoardPositionY);
         });
     }
 
@@ -59,15 +59,12 @@ export default class MoveInput extends EventTarget {
         this.#CancelMove();
     }
 
-    #handleClick(clickX, clickY, boardPositionX, boardPositionY) {
+    #handleClick(boardPositionX, boardPositionY) {
         if (!this.#enabled) return;
-        //get click coordinates relative to page
-        let xCoordinate = clickX;
-        let yCoordinate = clickY;
-        //get clicked square
 
-        let clickedRank = 8 - this.#inputListener.screenRow(yCoordinate, boardPositionY, BOARD_UI_SETTINGS.SQUARE_SIZE);
-        let clickedFile = this.#inputListener.screenCol(xCoordinate, boardPositionX, BOARD_UI_SETTINGS.SQUARE_SIZE) + 1;
+        //get clicked square
+        let clickedRank = 8 - this.#inputListener.screenRow(mouseY, boardPositionY, BOARD_UI_SETTINGS.SQUARE_SIZE);
+        let clickedFile = this.#inputListener.screenCol(mouseX, boardPositionX, BOARD_UI_SETTINGS.SQUARE_SIZE) + 1;
         let clickedSquare = {
             rank: clickedRank,
             file: clickedFile
@@ -136,19 +133,6 @@ export default class MoveInput extends EventTarget {
         this.#inputMoveDestination = null;
         let moveCanceled = new CustomEvent(MoveInput.inputEvents.onMoveCanceled);
         this.dispatchEvent(moveCanceled);
-    }
-
-    static #pieceSelectedForPromotion = E_PieceType.Queen;
-
-    static get pieceSelectedForPromotion() {
-        return this.#pieceSelectedForPromotion;
-    }
-
-    static set pieceSelectedForPromotion(value) {
-        assertPieceType(value);
-        assert(value !== E_PieceType.Pawn, "Promotion to Pawn is forbidden");
-        assert(value !== E_PieceType.King, "Promotion to King is forbidden");
-        this.#pieceSelectedForPromotion = value;
     }
 }
 
