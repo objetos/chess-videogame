@@ -52,6 +52,8 @@ export default class Board {
         [E_PieceColor.Black]: ""
     }
 
+    #startFen = undefined;
+
     /**
     * Creates a new chess board
     * @param {string} inputFen FEN of board
@@ -59,66 +61,16 @@ export default class Board {
     constructor(inputFen) {
         assert(typeof inputFen === 'string', "Invalid FEN");
 
-        //initialize move generator
         this.#moveGenerator = new MoveGenerator();
-        //initialize board
         this.#board = new Quadrille(inputFen);
-
-        //calculate castling rights
-        //for each color
-        for (let color of Object.values(E_PieceColor)) {
-            if (color === E_PieceColor.None || color === E_PieceColor.Any) continue;
-
-            let kingKey = pieceColorTypeToKey(color, E_PieceType.King);
-            let kingSymbol = Quadrille.chessSymbols[kingKey];
-            let kingPos = this.#board.search(createQuadrille([kingSymbol]), true)[0];
-            //if board has no king or king has moved from initial square
-            if (kingPos === undefined) {
-                //no castling is possible
-                this.#setCastlingRights(color, E_CastlingSide.KingSide, false);
-                this.#setCastlingRights(color, E_CastlingSide.QueenSide, false);
-                continue;
-
-            } else { //else if there's a king
-                let rank = NUMBER_OF_RANKS - kingPos.row;
-                let file = kingPos.col + 1;
-                let isKingOnInitialSquare = color === E_PieceColor.White ?
-                    (rank === 1 && file === 5) :
-                    (rank === 8 && file === 5);
-                //if king is not in its initial square
-                if (!isKingOnInitialSquare) {
-                    //no castling is possible
-                    this.#setCastlingRights(color, E_CastlingSide.KingSide, false);
-                    this.#setCastlingRights(color, E_CastlingSide.QueenSide, false);
-                    continue;
-                }
-            }
-
-            let rookKey = pieceColorTypeToKey(color, E_PieceType.Rook);
-            let rookSymbol = Quadrille.chessSymbols[rookKey];
-            let rookPositions = this.#board.search(createQuadrille([rookSymbol]), true);
-            for (let rookPosition of rookPositions) {
-
-                let rank = NUMBER_OF_RANKS - rookPosition.row;
-                let file = rookPosition.col + 1;
-                let isRookOnInitialSquare = color === E_PieceColor.White ?
-                    (rank === 1 && file === 1) || (rank === 1 && file === 8) :
-                    (rank === 8 && file === 1) || (rank === 8 && file === 8);
-
-                if (isRookOnInitialSquare) {
-                    let castlingSide = file === 1 ? E_CastlingSide.QueenSide : E_CastlingSide.KingSide;
-                    this.#setCastlingRights(color, castlingSide, true);
-                }
-            }
-        }
-
-        //initialize board implementation
-        this.#boardImplementation = new BoardImplementation(inputFen, this.#castlingRights, this.#enPassantInfo);
+        this.#calculateCastlingRights();
+        this.#boardImplementation = new BoardImplementation(this.#board, this.#castlingRights, this.#enPassantInfo);
 
         Quadrille.whiteSquare = BOARD_UI_SETTINGS.WHITE_SQUARE_COLOR;
         Quadrille.blackSquare = BOARD_UI_SETTINGS.BLACK_SQUARE_COLOR;
         this.#boardBackground = new Quadrille();
 
+        this.#startFen = inputFen;
     }
 
 
@@ -160,7 +112,7 @@ export default class Board {
                 default:
                     throw new Error("Failed making move. Move has no valid flag");
             }
-            this.#boardImplementation = new BoardImplementation(this.getFen(), this.#castlingRights, this.#enPassantInfo);
+            this.#boardImplementation = new BoardImplementation(this.#board, this.#castlingRights, this.#enPassantInfo);
         } catch (error) {
             console.log(move);
             this.print();
@@ -210,7 +162,7 @@ export default class Board {
                         throw new Error("Invalid board change");
                 }
             }
-            this.#boardImplementation = new BoardImplementation(this.getFen(), this.#castlingRights, this.#enPassantInfo);
+            this.#boardImplementation = new BoardImplementation(this.#board, this.#castlingRights, this.#enPassantInfo);
         } catch (error) {
             console.log(lastChanges);
             throw error;
@@ -260,6 +212,40 @@ export default class Board {
     }
 
     /**
+     * 
+     * @param {E_PieceColor} color 
+     * @param {E_CastlingSide} castlingSide 
+     * @returns Whether the given side has rights to castle (It does not necesarilly mean castling is possible).
+     */
+    hasCastlingRights(color, castlingSide) {
+        assertPieceColor(color);
+        assert(castlingSide === E_CastlingSide.QueenSide || castlingSide === E_CastlingSide.KingSide, "Invalid castling side");
+
+        return this.#castlingRights[color][castlingSide];
+    }
+
+    /**
+     * 
+     * @returns Object with information about en passant capture
+     */
+    getEnPassantInfo() {
+        return this.#enPassantInfo;
+    }
+
+    reset() {
+        this.#board = new Quadrille(this.#startFen);
+        this.#calculateCastlingRights();
+        this.#enPassantInfo.rightToEnPassant = false;
+        this.#enPassantInfo.captureRank = null;
+        this.#enPassantInfo.captureFile = null;
+        this.#boardChanges = [];
+        this.#capturedPieces[E_PieceColor.White] = "";
+        this.#capturedPieces[E_PieceColor.Black] = "";
+        this.#boardImplementation = new BoardImplementation(this.#board, this.#castlingRights, this.#enPassantInfo);
+    }
+
+
+    /**
      * Draws board
      */
     draw(graphics) {
@@ -301,7 +287,6 @@ export default class Board {
 
         console.log(string);
     }
-
 
 
     /**
@@ -446,8 +431,57 @@ export default class Board {
     }
 
 
+    #calculateCastlingRights() {
+        //calculate castling rights
+        //for each color
+        for (let color of Object.values(E_PieceColor)) {
+            if (color === E_PieceColor.None || color === E_PieceColor.Any) continue;
+
+            this.#setCastlingRights(color, E_CastlingSide.KingSide, false);
+            this.#setCastlingRights(color, E_CastlingSide.QueenSide, false);
+
+            let kingKey = pieceColorTypeToKey(color, E_PieceType.King);
+            let kingSymbol = Quadrille.chessSymbols[kingKey];
+            let kingPos = this.#board.search(createQuadrille([kingSymbol]), true)[0];
+            //if board has no king
+            if (kingPos === undefined) {
+                //no castling is possible
+                continue;
+
+            } else { //else if there's a king
+                let rank = NUMBER_OF_RANKS - kingPos.row;
+                let file = kingPos.col + 1;
+                let isKingOnInitialSquare = color === E_PieceColor.White ?
+                    (rank === 1 && file === 5) :
+                    (rank === 8 && file === 5);
+                //if king is not in its initial square
+                if (!isKingOnInitialSquare) {
+                    //no castling is possible
+                    continue;
+                }
+            }
+
+            let rookKey = pieceColorTypeToKey(color, E_PieceType.Rook);
+            let rookSymbol = Quadrille.chessSymbols[rookKey];
+            let rookPositions = this.#board.search(createQuadrille([rookSymbol]), true);
+            for (let rookPosition of rookPositions) {
+
+                let rank = NUMBER_OF_RANKS - rookPosition.row;
+                let file = rookPosition.col + 1;
+                let isRookOnInitialSquare = color === E_PieceColor.White ?
+                    (rank === 1 && file === 1) || (rank === 1 && file === 8) :
+                    (rank === 8 && file === 1) || (rank === 8 && file === 8);
+
+                if (isRookOnInitialSquare) {
+                    let castlingSide = file === 1 ? E_CastlingSide.QueenSide : E_CastlingSide.KingSide;
+                    this.#setCastlingRights(color, castlingSide, true);
+                }
+            }
+        }
+    }
+
+
     /**
-     * 
      * @param {Move} move 
      */
     #updateCastlingRights(move) {
@@ -473,22 +507,17 @@ export default class Board {
                 let rookCastlingSide = rook.file === 1 ? E_CastlingSide.QueenSide : E_CastlingSide.KingSide;
 
                 //if the rook that's moving is on its initial corner and hasn't moved
-                if (rook.isOnInitialSquare() && this.#hasCastlingRights(rook.color, rookCastlingSide)) {
+                if (rook.isOnInitialSquare() && this.hasCastlingRights(rook.color, rookCastlingSide)) {
                     //Remove castling rights from this rook's side
                     this.#disableCastlingRights(rook.color, rookCastlingSide);
                 }
             } //else if a king is moving
             else if (pieceInStart.GetType() === E_PieceType.King) {
                 let king = pieceInStart;
-                //if the king has not moved before
-                let hasKingMoved = !(king.isOnInitialSquare() &&
-                    this.#hasCastlingRights(king.color, E_CastlingSide.KingSide) &&
-                    this.#hasCastlingRights(king.color, E_CastlingSide.QueenSide));
-                if (!hasKingMoved) {
-                    //remove castling rights from both sides
-                    this.#disableCastlingRights(king.color, E_CastlingSide.KingSide);
-                    this.#disableCastlingRights(king.color, E_CastlingSide.QueenSide);
-                }
+                //remove castling rights from both sides
+                this.#disableCastlingRights(king.color, E_CastlingSide.KingSide);
+                this.#disableCastlingRights(king.color, E_CastlingSide.QueenSide);
+
             }
 
             //if a rook is captured
@@ -497,7 +526,7 @@ export default class Board {
                 let rookCastlingSide = rook.file === 1 ? E_CastlingSide.QueenSide : E_CastlingSide.KingSide;
 
                 //if the rook that's being captured is on its initial corner  and hasn't moved
-                if (rook.isOnInitialSquare() && this.#hasCastlingRights(rook.color, rookCastlingSide)) {
+                if (rook.isOnInitialSquare() && this.hasCastlingRights(rook.color, rookCastlingSide)) {
                     //remove castling rights from the captured rook's side
                     this.#disableCastlingRights(rook.color, rookCastlingSide);
                 }
@@ -505,18 +534,6 @@ export default class Board {
         }
     }
 
-    /**
-     * 
-     * @param {E_PieceColor} color 
-     * @param {E_CastlingSide} castlingSide 
-     * @returns Whether the given side has rights to castle (It does not necesarilly mean castling is possible).
-     */
-    #hasCastlingRights(color, castlingSide) {
-        assertPieceColor(color);
-        assert(Object.values(E_CastlingSide).includes(castlingSide), "Invalid castling side");
-
-        return this.#castlingRights[color][castlingSide];
-    }
 
     #setCastlingRights(color, castlingSide, enabled) {
         assert(Object.values(E_CastlingSide).includes(castlingSide), "Invalid castling side");
@@ -524,7 +541,7 @@ export default class Board {
     }
 
     #disableCastlingRights(color, castlingSide) {
-        if (this.#hasCastlingRights(color, castlingSide)) {
+        if (this.hasCastlingRights(color, castlingSide)) {
             this.#castlingRights[color][castlingSide] = false;
             //record change
             let disableCastlingRights = {

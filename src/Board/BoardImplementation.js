@@ -21,14 +21,9 @@ export default class BoardImplementation {
 
     /**
     * Creates a new chess board
-    * @param {string} inputFen FEN of board
+    * @param {Quadrille} inputBoard Quadrille representation of board
     */
-    constructor(inputFen, castlingRights, enPassantInfo) {
-        assert(typeof inputFen === 'string', "Invalid FEN");
-
-        //initialize board
-        let inputBoard = new Quadrille(inputFen);
-
+    constructor(inputBoard, castlingRights, enPassantInfo) {
         //initialize dictionary of pieces
         for (let color of Object.values(E_PieceColor)) {
             this.#piecesDictionary[color] = {}

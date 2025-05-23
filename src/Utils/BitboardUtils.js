@@ -84,13 +84,13 @@ export function getRay(startRank, startFile, destinationRank, destinationFile, i
 }
 
 /**
- * Calculates a sliding ray from given position to any square blocked by occupied in the direction of mask.
+ * Calculates a ray in the direction of the mask from given position to any occupied square.
  * Calculates usign o^(o-2r) trick. 
  * Taken from https://www.youtube.com/watch?v=bCH4YK6oq8M&list=PLQV5mozTHmacMeRzJCW_8K3qw2miYqd0c&index=9&ab_channel=LogicCrazyChess.
  * @param {bigint} occupied Bitboard with occupied squares
  * @param {bigint} position Bitboard with position of piece
  * @param {bigint} mask Bitboard with sliding direction
- * @returns Bitboard with sliding ray
+ * @returns An object that contains the ray in a positive direction, negative direction, and both.
  */
 export function hyperbolaQuintessenceAlgorithm(occupied, position, mask) {
     assert(typeof occupied === 'bigint', "Argument is not a BigInt");
