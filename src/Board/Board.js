@@ -64,7 +64,7 @@ export default class Board {
         this.#moveGenerator = new MoveGenerator();
         this.#board = new Quadrille(inputFen);
         this.#calculateCastlingRights();
-        this.#boardImplementation = new BoardImplementation(inputFen, this.#castlingRights, this.#enPassantInfo);
+        this.#boardImplementation = new BoardImplementation(this.#board, this.#castlingRights, this.#enPassantInfo);
 
         Quadrille.whiteSquare = BOARD_UI_SETTINGS.WHITE_SQUARE_COLOR;
         Quadrille.blackSquare = BOARD_UI_SETTINGS.BLACK_SQUARE_COLOR;
@@ -112,7 +112,7 @@ export default class Board {
                 default:
                     throw new Error("Failed making move. Move has no valid flag");
             }
-            this.#boardImplementation = new BoardImplementation(this.getFen(), this.#castlingRights, this.#enPassantInfo);
+            this.#boardImplementation = new BoardImplementation(this.#board, this.#castlingRights, this.#enPassantInfo);
         } catch (error) {
             console.log(move);
             this.print();
@@ -162,7 +162,7 @@ export default class Board {
                         throw new Error("Invalid board change");
                 }
             }
-            this.#boardImplementation = new BoardImplementation(this.getFen(), this.#castlingRights, this.#enPassantInfo);
+            this.#boardImplementation = new BoardImplementation(this.#board, this.#castlingRights, this.#enPassantInfo);
         } catch (error) {
             console.log(lastChanges);
             throw error;
@@ -223,6 +223,7 @@ export default class Board {
 
         return this.#castlingRights[color][castlingSide];
     }
+
     /**
      * 
      * @returns Object with information about en passant capture
@@ -240,7 +241,7 @@ export default class Board {
         this.#boardChanges = [];
         this.#capturedPieces[E_PieceColor.White] = "";
         this.#capturedPieces[E_PieceColor.Black] = "";
-        this.#boardImplementation = new BoardImplementation(this.#startFen, this.#castlingRights, this.#enPassantInfo);
+        this.#boardImplementation = new BoardImplementation(this.#board, this.#castlingRights, this.#enPassantInfo);
     }
 
 
@@ -481,7 +482,6 @@ export default class Board {
 
 
     /**
-     * 
      * @param {Move} move 
      */
     #updateCastlingRights(move) {
@@ -507,7 +507,7 @@ export default class Board {
                 let rookCastlingSide = rook.file === 1 ? E_CastlingSide.QueenSide : E_CastlingSide.KingSide;
 
                 //if the rook that's moving is on its initial corner and hasn't moved
-                if (rook.isOnInitialSquare() && this.#hasCastlingRights(rook.color, rookCastlingSide)) {
+                if (rook.isOnInitialSquare() && this.hasCastlingRights(rook.color, rookCastlingSide)) {
                     //Remove castling rights from this rook's side
                     this.#disableCastlingRights(rook.color, rookCastlingSide);
                 }
@@ -526,7 +526,7 @@ export default class Board {
                 let rookCastlingSide = rook.file === 1 ? E_CastlingSide.QueenSide : E_CastlingSide.KingSide;
 
                 //if the rook that's being captured is on its initial corner  and hasn't moved
-                if (rook.isOnInitialSquare() && this.#hasCastlingRights(rook.color, rookCastlingSide)) {
+                if (rook.isOnInitialSquare() && this.hasCastlingRights(rook.color, rookCastlingSide)) {
                     //remove castling rights from the captured rook's side
                     this.#disableCastlingRights(rook.color, rookCastlingSide);
                 }
@@ -534,18 +534,6 @@ export default class Board {
         }
     }
 
-    /**
-     * 
-     * @param {E_PieceColor} color 
-     * @param {E_CastlingSide} castlingSide 
-     * @returns Whether the given side has rights to castle (It does not necesarilly mean castling is possible).
-     */
-    #hasCastlingRights(color, castlingSide) {
-        assertPieceColor(color);
-        assert(Object.values(E_CastlingSide).includes(castlingSide), "Invalid castling side");
-
-        return this.#castlingRights[color][castlingSide];
-    }
 
     #setCastlingRights(color, castlingSide, enabled) {
         assert(Object.values(E_CastlingSide).includes(castlingSide), "Invalid castling side");
@@ -553,7 +541,7 @@ export default class Board {
     }
 
     #disableCastlingRights(color, castlingSide) {
-        if (this.#hasCastlingRights(color, castlingSide)) {
+        if (this.hasCastlingRights(color, castlingSide)) {
             this.#castlingRights[color][castlingSide] = false;
             //record change
             let disableCastlingRights = {

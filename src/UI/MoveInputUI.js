@@ -21,36 +21,43 @@ export default class MoveInputUI {
 
         this.#game = game;
         this.#UIQuadrille = createQuadrille(NUMBER_OF_FILES, NUMBER_OF_RANKS);
+
+        this.#colorForSelectedSquare = color(MOVE_INPUT_UI_SETTINGS.COLOR_FOR_SELECTED_SQUARES);
+        this.#colorForAvailableMoves = color(MOVE_INPUT_UI_SETTINGS.COLOR_FOR_AVAILABLE_MOVES);
+
         moveInput.addInputEventListener(MoveInput.inputEvents.onMoveStartSet, this.#onMoveStartSet.bind(this));
         moveInput.addInputEventListener(MoveInput.inputEvents.onMoveDestinationSet, this.#onMoveDestinationSet.bind(this));
         moveInput.addInputEventListener(MoveInput.inputEvents.onMoveInput, this.#onMoveInput.bind(this));
         moveInput.addInputEventListener(MoveInput.inputEvents.onMoveCanceled, this.#onMoveCanceled.bind(this));
-
-        this.#colorForSelectedSquare = color(MOVE_INPUT_UI_SETTINGS.COLOR_FOR_SELECTED_SQUARES);
-        this.#colorForAvailableMoves = color(MOVE_INPUT_UI_SETTINGS.COLOR_FOR_AVAILABLE_MOVES);
     }
 
     #onMoveStartSet(event) {
         //if a move was just completed
         if (this.#moveCompleted) {
-            //clar UI
-            this.#Clear();
+            //clear UI
+            this.#clear();
             this.#moveCompleted = false;
         }
-        let square = event.detail.square;
+
+        let selectedSquare = event.detail.square;
         //fill selected square
-        this.#fillSquare(square.rank, square.file, this.#colorForSelectedSquare);
+        this.#fillSquare(selectedSquare.rank, selectedSquare.file, this.#colorForSelectedSquare);
+
         //draw available moves
+        //for each legal move
         for (let move of this.#game.legalMoves) {
-            if (move.startRank === square.rank && move.startFile === square.file) {
+            //if this move's start square matches the selected square
+            if (move.startRank === selectedSquare.rank && move.startFile === selectedSquare.file) {
+                //highlight the destination square as an available move
                 this.#fillSquare(move.endRank, move.endFile, this.#colorForAvailableMoves);
             }
         }
     }
 
     #onMoveDestinationSet(event) {
+        let selectedSquare = event.detail.square;
         //fill selected square
-        this.#fillSquare(event.detail.square.rank, event.detail.square.file, this.#colorForSelectedSquare);
+        this.#fillSquare(selectedSquare.rank, selectedSquare.file, this.#colorForSelectedSquare);
     }
 
     #fillSquare(rank, file, color) {
@@ -64,7 +71,7 @@ export default class MoveInputUI {
         //if input move is not legal
         if (!result.isLegal) {
             //clear UI
-            this.#Clear();
+            this.#clear();
         } else {
             //hide available moves
             this.#UIQuadrille.replace(this.#colorForAvailableMoves, null);
@@ -73,10 +80,10 @@ export default class MoveInputUI {
     }
 
     #onMoveCanceled(event) {
-        this.#Clear();
+        this.#clear();
     }
 
-    #Clear() {
+    #clear() {
         this.#UIQuadrille.clear();
     }
 
