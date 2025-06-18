@@ -38,5 +38,48 @@ export default [
                 values: { _NO_SPECIAL_MOVES: false, _PAWN_TELEPORT: false, _NO_KING_SAFETY: true },
             })
         ]
+    }, {
+        input: 'src/Game.js',
+        output: {
+            file: 'devlog-builds/input-ui/partial-input-ui-1.js',
+            format: 'iife',
+            name: libraryName
+        },
+        plugins: [
+            jscc({
+                values: { _INPUT_UI_1: true },
+            })
+        ]
+    }, {
+        input: 'src/Game.js',
+        output: {
+            file: 'devlog-builds/input-ui/partial-input-ui-2.js',
+            format: 'iife',
+            name: libraryName
+        },
+        plugins: [
+            jscc({
+                values: { _INPUT_UI_2: true },
+            })
+        ]
+    }, {
+        input: 'src/Game.js',
+        output: {
+            file: 'devlog-builds/input-ui/partial-input-ui-3.js',
+            format: 'iife',
+            name: libraryName
+        },
+        plugins: [
+            jscc({
+                values: { _INPUT_UI_3: true },
+            })
+        ]
+    }, {
+        input: 'src/Game.js',
+        output: {
+            file: 'build/Chess.js',
+            format: 'iife',
+            name: libraryName
+        }
     }
 ];

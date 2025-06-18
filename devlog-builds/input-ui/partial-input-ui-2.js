@@ -1037,11 +1037,14 @@ var Chess = (function (exports) {
                 board.getEmptySpaces() & //target square is empty 
                 getRank(targetRankForJumping); //pawn can only jump from their initial rank
 
+            //calculate capture moves
             let rightCapture = rightDiagonalSquare &
-                board.getOccupied(OppositePieceColor(this.color));  //There's an enemy piece in that square
+                board.getOccupied(OppositePieceColor(this.color)) & //There's an enemy piece in that square
+                ~getFile(1); //remove right capture from 8th file to 1st file
 
             let leftCapture = leftDiagonalSquare &
-                board.getOccupied(OppositePieceColor(this.color)); //There's an enemy piece in that square
+                board.getOccupied(OppositePieceColor(this.color)) & //There's an enemy piece in that square
+                ~getFile(8); //remove right capture from 1st file to 8th file
 
             return frontJump | frontMove | leftCapture | rightCapture;
         }
@@ -1560,6 +1563,19 @@ var Chess = (function (exports) {
             //if there is a king 
             if (king !== undefined) {
                 let kingSafeMoves = this.#generateKingSafeMoves(king, enemyPieces, board);
+                let checkers = this.#calculateCheckers(king, enemyPieces, board);
+
+                //if there's more than one checker
+                if (1 < checkers.length) {
+                    //the only legal moves are king safe moves
+                    return kingSafeMoves;
+                } //else if there is just 1 checker
+                else if (checkers.length === 1) {
+                    //calculate squares that can block the check or capture checker
+                    squaresToPreventCheck = this.#calculateSquaresToPreventCheck(king, checkers[0], board);
+                }
+
+                pinnedPieces = this.#calculatePinnedPieces(king, enemyPieces, board);
 
                 //add king moves to the list of legal moves
                 legalMoves = legalMoves.concat(kingSafeMoves);
@@ -1584,7 +1600,12 @@ var Chess = (function (exports) {
                 }
 
                 //if a pawn is about to promote
-                if (piece.GetType() === E_PieceType.Pawn && piece.isBeforePromotingRank()) ;// else if piece is not a pawn or the pawn is not promoting
+                if (piece.GetType() === E_PieceType.Pawn && piece.isBeforePromotingRank()) {
+                    //add pawn moves as promotion moves
+                    let promotionsMoves = this.#bitboardToMoves(piece, pieceMovesBitboard, E_MoveFlag.Promotion);
+                    legalMoves = legalMoves.concat(promotionsMoves);
+
+                }// else if piece is not a pawn or the pawn is not promoting
                 else {
                     // add regular piece moves
                     let pieceMoves = this.#bitboardToMoves(piece, pieceMovesBitboard, E_MoveFlag.Regular);
@@ -1593,6 +1614,15 @@ var Chess = (function (exports) {
             }
 
             //-- EN-PASSANT --
+            let pawns = board.getPiecesOfType(inputColor, E_PieceType.Pawn);
+            let enPassantMoves = this.#generateEnPassantMoves(pawns, board);
+            legalMoves = legalMoves.concat(enPassantMoves);
+
+
+            //-- CASTLING --
+            let rooks = board.getPiecesOfType(inputColor, E_PieceType.Rook);
+            let castlingMoves = this.#generateCastlingMoves(king, rooks, board);
+            legalMoves = legalMoves.concat(castlingMoves);
 
 
             return legalMoves;
@@ -1627,6 +1657,17 @@ var Chess = (function (exports) {
         #generateKingSafeMoves(king, enemyPieces, board) {
             let dangerousSquaresForKing = 0n; //bitboard of squares that put the king in check
 
+            // remove king temporarily to consider squares behind the king
+            board.removePiece(king.rank, king.file);
+            //king cannot move to sqaures attacked by the enemy
+            let squaresAttackedByEnemy = board.getAttackedSquares(OppositePieceColor(king.color));
+            //protected pieces cannot be captured
+            let dangerouseCaptures = this.#calculateProtectedPieces(enemyPieces, board);
+            //add king back to the board
+            board.addPiece(king, king.rank, king.file);
+
+            //filter dangerous sqaures from king regular moves
+            dangerousSquaresForKing = dangerouseCaptures | squaresAttackedByEnemy;
 
             let kingMovesBitboard = king.GetMoves(board) & ~dangerousSquaresForKing;
 
@@ -1813,7 +1854,38 @@ var Chess = (function (exports) {
          * @returns Whether the en-passant move is legal or not
          */
         #isEnPassantLegal(playingColor, enPassant, board) {
-            return true;
+            let capturedPawnRank = enPassant.startRank;
+            let capturedPawnFile = enPassant.endFile;
+            let capturingPawnRank = enPassant.startRank;
+            let capturingPawnFile = enPassant.startFile;
+
+            //check is king is currently in check
+            let inCheckBeforeEnPassant = board.isKingInCheck(playingColor);
+
+            //simulate making the en-passant capture by removing both pieces
+            let capturedPawn = board.removePiece(capturedPawnRank, capturedPawnFile);
+            let capturingPawn = board.removePiece(capturingPawnRank, capturingPawnFile);
+
+            //check if king is in check after making the en-passant capture
+            let inCheckAfterEnPassant = board.isKingInCheck(playingColor);
+
+            //add removed pawns
+            board.addPiece(capturedPawn, capturedPawnRank, capturedPawnFile);
+            board.addPiece(capturingPawn, capturingPawnRank, capturingPawnFile);
+
+            if (!inCheckBeforeEnPassant & !inCheckAfterEnPassant) {
+                //en-passant is legal
+                return true;
+            } else if (inCheckBeforeEnPassant && !inCheckAfterEnPassant) {
+                //en-passant blocks a check or captures pawn that was checking. Therefore, it is legal
+                return true;
+            } else if (!inCheckBeforeEnPassant & inCheckAfterEnPassant) {
+                //en-passant discovers a check. Therefore, it is illegal
+                return false;
+            } else if (inCheckBeforeEnPassant & inCheckAfterEnPassant) {
+                //en-passant discovered another check or en-passant move does not prevent the check. Therefore, it is illegal
+                return false;
+            }
         }
 
         /**
@@ -2835,13 +2907,6 @@ var Chess = (function (exports) {
 
         #onMoveStartSet(event) {
 
-            //if a move was just completed
-            if (this.#moveCompleted) {
-                //clear UI
-                this.#clear();
-                this.#moveCompleted = false;
-            }
-
 
             let selectedSquare = event.detail.square;
             //fill selected square
@@ -2865,16 +2930,6 @@ var Chess = (function (exports) {
         }
 
         #onMoveInput(event) {
-            let result = this.#game.isMoveLegal(event.detail.move);
-            //if input move is not legal
-            if (!result.isLegal) {
-                //clear UI
-                this.#clear();
-            } else {
-                //hide available moves
-                this.#UIQuadrille.replace(this.#colorForAvailableMoves, null);
-            }
-
 
             this.#moveCompleted = true;
         }

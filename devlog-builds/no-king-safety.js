@@ -433,6 +433,19 @@ var Chess = (function (exports) {
         BACKGROUND_COLOR: 'rgba(255,255,255,1)'
     };
 
+    var UISettings = /*#__PURE__*/Object.freeze({
+        __proto__: null,
+        BOARD_UI_SETTINGS: BOARD_UI_SETTINGS,
+        GAME_STATE_UI_SETTINGS: GAME_STATE_UI_SETTINGS,
+        MOVE_INPUT_UI_SETTINGS: MOVE_INPUT_UI_SETTINGS,
+        MOVE_RECORD_UI_SETTINGS: MOVE_RECORD_UI_SETTINGS,
+        PIECES_CAPTURED_UI_SETTINGS: PIECES_CAPTURED_UI_SETTINGS,
+        PROMOTION_SELECTOR_SETTINGS: PROMOTION_SELECTOR_SETTINGS,
+        RANKS_FILES_UI_SETTING: RANKS_FILES_UI_SETTING,
+        RESET_BUTTON_UI_SETTINGS: RESET_BUTTON_UI_SETTINGS,
+        RESIGN_BUTTON_UI_SETTINGS: RESIGN_BUTTON_UI_SETTINGS
+    });
+
     const FIRST_FILE_BITBOARD = 0x0101010101010101n;
     const FIRST_RANK_BITBOARD = 0xFFn;
 
@@ -517,13 +530,13 @@ var Chess = (function (exports) {
     }
 
     /**
-     * Calculates a sliding ray from given position to any square blocked by occupied in the direction of mask.
+     * Calculates a ray in the direction of the mask from given position to any occupied square.
      * Calculates usign o^(o-2r) trick. 
      * Taken from https://www.youtube.com/watch?v=bCH4YK6oq8M&list=PLQV5mozTHmacMeRzJCW_8K3qw2miYqd0c&index=9&ab_channel=LogicCrazyChess.
      * @param {bigint} occupied Bitboard with occupied squares
      * @param {bigint} position Bitboard with position of piece
      * @param {bigint} mask Bitboard with sliding direction
-     * @returns Bitboard with sliding ray
+     * @returns An object that contains the ray in a positive direction, negative direction, and both.
      */
     function hyperbolaQuintessenceAlgorithm(occupied, position, mask) {
         assert(typeof occupied === 'bigint', "Argument is not a BigInt");
@@ -1139,14 +1152,9 @@ var Chess = (function (exports) {
 
         /**
         * Creates a new chess board
-        * @param {string} inputFen FEN of board
+        * @param {Quadrille} inputBoard Quadrille representation of board
         */
-        constructor(inputFen, castlingRights, enPassantInfo) {
-            assert(typeof inputFen === 'string', "Invalid FEN");
-
-            //initialize board
-            let inputBoard = new Quadrille(inputFen);
-
+        constructor(inputBoard, castlingRights, enPassantInfo) {
             //initialize dictionary of pieces
             for (let color of Object.values(E_PieceColor)) {
                 this.#piecesDictionary[color] = {};
@@ -1490,66 +1498,116 @@ var Chess = (function (exports) {
         }
     }
 
-    //****** CLASS PROLOG
+    /*
+    LINK TO FILE IN GITHUB: https://github.com/objetos/chess-videogame/blob/master/src/MoveGeneration/MoveGenerator.js 
+
+    Created for Chess.js
+    Play here: https://objetos.github.io/chess-thesis-website/play-chess/
+    Github project: https://github.com/objetos/chess-videogame
+
+    DESCRIPTION:
+    Generates legal moves based on the state of the board. Special rules (castling, enpassant, promotion) 
+    and king safety are implemented in this class. Basic rules for moving pieces are implemented by the Piece.js
+    abstract class and its drived classes.
+
+    Most calculations are done with the use of bitboards.
+
+    You can find a in-depth explanation of this class design and algorithms on the following devlogs:
+    - Code Architecture (https://objetos.github.io/chess-thesis-website/devlogs/fourth-devlog/)
+    - Special Rules: En-passant (https://objetos.github.io/chess-thesis-website/devlogs/eight-devlog/)
+    - Special Rules: Castling (https://objetos.github.io/chess-thesis-website/devlogs/ninth-devlog/)
+    - Generating Legal Moves Part 1 (https://objetos.github.io/chess-thesis-website/devlogs/tenth-devlog/)
+    - Generating Legal Moves Part 2 (https://objetos.github.io/chess-thesis-website/devlogs/eleventh-devlog/)
+
+    INPUT:
+    - Board: Instance of BoardImplementation.js class.
+    - Piece color: Piece color from E_PieceColor enum.
+
+    OUTPUT:
+    - Array of legal moves. Moves are instances of Move.js class.
+
+    ASSUMPTIONS:
+    - The board configuration provided is reachable through a sequence of legal moves
+
+    Created by Juan David Diaz Garcia. 
+    LinkedIn: https://www.linkedin.com/in/juan-david-diaz-garcia-8b72781b0/   
+    Github profile: https://github.com/D4vidDG 
+    Email: jdiazga@unal.edu.co 
+    */
+
+    //------
+
     class MoveGenerator {
+
         /**
+         * Generates a set of legal moves given a board configuration and a piece color
          * @param {BoardImplementation} board 
-         * @param {E_PieceColor} pieceColor
+         * @param {E_PieceColor} inputColor
          * @returns {Move[]} Array of legal moves of pieces of given color
          */
         generateMoves(board, pieceColor) {
+
             assert(board instanceof BoardImplementation, "Invalid board");
             assertPieceColor(pieceColor);
+            let inputColor = pieceColor;
 
             let legalMoves = [];
-            let playingPieces = board.getPiecesOfType(pieceColor, E_PieceType.Any);
-            let enemyPieces = board.getPiecesOfType(OppositePieceColor(pieceColor), E_PieceType.Any);
+            let playingPieces = board.getPiecesOfType(inputColor, E_PieceType.Any);
+            let enemyPieces = board.getPiecesOfType(OppositePieceColor(inputColor), E_PieceType.Any);
 
-            //calculate data to ensure king safety
-            let king = board.getPiecesOfType(pieceColor, E_PieceType.King)[0];
-            let targetSquaresToAvoidCheck = getBooleanBitboard(true);//squares to block check or capture checkers
-            let moveFilterForPinnedPieces = {};//filter for moves of pinned pieces
+            //-- CALCULATIONS FOR KING SAFETY --
+            let king = board.getPiecesOfType(inputColor, E_PieceType.King)[0];
+            let squaresToPreventCheck = getBooleanBitboard(true);// Bitboard with squares that prevent check by blocking the checkers path or by capturing the checker.
+            let pinnedPieces = {};// Dictionary with pieces that are pinned. Key is the piece position and value is the squares the piece can move to without discovering a check
 
+            //if there is a king 
             if (king !== undefined) {
                 let kingSafeMoves = this.#generateKingSafeMoves(king, enemyPieces, board);
+
+                //add king moves to the list of legal moves
                 legalMoves = legalMoves.concat(kingSafeMoves);
             }
 
-            //calculate regular moves for each piece
+            //-- REGULAR MOVES AND PROMOTION--
+            //calculate regular move of every piece of the input color
             for (let piece of playingPieces) {
                 //exclude calculation for king
                 if (piece.GetType() === E_PieceType.King) continue;
-                //get board with permitted moves
+
+                //get bitboard with regular moves
                 let pieceMovesBitboard = piece.GetMoves(board);
-                //filter moves if king is in check
-                pieceMovesBitboard = pieceMovesBitboard & targetSquaresToAvoidCheck;
-                //if piece is pinned, filter moves that do not discover a check
-                let isPiecePinned = moveFilterForPinnedPieces[piece.position] !== undefined;
+                //filter moves that do not prevent king check
+                pieceMovesBitboard = pieceMovesBitboard & squaresToPreventCheck;
+                //if piece is pinned
+                let isPiecePinned = pinnedPieces[piece.position] !== undefined;
                 if (isPiecePinned) {
-                    let moveFilter = moveFilterForPinnedPieces[piece.position];
-                    pieceMovesBitboard = pieceMovesBitboard & moveFilter;
+                    //filter moves that discover a check
+                    let pinnedPieceSafeSquares = pinnedPieces[piece.position];
+                    pieceMovesBitboard = pieceMovesBitboard & pinnedPieceSafeSquares;
                 }
 
                 //if a pawn is about to promote
                 if (piece.GetType() === E_PieceType.Pawn && piece.isBeforePromotingRank()) {
-                    //add promotion moves
+                    //add pawn moves as promotion moves
                     let promotionsMoves = this.#bitboardToMoves(piece, pieceMovesBitboard, E_MoveFlag.Promotion);
                     legalMoves = legalMoves.concat(promotionsMoves);
 
-                }// else, add regular piece moves
+                }// else if piece is not a pawn or the pawn is not promoting
                 else {
+                    // add regular piece moves
                     let pieceMoves = this.#bitboardToMoves(piece, pieceMovesBitboard, E_MoveFlag.Regular);
                     legalMoves = legalMoves.concat(pieceMoves);
                 }
             }
 
-            //generate enpassant move
-            let pawns = board.getPiecesOfType(pieceColor, E_PieceType.Pawn);
+            //-- EN-PASSANT --
+            let pawns = board.getPiecesOfType(inputColor, E_PieceType.Pawn);
             let enPassantMoves = this.#generateEnPassantMoves(pawns, board);
             legalMoves = legalMoves.concat(enPassantMoves);
 
-            //generate castling moves
-            let rooks = board.getPiecesOfType(pieceColor, E_PieceType.Rook);
+
+            //-- CASTLING --
+            let rooks = board.getPiecesOfType(inputColor, E_PieceType.Rook);
             let castlingMoves = this.#generateCastlingMoves(king, rooks, board);
             legalMoves = legalMoves.concat(castlingMoves);
 
@@ -1558,7 +1616,7 @@ var Chess = (function (exports) {
         }
 
         /**
-         * 
+         * Calculate enemy pieces that are checking the king
          * @param {King} king 
          * @param {Piece[]} enemyPieces 
          * @param {BoardImplementation} board 
@@ -1577,54 +1635,66 @@ var Chess = (function (exports) {
         }
 
         /**
-         * 
+         * Generates moves for the king that do not put it in check
          * @param {King} king 
-         * @param {bigint} protectedPieces 
+         * @param {Piece[]} enemyPieces 
          * @param {BoardImplementation} board 
          * @returns Array of moves the king can do safely
          */
         #generateKingSafeMoves(king, enemyPieces, board) {
-            let dangerousSquaresForKing = 0n;
+            let dangerousSquaresForKing = 0n; //bitboard of squares that put the king in check
+
 
             let kingMovesBitboard = king.GetMoves(board) & ~dangerousSquaresForKing;
+
             return this.#bitboardToMoves(king, kingMovesBitboard, E_MoveFlag.Regular);
         }
 
         /**
-         * 
+         * Determines what enemy pieces are being protected (i.e the enemy can recapture if they are captured)
          * @param {King} king 
          * @param {Piece[]} enemyPieces 
          * @param {BoardImplementation} board 
-         * @returns Bitboard of enemy pieces that are protected (i.e the enemy can recapture if they are captured)
+         * @returns Bitboard with the position of protected pieces
          */
-        #calculateProtectedPieces(enemyPieces, board) { // ****** repeated code, transfer to piece?
+        #calculateProtectedPieces(enemyPieces, board) {
+            if (enemyPieces.length == 0) return;
             let protectedPieces = 0n;
+            let squaresOccupiedByEnemyPieces = board.getOccupied(enemyPieces[0].color);
             //for every enemy piece
             for (let enemyPiece of enemyPieces) {
                 //if it is a slider
                 if (enemyPiece.IsSlider()) {
+                    //calculate moves normally
+                    let slider = enemyPiece;
                     let occupied = board.getOccupied();
-                    let rays = enemyPiece.getSlidingRays();
-                    let position = enemyPiece.position;
+                    let rays = slider.getSlidingRays();
+                    let position = slider.position;
                     let slidingMoves = 0n;
 
                     rays.forEach(ray => {
                         let movesInRay = hyperbolaQuintessenceAlgorithm(occupied, position, ray);
                         slidingMoves = slidingMoves | movesInRay.wholeRay;
                     });
+                    //protected pieces are where this piece could move to if there was an enemy piece 
+                    protectedPieces |= slidingMoves & squaresOccupiedByEnemyPieces;
+                }
+                //else if it is a pawn
+                else if (enemyPiece.GetType() === E_PieceType.Pawn) {
+                    let pawn = enemyPiece;
+                    //calculate sqaures where the pawn captures
+                    let pawnCapturingSquares = pawn.GetCapturingSquares();
+                    //protected pieces are where this pawn could capture if there was an enemy piece 
+                    protectedPieces |= pawnCapturingSquares & squaresOccupiedByEnemyPieces;
 
-
-                    protectedPieces |= slidingMoves & board.getOccupied(enemyPiece.color);
-
-                } else if (enemyPiece.GetType() === E_PieceType.Pawn) {
-
-                    let pawnCapturingSquares = enemyPiece.GetCapturingSquares();
-                    protectedPieces |= pawnCapturingSquares & board.getOccupied(enemyPiece.color);
-
-                } else if (enemyPiece.GetType() === E_PieceType.Knight | enemyPiece.GetType() === E_PieceType.King) {
-                    let emptyBoard = new BoardImplementation('8/8/8/8/8/8/8/8');
+                }
+                //else if it is a knight or a king
+                else if (enemyPiece.GetType() === E_PieceType.Knight | enemyPiece.GetType() === E_PieceType.King) {
+                    //calculate moves in an empty board
+                    let emptyBoard = new BoardImplementation(new Quadrille('8/8/8/8/8/8/8/8'));
                     let enemyMovesInEmptyBoard = enemyPiece.GetMoves(emptyBoard);
-                    protectedPieces |= enemyMovesInEmptyBoard & board.getOccupied(enemyPiece.color);
+                    //protected pieces are where this piece could move to if there was an enemy piece 
+                    protectedPieces |= enemyMovesInEmptyBoard & squaresOccupiedByEnemyPieces;
                 }
             }
 
@@ -1633,33 +1703,38 @@ var Chess = (function (exports) {
         }
 
         /**
-         * 
+         * Calculates squares that allow to prevent a check
          * @param {King} king 
          * @param {Piece} checker 
-         * @returns Bitboard with squares pieces can move to in order to avoid the check
+         * @returns Bitboard with squares that pieces can move to in order to avoid the check
          */
-        #calculateSquaresToAvoidCheck(king, checker) {
+        #calculateSquaresToPreventCheck(king, checker) {
             //if checker is a slider
             if (checker.IsSlider()) {
-                //We can block the check by moving to any square between the slider and the king or capturing the slider
+                //we can block the check by moving to any square between the slider and the king or capturing the slider.
+                //return ray from the checker to the king including the start square
                 return getRay(checker.rank, checker.file, king.rank, king.file, true, false);
-            } //if piece is not a slider
+            }
+            //else if piece is not a slider
             else {
-                //We can avoid the check only by capturing the checker
+                //we can avoid the check only by capturing the checker
                 return checker.position;
             }
         }
 
         /**
-         * 
+         * Calculates pinned pieces and determines the squares thye can move to
          * @param {King} king 
          * @param {Piece[]} enemyPieces 
          * @param {BoardImplementation} board 
-         * @returns Object with pinned pieces and the filters for their moves
+         * @returns Dictionary of pinned pieces. 
+         * Key is a bitboard with the position of a pinned piece.
+         * Value is a bitboard with the squares it can move to without discovering a check.
          */
         #calculatePinnedPieces(king, enemyPieces, board) {
-            let moveFilterForPinnedPieces = {};
-            //for every enemy piece
+            let pinnedPieces = {};
+
+            //calculate if any enemy piece is pinning pieces
             for (let enemyPiece of enemyPieces) {
                 //if it is not a slider, it cannot pin pieces
                 if (!enemyPiece.IsSlider()) continue;
@@ -1671,85 +1746,95 @@ var Chess = (function (exports) {
                 //if there's no possible ray between slider and king, king is not within slider's attack range, continue.
                 if (rayFromSliderToKing === 0n) continue;
 
-                //calculate if slider is allowed to move on the ray to the king
+                //determine if slider is allowed to move on a ray to the king
                 let isSliderAllowedToMoveOnRay = false;
                 for (let ray of sliderRays) {
                     if ((ray & rayFromSliderToKing) > 0n) {
                         isSliderAllowedToMoveOnRay = true;
                     }
                 }
+
                 //if slider is not allowed to move on the ray to the king, king is not within slider's attack range, do nothing. 
                 if (!isSliderAllowedToMoveOnRay) continue;
 
-                //check for pinned pieces
-                //Taken from https://www.chessprogramming.org/Checks_and_Pinned_Pieces_(Bitboards)
-                let attacksFromSliderToKing = hyperbolaQuintessenceAlgorithm(board.getOccupied(), slider.position, rayFromSliderToKing);
-                let attacksFromKingToSlider = hyperbolaQuintessenceAlgorithm(board.getOccupied(), king.position, rayFromSliderToKing);
+                //check for pinned pieces. Algorithm taken from https://www.chessprogramming.org/Checks_and_Pinned_Pieces_(Bitboards)
+                let occupied = board.getOccupied();
+                let attacksFromSliderToKing = hyperbolaQuintessenceAlgorithm(occupied, slider.position, rayFromSliderToKing);
+                let attacksFromKingToSlider = hyperbolaQuintessenceAlgorithm(occupied, king.position, rayFromSliderToKing);
                 let emptySpaceBetweenKingAndSlider = rayFromSliderToKing & ~king.position;
                 let intersection = attacksFromKingToSlider.wholeRay & attacksFromSliderToKing.wholeRay;
 
                 //if there's no intersection
-                if (intersection === 0n) ; //else if the intersection is equal to empty spaces
+                if (intersection === 0n) ;
+                //else if the intersection is equal to empty spaces
                 else if ((intersection & board.getEmptySpaces()) === emptySpaceBetweenKingAndSlider) ; else {
-                    //There's one piece in between slider and king
+                    //there's one piece in between slider and king in the intersection
                     //if the piece is an ally
                     let isPieceAnAlly = (intersection & board.getOccupied(king.color)) > 0n;
                     if (isPieceAnAlly) {
                         //piece is being pinned by the slider.
+                        let pinnedPosition = intersection;
                         //piece can only move in the ray from the slider to the king to avoid discovering a check
-                        moveFilterForPinnedPieces[intersection] = rayFromSliderToKing | slider.position;
+                        let legalSquares = rayFromSliderToKing | slider.position;
+                        //add pinned piece position and squares to dictionary
+                        pinnedPieces[pinnedPosition] = legalSquares;
                     }
                 }
             }
-            return moveFilterForPinnedPieces;
+            return pinnedPieces;
         }
 
         /**
-         * 
-         * @param {Pawn[]} pawns 
+         * Generates en-passant moves of a set of pawns
+         * @param {Pawn[]} pawns Pawns of the same color
          * @param {BoardImplementation} board 
          * @returns Array of en passant moves
          */
         #generateEnPassantMoves(pawns, board) {
             let enPassantMoves = [];
-            let enPassantInfo = board.getEnPassantInfo();
-            for (let pawn of pawns) {
-                //The en passant capture must be performed on the turn immediately after the pawn being captured moves.
+            let enPassantInfo = board.getEnPassantInfo();//tells if an en-passant capture is possible and where
+            //calculate en-passant for every pawn
+            for (let capturingPawn of pawns) {
+                //The en passant capture must be performed on the turn immediately after the enemy pawn moves.
                 if (enPassantInfo.rightToEnPassant === false) continue;
 
                 //The capturing pawn must have advanced exactly three ranks to perform this move.
-                if (pawn.rank !== ENPASSANT_CAPTURING_RANKS[pawn.color]) continue;
+                if (capturingPawn.rank !== ENPASSANT_CAPTURING_RANKS[capturingPawn.color]) continue;
 
-                //The captured pawn must be right next to the capturing pawn.
-                let rankDiff = Math.abs(enPassantInfo.captureRank - pawn.rank);
-                let fileDiff = Math.abs(enPassantInfo.captureFile - pawn.file);
+                //The captured pawn must be on the same rank and one file apart from the capturing pawn. 
+                let rankDiff = Math.abs(enPassantInfo.captureRank - capturingPawn.rank);
+                let fileDiff = Math.abs(enPassantInfo.captureFile - capturingPawn.file);
                 if (fileDiff !== 1 || rankDiff !== 0) continue;
 
-                //You move your pawn diagonally to an adjacent square, one rank farther from where it had been, 
-                //on the same file where the enemy's pawn is.
-                let targetRank = pawn.color === E_PieceColor.White ? pawn.rank + 1 : pawn.rank - 1;
-                let enPassant = new Move(pawn.rank, pawn.file, targetRank, enPassantInfo.captureFile, E_MoveFlag.EnPassant);
-                //en passant move must be legal
-                if (!this.#isEnPassantLegal(pawn.color, enPassant, board)) continue;
+                /* Generate en-passant move.The capturing pawn moves diagonally to an adjacent square, 
+                one rank farther from where it was, and on the same file where the captured pawn is.*/
+                let targetRank = capturingPawn.color === E_PieceColor.White ?
+                    capturingPawn.rank + 1 : capturingPawn.rank - 1;
+                let enPassant = new Move(capturingPawn.rank, capturingPawn.file, targetRank, enPassantInfo.captureFile, E_MoveFlag.EnPassant);
 
+                //en passant move must be legal
+                if (!this.#isEnPassantLegal(capturingPawn.color, enPassant, board)) continue;
+
+                //if legal, add en-passant move
                 enPassantMoves.push(enPassant);
             }
+
             return enPassantMoves;
         }
 
         /**
-         * Checks if an en passant move is legal. Taken from: https://peterellisjones.com/posts/generating-legal-chess-moves-efficiently/
+         * Checks if an en passant move is legal. Algorithm taken from: https://peterellisjones.com/posts/generating-legal-chess-moves-efficiently/
          * @param {E_PieceColor} playingColor 
-         * @param {Move} enPassant 
+         * @param {Move} enPassant En-passant move
          * @param {BoardImplementation} board 
-         * @returns Whether the en passant move is legal
+         * @returns Whether the en-passant move is legal or not
          */
         #isEnPassantLegal(playingColor, enPassant, board) {
             return true;
         }
 
         /**
-         * 
+         * Generates castling moves of rooks
          * @param {King} king 
          * @param {Rook[]} rooks 
          * @param {BoardImplementation} board 
@@ -1760,78 +1845,89 @@ var Chess = (function (exports) {
             if (king === undefined) return [];
             if (rooks === undefined || rooks.length === 0) return [];
 
-            //The king cannot be in check
+            //if the the king is in check, castling is not possible
             if (board.isKingInCheck(king.color)) return [];
 
             //if the king is not on its initial square, castling is not possible
             if (!king.isOnInitialSquare()) return [];
 
             let castlingMoves = [];
+            //calculate if any rook can castle with the king
             for (let rook of rooks) {
-                //if rook is not on its initial square, skip
+                //if rook is not on its initial square, it cannot castle
                 if (!rook.isOnInitialSquare()) continue;
 
-                //This side must have castling rights. That is, rooks cannot have moved or been captured and king cannot have moved.
+                /*This side must have castling rights. That is, rooks cannot have moved 
+                or been captured previously. Also, king cannot have moved before.*/
                 let castlingSide = king.file > rook.file ? E_CastlingSide.QueenSide : E_CastlingSide.KingSide;
                 if (!board.hasCastlingRights(rook.color, castlingSide)) continue;
 
-                //There cannot be any piece between the rook and the king
-                let castlingPath = castlingSide === E_CastlingSide.QueenSide ?
+                //calculate path from king to rook
+                let pathFromKingToRook = castlingSide === E_CastlingSide.QueenSide ?
                     king.position << 1n | king.position << 2n | king.position << 3n :
                     king.position >> 1n | king.position >> 2n;
 
-                let isCastlingPathObstructed = (board.getEmptySpaces() & castlingPath) !== castlingPath;
+                //there cannot be any piece between the rook and the king
+                let isCastlingPathObstructed = (board.getEmptySpaces() & pathFromKingToRook) !== pathFromKingToRook;
+                if (isCastlingPathObstructed) continue;
 
-                //Your king can not pass through check
-                let attackedSquares = board.getAttackedSquares(OppositePieceColor(king.color));
+                //calculate the path the king takes to castle
                 let kingPathToCastle = castlingSide === E_CastlingSide.QueenSide ?
                     king.position << 1n | king.position << 2n :
                     king.position >> 1n | king.position >> 2n;
-
+                //the king cannot pass through check when castling
+                let attackedSquares = board.getAttackedSquares(OppositePieceColor(king.color));
                 let isKingPathChecked = (kingPathToCastle & attackedSquares) > 0n;
+                if (isKingPathChecked) continue;
 
-                if (!isCastlingPathObstructed && !isKingPathChecked) {
-                    let kingTargetFile = CASTLING_FILES[castlingSide][E_PieceType.King].endFile;
-                    let kingMove = new Castling(king.rank, king.file, king.rank, kingTargetFile, castlingSide);
-                    castlingMoves.push(kingMove);
-                }
+                //The rook can castle with the king. create castling move
+                let kingTargetFile = CASTLING_FILES[castlingSide][E_PieceType.King].endFile;
+                let kingMove = new Castling(king.rank, king.file, king.rank, kingTargetFile, castlingSide);
+                //add castling move 
+                castlingMoves.push(kingMove);
             }
+
             return castlingMoves;
         }
 
 
         /**
-         * Converts a bitboard of moves into an array of moves with given flag
+         * Converts bitboard into a set of moves. The start square is the piece position and the destination is
+         * the position of every on-bit of the bitboard. The move flag is assigned to every move.
          * @param {Piece} piece 
-         * @param {bigint} movesBitboard 
+         * @param {bigint} bitboard 
          * @param {E_MoveFlag} moveFlag 
          * @returns  Array of moves with given flag
          */
-        #bitboardToMoves(piece, movesBitboard, moveFlag) {
+        #bitboardToMoves(piece, bitboard, moveFlag) {
             let moves = [];
-            let testBit = 1n;
+            let testBit = 1n; //bit used to traverse the bitboard
 
-            if (movesBitboard === 0n) return [];
-            //for each square
+            //if no bits are set, return no moves
+            if (bitboard === 0n) return [];
+            //for each bit
             for (let index = 0; index < 64; index++) {
-                //if square is attacked by piece
-                let squareAttacked = (movesBitboard & testBit) > 0n;
-                if (squareAttacked) {
-                    //calculate end rank and file
+                //if bit is on
+                if (0n < (bitboard & testBit)) {
+                    //calculate destination rank and file
                     let endRank = Math.floor((index) / NUMBER_OF_FILES) + 1;
                     let endFile = NUMBER_OF_FILES - (index % NUMBER_OF_FILES);
+
                     //create move
                     let newMove;
                     if (moveFlag === E_MoveFlag.Promotion) {
                         newMove = new Promotion(piece.rank, piece.file, endRank, endFile);
+                    } else if (moveFlag === E_MoveFlag.Castling) {
+                        newMove = new Castling(piece.rank, piece.file, endRank, endFile);
                     } else {
                         newMove = new Move(piece.rank, piece.file, endRank, endFile, moveFlag);
                     }
+
                     //add move to array
                     moves.push(newMove);
                 }
 
-                //continue to next square
+                //continue to next bit
                 testBit = testBit << 1n;
             }
 
@@ -1881,7 +1977,7 @@ var Chess = (function (exports) {
 
             //listen to click events on main canvas
             select('canvas').mouseClicked(() => {
-                this.#handleClick(mouseX, mouseY, globalBoardPositionX, globalBoardPositionY);
+                this.#handleClick(globalBoardPositionX, globalBoardPositionY);
             });
         }
 
@@ -1894,15 +1990,12 @@ var Chess = (function (exports) {
             this.#CancelMove();
         }
 
-        #handleClick(clickX, clickY, boardPositionX, boardPositionY) {
+        #handleClick(boardPositionX, boardPositionY) {
             if (!this.#enabled) return;
-            //get click coordinates relative to page
-            let xCoordinate = clickX;
-            let yCoordinate = clickY;
-            //get clicked square
 
-            let clickedRank = 8 - this.#inputListener.screenRow(yCoordinate, boardPositionY, BOARD_UI_SETTINGS.SQUARE_SIZE);
-            let clickedFile = this.#inputListener.screenCol(xCoordinate, boardPositionX, BOARD_UI_SETTINGS.SQUARE_SIZE) + 1;
+            //get clicked square
+            let clickedRank = 8 - this.#inputListener.screenRow(mouseY, boardPositionY, BOARD_UI_SETTINGS.SQUARE_SIZE);
+            let clickedFile = this.#inputListener.screenCol(mouseX, boardPositionX, BOARD_UI_SETTINGS.SQUARE_SIZE) + 1;
             let clickedSquare = {
                 rank: clickedRank,
                 file: clickedFile
@@ -1972,19 +2065,6 @@ var Chess = (function (exports) {
             let moveCanceled = new CustomEvent(MoveInput.inputEvents.onMoveCanceled);
             this.dispatchEvent(moveCanceled);
         }
-
-        static #pieceSelectedForPromotion = E_PieceType.Queen;
-
-        static get pieceSelectedForPromotion() {
-            return this.#pieceSelectedForPromotion;
-        }
-
-        static set pieceSelectedForPromotion(value) {
-            assertPieceType(value);
-            assert(value !== E_PieceType.Pawn, "Promotion to Pawn is forbidden");
-            assert(value !== E_PieceType.King, "Promotion to King is forbidden");
-            this.#pieceSelectedForPromotion = value;
-        }
     }
 
     /* globals CENTER */
@@ -2039,7 +2119,7 @@ var Chess = (function (exports) {
             this.#moveGenerator = new MoveGenerator();
             this.#board = new Quadrille(inputFen);
             this.#calculateCastlingRights();
-            this.#boardImplementation = new BoardImplementation(inputFen, this.#castlingRights, this.#enPassantInfo);
+            this.#boardImplementation = new BoardImplementation(this.#board, this.#castlingRights, this.#enPassantInfo);
 
             Quadrille.whiteSquare = BOARD_UI_SETTINGS.WHITE_SQUARE_COLOR;
             Quadrille.blackSquare = BOARD_UI_SETTINGS.BLACK_SQUARE_COLOR;
@@ -2087,7 +2167,7 @@ var Chess = (function (exports) {
                     default:
                         throw new Error("Failed making move. Move has no valid flag");
                 }
-                this.#boardImplementation = new BoardImplementation(this.getFen(), this.#castlingRights, this.#enPassantInfo);
+                this.#boardImplementation = new BoardImplementation(this.#board, this.#castlingRights, this.#enPassantInfo);
             } catch (error) {
                 console.log(move);
                 this.print();
@@ -2137,7 +2217,7 @@ var Chess = (function (exports) {
                             throw new Error("Invalid board change");
                     }
                 }
-                this.#boardImplementation = new BoardImplementation(this.getFen(), this.#castlingRights, this.#enPassantInfo);
+                this.#boardImplementation = new BoardImplementation(this.#board, this.#castlingRights, this.#enPassantInfo);
             } catch (error) {
                 console.log(lastChanges);
                 throw error;
@@ -2198,6 +2278,7 @@ var Chess = (function (exports) {
 
             return this.#castlingRights[color][castlingSide];
         }
+
         /**
          * 
          * @returns Object with information about en passant capture
@@ -2215,7 +2296,7 @@ var Chess = (function (exports) {
             this.#boardChanges = [];
             this.#capturedPieces[E_PieceColor.White] = "";
             this.#capturedPieces[E_PieceColor.Black] = "";
-            this.#boardImplementation = new BoardImplementation(this.#startFen, this.#castlingRights, this.#enPassantInfo);
+            this.#boardImplementation = new BoardImplementation(this.#board, this.#castlingRights, this.#enPassantInfo);
         }
 
 
@@ -2456,7 +2537,6 @@ var Chess = (function (exports) {
 
 
         /**
-         * 
          * @param {Move} move 
          */
         #updateCastlingRights(move) {
@@ -2482,7 +2562,7 @@ var Chess = (function (exports) {
                     let rookCastlingSide = rook.file === 1 ? E_CastlingSide.QueenSide : E_CastlingSide.KingSide;
 
                     //if the rook that's moving is on its initial corner and hasn't moved
-                    if (rook.isOnInitialSquare() && this.#hasCastlingRights(rook.color, rookCastlingSide)) {
+                    if (rook.isOnInitialSquare() && this.hasCastlingRights(rook.color, rookCastlingSide)) {
                         //Remove castling rights from this rook's side
                         this.#disableCastlingRights(rook.color, rookCastlingSide);
                     }
@@ -2501,7 +2581,7 @@ var Chess = (function (exports) {
                     let rookCastlingSide = rook.file === 1 ? E_CastlingSide.QueenSide : E_CastlingSide.KingSide;
 
                     //if the rook that's being captured is on its initial corner  and hasn't moved
-                    if (rook.isOnInitialSquare() && this.#hasCastlingRights(rook.color, rookCastlingSide)) {
+                    if (rook.isOnInitialSquare() && this.hasCastlingRights(rook.color, rookCastlingSide)) {
                         //remove castling rights from the captured rook's side
                         this.#disableCastlingRights(rook.color, rookCastlingSide);
                     }
@@ -2509,18 +2589,6 @@ var Chess = (function (exports) {
             }
         }
 
-        /**
-         * 
-         * @param {E_PieceColor} color 
-         * @param {E_CastlingSide} castlingSide 
-         * @returns Whether the given side has rights to castle (It does not necesarilly mean castling is possible).
-         */
-        #hasCastlingRights(color, castlingSide) {
-            assertPieceColor(color);
-            assert(Object.values(E_CastlingSide).includes(castlingSide), "Invalid castling side");
-
-            return this.#castlingRights[color][castlingSide];
-        }
 
         #setCastlingRights(color, castlingSide, enabled) {
             assert(Object.values(E_CastlingSide).includes(castlingSide), "Invalid castling side");
@@ -2528,7 +2596,7 @@ var Chess = (function (exports) {
         }
 
         #disableCastlingRights(color, castlingSide) {
-            if (this.#hasCastlingRights(color, castlingSide)) {
+            if (this.hasCastlingRights(color, castlingSide)) {
                 this.#castlingRights[color][castlingSide] = false;
                 //record change
                 let disableCastlingRights = {
@@ -2772,36 +2840,64 @@ var Chess = (function (exports) {
 
             this.#game = game;
             this.#UIQuadrille = createQuadrille(NUMBER_OF_FILES, NUMBER_OF_RANKS);
+
+            this.#colorForSelectedSquare = color(MOVE_INPUT_UI_SETTINGS.COLOR_FOR_SELECTED_SQUARES);
+            this.#colorForAvailableMoves = color(MOVE_INPUT_UI_SETTINGS.COLOR_FOR_AVAILABLE_MOVES);
+
             moveInput.addInputEventListener(MoveInput.inputEvents.onMoveStartSet, this.#onMoveStartSet.bind(this));
             moveInput.addInputEventListener(MoveInput.inputEvents.onMoveDestinationSet, this.#onMoveDestinationSet.bind(this));
             moveInput.addInputEventListener(MoveInput.inputEvents.onMoveInput, this.#onMoveInput.bind(this));
             moveInput.addInputEventListener(MoveInput.inputEvents.onMoveCanceled, this.#onMoveCanceled.bind(this));
-
-            this.#colorForSelectedSquare = color(MOVE_INPUT_UI_SETTINGS.COLOR_FOR_SELECTED_SQUARES);
-            this.#colorForAvailableMoves = color(MOVE_INPUT_UI_SETTINGS.COLOR_FOR_AVAILABLE_MOVES);
         }
 
         #onMoveStartSet(event) {
+
             //if a move was just completed
             if (this.#moveCompleted) {
-                //clar UI
-                this.#Clear();
+                //clear UI
+                this.#clear();
                 this.#moveCompleted = false;
             }
-            let square = event.detail.square;
+
+
+            let selectedSquare = event.detail.square;
             //fill selected square
-            this.#fillSquare(square.rank, square.file, this.#colorForSelectedSquare);
+            this.#fillSquare(selectedSquare.rank, selectedSquare.file, this.#colorForSelectedSquare);
+
             //draw available moves
+            //for each legal move
             for (let move of this.#game.legalMoves) {
-                if (move.startRank === square.rank && move.startFile === square.file) {
+                //if this move's start square matches the selected square
+                if (move.startRank === selectedSquare.rank && move.startFile === selectedSquare.file) {
+                    //highlight the destination square as an available move
                     this.#fillSquare(move.endRank, move.endFile, this.#colorForAvailableMoves);
                 }
             }
         }
 
         #onMoveDestinationSet(event) {
+            let selectedSquare = event.detail.square;
             //fill selected square
-            this.#fillSquare(event.detail.square.rank, event.detail.square.file, this.#colorForSelectedSquare);
+            this.#fillSquare(selectedSquare.rank, selectedSquare.file, this.#colorForSelectedSquare);
+        }
+
+        #onMoveInput(event) {
+            let result = this.#game.isMoveLegal(event.detail.move);
+            //if input move is not legal
+            if (!result.isLegal) {
+                //clear UI
+                this.#clear();
+            } else {
+                //hide available moves
+                this.#UIQuadrille.replace(this.#colorForAvailableMoves, null);
+            }
+
+
+            this.#moveCompleted = true;
+        }
+
+        #onMoveCanceled(event) {
+            this.#clear();
         }
 
         #fillSquare(rank, file, color) {
@@ -2810,24 +2906,7 @@ var Chess = (function (exports) {
             this.#UIQuadrille.fill(row, column, color);
         }
 
-        #onMoveInput(event) {
-            let result = this.#game.isMoveLegal(event.detail.move);
-            //if input move is not legal
-            if (!result.isLegal) {
-                //clear UI
-                this.#Clear();
-            } else {
-                //hide available moves
-                this.#UIQuadrille.replace(this.#colorForAvailableMoves, null);
-            }
-            this.#moveCompleted = true;
-        }
-
-        #onMoveCanceled(event) {
-            this.#Clear();
-        }
-
-        #Clear() {
+        #clear() {
             this.#UIQuadrille.clear();
         }
 
@@ -3567,6 +3646,7 @@ var Chess = (function (exports) {
     exports.Pawn = Pawn;
     exports.Queen = Queen;
     exports.Rook = Rook;
+    exports.UISettings = UISettings;
 
     return exports;
 
