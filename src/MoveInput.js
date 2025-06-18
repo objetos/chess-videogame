@@ -56,7 +56,7 @@ export default class MoveInput extends EventTarget {
     }
 
     reset() {
-        this.#CancelMove();
+        this.#cancelMove();
     }
 
     #handleClick(boardPositionX, boardPositionY) {
@@ -76,7 +76,7 @@ export default class MoveInput extends EventTarget {
             //if move was started
             if (this.#inputMoveStart !== null) {
                 //cancel it
-                this.#CancelMove();
+                this.#cancelMove();
             }
             return;
         }
@@ -104,7 +104,7 @@ export default class MoveInput extends EventTarget {
             //if start square and destination square are the same
             if ((this.#inputMoveStart.rank === clickedRank && this.#inputMoveStart.file === clickedFile)) {
                 //cancel move
-                this.#CancelMove();
+                this.#cancelMove();
                 return;
             }
 
@@ -128,7 +128,7 @@ export default class MoveInput extends EventTarget {
         }
     }
 
-    #CancelMove() {
+    #cancelMove() {
         this.#inputMoveStart = null;
         this.#inputMoveDestination = null;
         let moveCanceled = new CustomEvent(MoveInput.inputEvents.onMoveCanceled);
